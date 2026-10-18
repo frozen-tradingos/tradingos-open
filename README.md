@@ -1,12 +1,25 @@
 # Trading OS Open
 
-本地、只读的交易研究工具。把行情证据、条件研究、交易计划和复盘放在一起；用户使用自己的账号和数据权限。
+在本地研究美股，查看预测依据，记录自己的交易计划并复盘。使用你自己的模型账号和 Robinhood 数据权限。
 
-**v0.1.0-preview.2 · 实验预览版 · MIT**。首版面向 Windows x64 单用户本地运行，不是云端商业服务，也不是已验证的交易产品。真实新用户OAuth、行情权限和首个自然预测仍需验收；安装测试通过不代表预测准确或盈利，不能盲目跟单。
+Local-first trading research: TS forecasts, conditional setups, trading plans and reviews. Bring your own model and Robinhood access.
 
-Local, read-only market research with your own broker, data and model accounts. Windows x64 preview; Robinhood is the only implemented broker adapter. Live authorization and a first natural forecast are not yet end-to-end validated. No automated order execution or performance guarantee.
+**Windows x64 · 只读研究 · MIT · v0.1.0-preview.2**
 
-## 先看清楚支持范围
+[下载预览版源码包](https://github.com/w1113009511-svg/tradingos-open/releases/tag/v0.1.0-preview.2) · [安装步骤](#首次安装) · [反馈问题](https://github.com/w1113009511-svg/tradingos-open/issues)
+
+## 可以用它做什么
+
+- **预测与条件研究**：查看 TS 市场判断、目标交易日、触发条件和失效条件，保留判断依据。
+- **交易计划与复盘**：记录交易理由和风险限制，回看原始判断与后续市场记录。
+- **行情和持仓工作区**：提供 SPY / QQQ 图表、Robinhood 只读适配和可选 Finnhub 新闻入口。
+- **自己的本地研究环境**：独立保存数据和授权；附带 Codex Skill，可用自然语言检查准备状态、研究市场或整理复盘。
+
+**当前是实验预览版。** 已通过 Windows 独立副本的安装、构建和离线测试；真实新用户券商授权、行情读取到首个自然预测的完整流程仍待验收。首次需准备运行环境，模型和数据可能收费。不提供自动下单，不保证预测准确或盈利。
+
+Windows x64 preview; Robinhood is the only implemented broker adapter. Live authorization, market data and a first natural forecast remain unverified end to end. Research only; no automated orders or performance guarantee.
+
+## 支持范围
 
 | 部分 | 本候选包的范围 |
 | --- | --- |
