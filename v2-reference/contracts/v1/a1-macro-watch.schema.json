@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "actionable",
+    "status",
+    "generated_at",
+    "timezone",
+    "window_start",
+    "window_end",
+    "selection_rule",
+    "events"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "A1_MACRO_WATCH"},
+    "actionable": {"type": "boolean", "const": false},
+    "status": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED"]
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "timezone": {
+      "type": "string",
+      "const": "America/Los_Angeles"
+    },
+    "window_start": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "window_end": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "selection_rule": {
+      "type": "string",
+      "const": "BLS_MARKET_MOVING_RELEASES_NEXT_7_CALENDAR_DAYS"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"$ref": "#/$defs/event"}
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_fingerprint",
+        "category",
+        "release_name",
+        "scheduled_at",
+        "market_impact_status",
+        "result_status",
+        "source",
+        "source_url",
+        "confidence"
+      ],
+      "properties": {
+        "event_fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["employment", "inflation"]
+        },
+        "release_name": {
+          "type": "string",
+          "enum": [
+            "Employment Situation",
+            "Job Openings and Labor Turnover Survey",
+            "Consumer Price Index",
+            "Producer Price Index"
+          ]
+        },
+        "scheduled_at": {"type": "string", "format": "date-time"},
+        "market_impact_status": {
+          "type": "string",
+          "const": "SCHEDULED_UNRELEASED"
+        },
+        "result_status": {
+          "type": "string",
+          "const": "UNKNOWN"
+        },
+        "source": {
+          "type": "string",
+          "const": "BLS Official Release Calendar"
+        },
+        "source_url": {
+          "type": "string",
+          "const": "https://www.bls.gov/schedule/news_release/bls.ics"
+        },
+        "confidence": {
+          "type": "string",
+          "const": "official_schedule"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "flow_state",
+    "direction",
+    "confidence",
+    "summary",
+    "evidence_for",
+    "evidence_against",
+    "reversal_signals",
+    "data_gaps"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "role": {"type": "string", "enum": ["COMMITTEE"]},
+    "flow_state": {
+      "type": "string",
+      "enum": ["entering", "exiting", "strengthening", "reversing", "mixed", "unknown"]
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["bullish", "bearish", "neutral", "unknown"]
+    },
+    "confidence": {"type": "integer", "minimum": 0, "maximum": 10},
+    "summary": {"type": "string"},
+    "evidence_for": {"type": "array", "items": {"type": "string"}},
+    "evidence_against": {"type": "array", "items": {"type": "string"}},
+    "reversal_signals": {"type": "array", "items": {"type": "string"}},
+    "data_gaps": {"type": "array", "items": {"type": "string"}}
+  }
+}

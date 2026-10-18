@@ -1,0 +1,27 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["decision_id", "candidates"],
+  "properties": {
+    "decision_id": { "type": "string" },
+    "candidates": { "type": "array", "minItems": 3, "maxItems": 6, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["symbol", "direction", "contract_id", "reason", "evidence_refs", "entry_conditions"],
+      "properties": {
+        "symbol": { "type": "string" },
+        "direction": { "type": "string", "enum": ["BULLISH", "BEARISH"] },
+        "contract_id": { "type": "string", "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 800 },
+        "evidence_refs": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "type": "string" } },
+        "entry_conditions": { "anyOf": [
+          { "type": "null" },
+          { "type": "object", "additionalProperties": false, "required": ["evidence_ref", "entry", "invalidation", "target"], "properties": {
+            "evidence_ref": { "type": "string", "pattern": "^entry:[a-f0-9]{64}$" },
+            "entry": { "type": "number", "exclusiveMinimum": 0 },
+            "invalidation": { "type": "number", "exclusiveMinimum": 0 },
+            "target": { "type": "number", "exclusiveMinimum": 0 }
+          } }
+        ] }
+      }
+    } }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v3/ts-forecast-settlement.schema.json",
+  "title": "Trading OS V2 TS Forecast Settlement v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "forecast_run_id",
+    "forecast_hash",
+    "report_type",
+    "release_commit",
+    "forecast_window",
+    "settled_at",
+    "status",
+    "actual_scenario",
+    "scenario_probabilities",
+    "scenario_results",
+    "symbol_results",
+    "brier_score",
+    "source_observation_hashes",
+    "notes",
+    "settlement_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v3"},
+    "component": {"type": "string", "const": "TS_FORECAST_SETTLEMENT"},
+    "forecast_run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "forecast_hash": {"$ref": "#/$defs/hash"},
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "WEEKEND_OUTLOOK",
+        "NEXT_SESSION",
+        "OPENING_FORECAST",
+        "OPEN_15M_CHECK",
+        "OPEN_30M_CHECK",
+        "INTRADAY_30_60M"
+      ]
+    },
+    "release_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "forecast_window": {
+      "$ref": "../v2/ts-output.schema.json#/$defs/forecast_window"
+    },
+    "settled_at": {"type": "string", "format": "date-time"},
+    "status": {"type": "string", "enum": ["RESOLVED", "UNRESOLVED"]},
+    "actual_scenario": {
+      "type": "string",
+      "enum": ["MAIN", "REVERSE", "EXTREME", "UNRESOLVED"]
+    },
+    "scenario_probabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main", "reverse", "extreme"],
+      "properties": {
+        "main": {"$ref": "#/$defs/probability"},
+        "reverse": {"$ref": "#/$defs/probability"},
+        "extreme": {"$ref": "#/$defs/probability"}
+      }
+    },
+    "scenario_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main", "reverse", "extreme"],
+      "properties": {
+        "main": {"$ref": "#/$defs/scenario_result"},
+        "reverse": {"$ref": "#/$defs/scenario_result"},
+        "extreme": {"$ref": "#/$defs/scenario_result"}
+      }
+    },
+    "symbol_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SPY", "QQQ"],
+      "properties": {
+        "SPY": {"$ref": "#/$defs/symbol_result"},
+        "QQQ": {"$ref": "#/$defs/symbol_result"}
+      }
+    },
+    "brier_score": {
+      "oneOf": [
+        {"type": "number", "minimum": 0, "maximum": 2},
+        {"type": "null"}
+      ]
+    },
+    "source_observation_hashes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash"}
+    },
+    "notes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "settlement_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "probability": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "multipleOf": 5
+    },
+    "scenario_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "completed_stage_count", "completed_at"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "PARTIAL",
+            "INVALIDATED",
+            "NOT_ACTIVATED",
+            "UNRESOLVED"
+          ]
+        },
+        "completed_stage_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "completed_at": {
+          "oneOf": [
+            {"type": "string", "format": "date-time"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "symbol_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_price",
+        "end_price",
+        "return_pct",
+        "forecast_direction",
+        "actual_direction"
+      ],
+      "properties": {
+        "start_price": {"type": "number", "exclusiveMinimum": 0},
+        "end_price": {"type": "number", "exclusiveMinimum": 0},
+        "return_pct": {"type": "number"},
+        "forecast_direction": {
+          "type": "string",
+          "enum": ["BULLISH", "BEARISH", "RANGE"]
+        },
+        "actual_direction": {
+          "type": "string",
+          "enum": ["BULLISH", "BEARISH", "RANGE", "UNRESOLVED"]
+        }
+      }
+    }
+  }
+}

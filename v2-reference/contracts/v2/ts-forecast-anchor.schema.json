@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v2/ts-forecast-anchor.schema.json",
+  "title": "Trading OS V2 TS Forecast Anchor v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "forecast_run_id",
+    "forecast_hash",
+    "report_type",
+    "market_date",
+    "issued_at",
+    "anchor_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v2"},
+    "component": {"type": "string", "const": "TS_FORECAST_ANCHOR"},
+    "forecast_run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "forecast_hash": {"$ref": "#/$defs/hash"},
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "WEEKEND_OUTLOOK",
+        "NEXT_SESSION",
+        "OPENING_FORECAST",
+        "OPEN_15M_CHECK",
+        "OPEN_30M_CHECK",
+        "INTRADAY_30_60M"
+      ]
+    },
+    "market_date": {"type": "string", "format": "date"},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "anchor_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

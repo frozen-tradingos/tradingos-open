@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "role", "evidence_id", "action", "symbol", "contract_id", "option_type", "expiration", "strike", "quantity", "max_entry_debit", "stop_loss_pct", "take_profit_pct", "score", "entry_conditions", "invalidation", "target_price", "reasons", "entry_trigger_price", "invalidation_price", "holding_period", "contract_selection_reason"],
+  "properties": {
+    "contract_version": { "type": "string", "const": "stock-plan-v2" },
+    "role": { "type": "string", "enum": ["D", "A3"] },
+    "evidence_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "action": { "type": "string", "enum": ["CONDITIONAL_PLAN", "MANUAL_BUY", "NO_TRADE"] },
+    "symbol": { "type": "string", "maxLength": 8 },
+    "contract_id": { "type": "string", "maxLength": 200 },
+    "option_type": { "type": "string", "enum": ["call", "put"] },
+    "expiration": { "type": "string", "maxLength": 10 },
+    "strike": { "type": "number", "minimum": 0 },
+    "quantity": { "type": "integer", "minimum": 0, "maximum": 1 },
+    "max_entry_debit": { "type": "number", "minimum": 0, "maximum": 1000 },
+    "stop_loss_pct": { "anyOf": [{ "type": "number", "minimum": -50, "maximum": -30 }, { "type": "number", "const": 0 }] },
+    "take_profit_pct": { "anyOf": [{ "type": "number", "minimum": 30, "maximum": 70 }, { "type": "number", "const": 0 }] },
+    "score": { "type": "number", "minimum": 0, "maximum": 10 },
+    "entry_conditions": { "type": "array", "maxItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 400 } },
+    "invalidation": { "type": "array", "maxItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 400 } },
+    "target_price": { "type": "number", "minimum": 0 },
+    "reasons": { "type": "array", "minItems": 1, "maxItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 400 } },
+    "entry_trigger_price": { "type": "number", "minimum": 0 },
+    "invalidation_price": { "type": "number", "minimum": 0 },
+    "holding_period": { "type": "string", "maxLength": 400 },
+    "contract_selection_reason": { "type": "string", "maxLength": 400 }
+  }
+}

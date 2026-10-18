@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v1/ts-swing-scorecard.schema.json",
+  "title": "Trading OS V2 TS Swing Scorecard v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "forecast_run_id",
+    "forecast_hash",
+    "report_type",
+    "forecast_window",
+    "measured_at",
+    "holding_style",
+    "execution_scope",
+    "forecast_role",
+    "eligibility",
+    "option_execution_evidence",
+    "source_observation_hash",
+    "symbols",
+    "scorecard_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "TS_SWING_SCORECARD"},
+    "forecast_run_id": {"$ref": "#/$defs/run_id"},
+    "forecast_hash": {"$ref": "#/$defs/hash"},
+    "report_type": {"$ref": "#/$defs/report_type"},
+    "forecast_window": {
+      "$ref": "../v2/ts-output.schema.json#/$defs/forecast_window"
+    },
+    "measured_at": {"type": "string", "format": "date-time"},
+    "holding_style": {
+      "type": "string",
+      "const": "MANUAL_SINGLE_LEG_0_TO_15_DTE"
+    },
+    "execution_scope": {
+      "type": "string",
+      "const": "READ_ONLY_NO_ORDER_ACTION"
+    },
+    "forecast_role": {"type": "string", "const": "FORMAL_SLOT"},
+    "eligibility": {"type": "string", "const": "OFFICIAL_CALIBRATION"},
+    "option_execution_evidence": {
+      "type": "string",
+      "const": "NOT_INFERRED_WITHOUT_MANUAL_POSITION"
+    },
+    "source_observation_hash": {"$ref": "#/$defs/hash"},
+    "symbols": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SPY", "QQQ"],
+      "properties": {
+        "SPY": {"$ref": "#/$defs/symbol_result"},
+        "QQQ": {"$ref": "#/$defs/symbol_result"}
+      }
+    },
+    "scorecard_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "WEEKEND_OUTLOOK",
+        "NEXT_SESSION",
+        "OPENING_FORECAST",
+        "OPEN_15M_CHECK",
+        "OPEN_30M_CHECK",
+        "INTRADAY_30_60M"
+      ]
+    },
+    "nullable_number": {
+      "oneOf": [{"type": "number"}, {"type": "null"}]
+    },
+    "symbol_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecast_direction",
+        "entry_price",
+        "entry_at",
+        "max_price",
+        "max_bar_closed_at",
+        "min_price",
+        "min_bar_closed_at",
+        "close_price",
+        "close_at",
+        "upside_excursion_pct",
+        "downside_excursion_pct",
+        "close_return_pct",
+        "favorable_excursion_pct",
+        "adverse_excursion_pct",
+        "first_extreme"
+      ],
+      "properties": {
+        "forecast_direction": {
+          "type": "string",
+          "enum": ["BULLISH", "BEARISH", "RANGE"]
+        },
+        "entry_price": {"type": "number", "exclusiveMinimum": 0},
+        "entry_at": {"type": "string", "format": "date-time"},
+        "max_price": {"type": "number", "exclusiveMinimum": 0},
+        "max_bar_closed_at": {"type": "string", "format": "date-time"},
+        "min_price": {"type": "number", "exclusiveMinimum": 0},
+        "min_bar_closed_at": {"type": "string", "format": "date-time"},
+        "close_price": {"type": "number", "exclusiveMinimum": 0},
+        "close_at": {"type": "string", "format": "date-time"},
+        "upside_excursion_pct": {"type": "number", "minimum": 0},
+        "downside_excursion_pct": {"type": "number", "maximum": 0},
+        "close_return_pct": {"type": "number"},
+        "favorable_excursion_pct": {"$ref": "#/$defs/nullable_number"},
+        "adverse_excursion_pct": {"$ref": "#/$defs/nullable_number"},
+        "first_extreme": {
+          "type": "string",
+          "enum": ["HIGH_FIRST", "LOW_FIRST", "SAME_BAR_UNRESOLVED"]
+        }
+      }
+    }
+  }
+}

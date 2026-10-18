@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "actionable",
+    "status",
+    "generated_at",
+    "timezone",
+    "window_start",
+    "window_end",
+    "selection_rule",
+    "events"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "A1_EARNINGS_WATCH"},
+    "actionable": {"type": "boolean", "const": false},
+    "status": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED"]
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "timezone": {
+      "type": "string",
+      "const": "America/Los_Angeles"
+    },
+    "window_start": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "window_end": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "selection_rule": {
+      "type": "string",
+      "const": "TOP_20_ABSOLUTE_REVENUE_ESTIMATE"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"$ref": "#/$defs/event"}
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "symbol",
+        "date",
+        "session",
+        "eps_estimate",
+        "revenue_estimate",
+        "importance_rank",
+        "market_impact_status",
+        "source",
+        "confidence"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "symbol": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9.-]{0,14}$"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "session": {
+          "type": "string",
+          "enum": ["BMO", "AMC", "UNKNOWN"]
+        },
+        "eps_estimate": {"type": ["number", "null"]},
+        "revenue_estimate": {"type": ["number", "null"]},
+        "importance_rank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "market_impact_status": {
+          "type": "string",
+          "const": "UNVERIFIED_CANDIDATE"
+        },
+        "source": {
+          "type": "string",
+          "const": "Finnhub Earnings Calendar"
+        },
+        "confidence": {
+          "type": "string",
+          "const": "scheduled_event"
+        }
+      }
+    }
+  }
+}

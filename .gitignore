@@ -1,0 +1,33 @@
+# All local account, market, broker and model state is private.
+**/data/
+**/runtime/
+**/.env
+**/.env.*
+**/*codex-home/
+**/.codex/
+**/auth.json
+**/credentials.json
+**/*.sqlite*
+**/*.db
+**/*.db-*
+**/*.log
+**/*.pem
+**/*.key
+**/*.pfx
+**/*.p12
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.tsbuildinfo
+# Web tests generate temporary fixture directories beside the test sources.
+web/tests/*/
+**/.pytest_cache/
+**/.wrangler/
+**/.next/
+**/dist/
+**/.tools/
+_工作文件/
+release/
+.DS_Store
+Thumbs.db

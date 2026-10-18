@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v2/ts-settlement-run.schema.json",
+  "title": "Trading OS V2 TS Settlement Run v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "status",
+    "as_of",
+    "dataset_hash",
+    "due_forecasts",
+    "due_inventory_hash",
+    "settled_due_run_ids",
+    "settled_due_hash",
+    "newly_settled_run_ids",
+    "newly_settled_hash",
+    "pending_run_ids",
+    "settlement_count",
+    "resolved_count",
+    "calibration_hash",
+    "run_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v2"},
+    "component": {"type": "string", "const": "TS_SETTLEMENT_RUN"},
+    "status": {"type": "string", "const": "COMPLETED"},
+    "as_of": {"type": "string", "format": "date-time"},
+    "dataset_hash": {"$ref": "#/$defs/hash"},
+    "due_forecasts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/due_forecast"}
+    },
+    "due_inventory_hash": {"$ref": "#/$defs/hash"},
+    "settled_due_run_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/run_id"}
+    },
+    "settled_due_hash": {"$ref": "#/$defs/hash"},
+    "newly_settled_run_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/run_id"}
+    },
+    "newly_settled_hash": {"$ref": "#/$defs/hash"},
+    "pending_run_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/run_id"}
+    },
+    "settlement_count": {"type": "integer", "minimum": 0},
+    "resolved_count": {"type": "integer", "minimum": 0},
+    "calibration_hash": {"$ref": "#/$defs/hash"},
+    "run_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "due_forecast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forecast_run_id", "target_market_dates"],
+      "properties": {
+        "forecast_run_id": {"$ref": "#/$defs/run_id"},
+        "target_market_dates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "format": "date"}
+        }
+      }
+    }
+  }
+}

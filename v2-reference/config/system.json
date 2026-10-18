@@ -1,0 +1,44 @@
+{
+  "contract_version": "v1",
+  "system": { "name": "Trading OS Open", "phase": 1, "timezone": "America/Los_Angeles", "symbols": ["SPY", "QQQ"], "execution_enabled": false, "automatic_orders_enabled": false, "legacy_paths_allowed": false },
+  "providers": {
+    "tradier": { "base_url": "https://api.tradier.com/v1", "token_env": "TRADIER_ACCESS_TOKEN" },
+    "finnhub": { "base_url": "https://finnhub.io/api/v1", "token_env": "FINNHUB_API_KEY", "role": "primary_news_and_earnings" },
+    "fmp": { "base_url": "https://financialmodelingprep.com/api/v3", "token_env": "FMP_API_KEY", "role": "future_backup" },
+    "google_news_rss": { "url": "https://news.google.com/rss/search", "role": "discovery_only" },
+    "official_sources": ["Federal Reserve", "BLS", "BEA", "SEC", "company investor relations"],
+    "official_news_feeds": [
+      { "name": "Federal Reserve", "url": "https://www.federalreserve.gov/feeds/press_all.xml" },
+      { "name": "BLS", "url": "https://www.bls.gov/feed/bls_latest.rss" },
+      { "name": "BEA", "url": "https://apps.bea.gov/rss/rss.xml" },
+      { "name": "SEC", "url": "https://www.sec.gov/news/pressreleases.rss" }
+    ],
+    "cross_confirmation_sources": ["SEC", "Nasdaq", "company investor relations", "Reuters"]
+  },
+  "discord": { "enabled": false, "guild_id": "", "owner_user_id": "", "bot_token_env": "DISCORD_DISABLED", "channels": {} },
+  "schedule": {
+    "market_open": "06:30", "market_close": "13:00", "new_position_cutoff": "10:30", "a1_heartbeat_minutes": 15,
+    "local_guard_minutes": 5, "codex_guard_minutes": 5, "local_guard_start": "06:33:30", "codex_guard_start": "06:34:30",
+    "closing_settlement_local_guard": "13:03", "closing_settlement_codex_guard": "13:04", "early_report": "06:30",
+    "mid_report": "09:30", "late_report": "11:30", "history_archive": "13:15", "ts_settlement": "13:50",
+    "next_day_report": "18:00", "sunday_report": "18:00", "daily_review": "18:20"
+  },
+  "trading_rules": {
+    "manual_only": true, "underlyings": ["SPY", "QQQ"], "option_sides": ["call", "put"], "single_leg_only": true,
+    "dte_min": 0, "dte_max": 15, "max_cumulative_cost_per_position_usd": 1000, "max_open_positions": 3,
+    "same_direction_spy_qqq_allowed": true, "add_reduce_reenter_allowed": true,
+    "stop_loss_pct_min": -50, "stop_loss_pct_max": -30, "take_profit_pct_min": 30, "take_profit_pct_max": 70,
+    "score_actionable_min": 9, "score_observe": 7,
+    "range_market_policy": { "status": "TREND_ALIGNED_PULLBACK_ONLY", "wide_chop_new_trade_allowed": false, "transition_requires_qualified_context": true, "required_structure_timeframes": ["15m", "30m"], "microstructure_confirmation": "5M_BREAK_AND_NEXT_BAR_HOLD", "vwap_role": "EVIDENCE_ONLY" },
+    "after_cutoff_requires_verified_market_moving_news": true, "returns_use_actual_option_fill_price": true,
+    "spread_rule": { "status": "DEFINED", "max_relative_pct": 5, "max_absolute_usd": 0.15, "effect": "BLOCK_NEW_TRADE_OUTSIDE_THRESHOLD" }
+  },
+  "health": { "states": ["HEALTHY", "DEGRADED", "DEGRADED_NO_TRADE", "BLOCKED"], "single_restart_per_component_per_trading_day": true, "discord_backup": "DISABLED", "discord_backup_status": "UNPROVEN" },
+  "review": { "storage_root": "../web/data/reviews", "discord_channel": "", "contains_secrets": false },
+  "data": {
+    "contract_version": "v1", "storage_root": "../web/data/live-shadow/v2-data", "contains_secrets": false,
+    "history": { "provider": "tradier", "symbols": ["SPY", "QQQ"], "interval": "5min", "session_filter": "open", "lookback_days": 40 },
+    "half_hour_forecast": { "enabled": false, "mode": "SHADOW", "actionable": false, "cadence_minutes": 15, "horizon_minutes": 30, "first_issue": "07:00", "last_issue": "12:30" }
+  },
+  "acceptance": { "required_valid_trading_days": 3, "failed_day_resets_prior_passes": true, "required_heartbeat_slots": 27, "required_local_guard_slots": 79, "required_codex_guard_slots": 79, "required_reports": ["早盘固定分析", "开盘15分钟验证", "开盘30分钟验证", "中盘固定分析", "晚盘固定分析", "次日提前分析"], "archive_after_pass": true }
+}

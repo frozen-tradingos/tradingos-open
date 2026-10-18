@@ -1,0 +1,12 @@
+{
+  "project_id": "trading-os-stock-web",
+  "project_kind": "STOCK_TRADING_OWNER_SITE",
+  "data_root": "data",
+  "protected_records": [
+    "SQLite",
+    "forecast archives and settlements",
+    "Run Ledger and Output Gateway history",
+    "incidents, complaints and audit evidence",
+    "backups, logs and Shadow evidence"
+  ]
+}

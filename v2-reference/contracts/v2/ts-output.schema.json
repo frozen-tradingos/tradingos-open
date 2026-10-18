@@ -1,0 +1,603 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v2/ts-output.schema.json",
+  "title": "Trading OS V2 TS Output v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "report_type",
+    "evidence_snapshot",
+    "forecast_window",
+    "forecast_update",
+    "current_pattern",
+    "one_line_forecast",
+    "path_bias",
+    "symbol_outlooks",
+    "evidence_assessment",
+    "evidence_maturity",
+    "tradeability",
+    "scenarios",
+    "causal_chains",
+    "key_levels",
+    "next_validation",
+    "most_likely_mistake",
+    "historical_similarity_context",
+    "hypotheses",
+    "data_gaps"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v2"},
+    "role": {"type": "string", "const": "TS"},
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "WEEKEND_OUTLOOK",
+        "NEXT_SESSION",
+        "OPENING_FORECAST",
+        "OPEN_15M_CHECK",
+        "OPEN_30M_CHECK",
+        "INTRADAY_30_60M"
+      ]
+    },
+    "evidence_snapshot": {"$ref": "#/$defs/evidence_snapshot"},
+    "forecast_window": {"$ref": "#/$defs/forecast_window"},
+    "forecast_update": {"$ref": "#/$defs/forecast_update"},
+    "current_pattern": {"$ref": "#/$defs/current_pattern"},
+    "one_line_forecast": {"type": "string", "minLength": 1},
+    "path_bias": {"$ref": "#/$defs/direction"},
+    "symbol_outlooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SPY", "QQQ"],
+      "properties": {
+        "SPY": {"$ref": "#/$defs/symbol_outlook"},
+        "QQQ": {"$ref": "#/$defs/symbol_outlook"}
+      }
+    },
+    "evidence_assessment": {"$ref": "#/$defs/evidence_assessment"},
+    "evidence_maturity": {"$ref": "#/$defs/evidence_maturity"},
+    "tradeability": {"$ref": "#/$defs/tradeability"},
+    "scenarios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main", "reverse", "extreme"],
+      "properties": {
+        "main": {"$ref": "#/$defs/scenario"},
+        "reverse": {"$ref": "#/$defs/scenario"},
+        "extreme": {"$ref": "#/$defs/scenario"}
+      }
+    },
+    "causal_chains": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/causal_chain"}
+    },
+    "key_levels": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 12,
+      "items": {"$ref": "#/$defs/key_level"}
+    },
+    "next_validation": {"$ref": "#/$defs/next_validation"},
+    "most_likely_mistake": {"type": "string", "minLength": 1},
+    "historical_similarity_context": {
+      "$ref": "#/$defs/historical_similarity_context"
+    },
+    "hypotheses": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {"$ref": "#/$defs/hypothesis"}
+    },
+    "data_gaps": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "earnings_day_coverage": {
+      "$ref": "#/$defs/earnings_day_coverage"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "release_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "nullable_hash": {
+      "oneOf": [
+        {"$ref": "#/$defs/hash"},
+        {"type": "null"}
+      ]
+    },
+    "nullable_run_id": {
+      "oneOf": [
+        {"$ref": "#/$defs/run_id"},
+        {"type": "null"}
+      ]
+    },
+    "nullable_datetime": {
+      "oneOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["BULLISH", "BEARISH", "RANGE"]
+    },
+    "evidence_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "packet_hash",
+        "analysis_freshness_hash",
+        "release_commit",
+        "market_time"
+      ],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/run_id"},
+        "packet_hash": {"$ref": "#/$defs/hash"},
+        "analysis_freshness_hash": {"$ref": "#/$defs/hash"},
+        "release_commit": {"$ref": "#/$defs/release_commit"},
+        "market_time": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["timezone", "observed_at", "market_date", "state"],
+          "properties": {
+            "timezone": {
+              "type": "string",
+              "const": "America/Los_Angeles"
+            },
+            "observed_at": {"type": "string", "format": "date-time"},
+            "market_date": {"type": "string", "format": "date"},
+            "state": {
+              "type": "string",
+              "enum": ["OPEN", "CLOSED", "PREMARKET", "POSTMARKET"]
+            }
+          }
+        }
+      }
+    },
+    "forecast_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["horizon", "start_at", "end_at", "end_condition"],
+      "properties": {
+        "horizon": {
+          "type": "string",
+          "enum": [
+            "NEXT_REGULAR_SESSION",
+            "NEXT_REGULAR_SESSION_AND_WEEK",
+            "OPEN_TO_60_MINUTES",
+            "NEXT_30_TO_60_MINUTES"
+          ]
+        },
+        "start_at": {"type": "string", "format": "date-time"},
+        "end_at": {"$ref": "#/$defs/nullable_datetime"},
+        "end_condition": {
+          "type": "string",
+          "enum": [
+            "AT_TIMESTAMP",
+            "NEXT_REGULAR_SESSION_CLOSE",
+            "NEXT_FIVE_REGULAR_SESSIONS_CLOSE"
+          ]
+        }
+      }
+    },
+    "forecast_update": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "prior_run_id",
+        "prior_forecast_hash",
+        "prior_status",
+        "change_summary"
+      ],
+      "properties": {
+        "mode": {"type": "string", "enum": ["NEW", "CHECK"]},
+        "prior_run_id": {"$ref": "#/$defs/nullable_run_id"},
+        "prior_forecast_hash": {"$ref": "#/$defs/nullable_hash"},
+        "prior_status": {
+          "type": "string",
+          "enum": [
+            "NOT_APPLICABLE",
+            "CONFIRMED",
+            "PARTIAL",
+            "WEAKENED",
+            "INVALIDATED"
+          ]
+        },
+        "change_summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "current_pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regime", "summary"],
+      "properties": {
+        "regime": {
+          "type": "string",
+          "enum": [
+            "TREND_UP",
+            "TREND_DOWN",
+            "NARROW_RANGE",
+            "WIDE_CHOP",
+            "V_REVERSAL_UP",
+            "V_REVERSAL_DOWN",
+            "FALSE_BREAKOUT",
+            "FALSE_BREAKDOWN",
+            "TRANSITION",
+            "MIXED",
+            "UNKNOWN"
+          ]
+        },
+        "summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "symbol_outlook": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["direction", "relative_strength", "summary"],
+      "properties": {
+        "direction": {"$ref": "#/$defs/direction"},
+        "relative_strength": {
+          "type": "string",
+          "enum": ["LEADER", "LAGGER", "IN_LINE"]
+        },
+        "summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_status",
+        "core_sources",
+        "core_gaps",
+        "enhanced_available",
+        "enhanced_missing",
+        "enhancement_gap_effect"
+      ],
+      "properties": {
+        "core_status": {"type": "string", "const": "READY"},
+        "core_sources": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "SPY_QUOTE",
+              "QQQ_QUOTE",
+              "MARKET_CLOCK",
+              "A2_STRUCTURE"
+            ]
+          }
+        },
+        "core_gaps": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {"type": "string"}
+        },
+        "enhanced_available": {
+          "$ref": "#/$defs/enhanced_evidence_list"
+        },
+        "enhanced_missing": {
+          "$ref": "#/$defs/enhanced_evidence_list"
+        },
+        "enhancement_gap_effect": {
+          "type": "string",
+          "const": "LOWERS_MATURITY_NOT_FORECAST_AVAILABILITY"
+        }
+      }
+    },
+    "enhanced_evidence_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "MARKET_MOVING_NEWS",
+          "MACRO_SCHEDULE",
+          "OIL_CONTEXT",
+          "RATES_CONTEXT",
+          "SECTOR_BREADTH",
+          "OPTIONS_POSITIONING",
+          "A2_HISTORICAL_SIMILARITY",
+          "OVERNIGHT_FUTURES"
+        ]
+      }
+    },
+    "evidence_maturity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reason"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"]
+        },
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "tradeability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["WAIT", "CONDITIONAL", "READY_FOR_D_REVIEW"]
+        },
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bias",
+        "probability_pct",
+        "summary",
+        "activation",
+        "sequence",
+        "invalidation"
+      ],
+      "properties": {
+        "bias": {"$ref": "#/$defs/direction"},
+        "probability_pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "multipleOf": 5
+        },
+        "summary": {"type": "string", "minLength": 1},
+        "activation": {"$ref": "#/$defs/condition_group"},
+        "sequence": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/scenario_stage"}
+        },
+        "invalidation": {"$ref": "#/$defs/condition_group"}
+      }
+    },
+    "scenario_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "label", "conditions"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1, "maximum": 3},
+        "label": {"type": "string", "minLength": 1},
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/observable_condition"}
+        }
+      }
+    },
+    "condition_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logic", "conditions"],
+      "properties": {
+        "logic": {"type": "string", "enum": ["ALL", "ANY"]},
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/observable_condition"}
+        }
+      }
+    },
+    "observable_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "metric",
+        "operator",
+        "value",
+        "upper_value",
+        "confirmation"
+      ],
+      "properties": {
+        "symbol": {"type": "string", "enum": ["SPY", "QQQ"]},
+        "metric": {
+          "type": "string",
+          "enum": [
+            "LAST_PRICE",
+            "VWAP",
+            "SESSION_HIGH",
+            "SESSION_LOW",
+            "OPENING_RANGE_HIGH",
+            "OPENING_RANGE_LOW"
+          ]
+        },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "ABOVE",
+            "BELOW",
+            "AT_OR_ABOVE",
+            "AT_OR_BELOW",
+            "BETWEEN"
+          ]
+        },
+        "value": {"type": "number", "exclusiveMinimum": 0},
+        "upper_value": {
+          "oneOf": [
+            {"type": "number", "exclusiveMinimum": 0},
+            {"type": "null"}
+          ]
+        },
+        "confirmation": {
+          "type": "string",
+          "enum": [
+            "LIVE_QUOTE",
+            "ONE_5M_CLOSE",
+            "ONE_15M_CLOSE",
+            "ONE_30M_CLOSE"
+          ]
+        }
+      }
+    },
+    "causal_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "event_fingerprint",
+        "event_category",
+        "event",
+        "evidence_state",
+        "channels",
+        "transmission",
+        "index_effect",
+        "failure_conditions"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["CATALYST", "AMPLIFIER"]
+        },
+        "event_fingerprint": {"$ref": "#/$defs/hash"},
+        "event_category": {
+          "type": "string",
+          "enum": [
+            "central_bank",
+            "inflation",
+            "employment",
+            "growth",
+            "systemic_event",
+            "geopolitical_deescalation",
+            "geopolitical_escalation",
+            "energy"
+          ]
+        },
+        "event": {"type": "string", "minLength": 1},
+        "evidence_state": {
+          "type": "string",
+          "enum": ["VERIFIED", "PARTIAL", "CONTESTED"]
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "OIL",
+              "RATES",
+              "SECTOR",
+              "RISK_APPETITE",
+              "VOLATILITY",
+              "MEGA_CAPS"
+            ]
+          }
+        },
+        "transmission": {"type": "string", "minLength": 1},
+        "index_effect": {"type": "string", "minLength": 1},
+        "failure_conditions": {"$ref": "#/$defs/condition_group"}
+      }
+    },
+    "key_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "label", "value", "basis"],
+      "properties": {
+        "symbol": {"type": "string", "enum": ["SPY", "QQQ"]},
+        "label": {"type": "string", "minLength": 1},
+        "value": {"type": "number", "exclusiveMinimum": 0},
+        "basis": {"type": "string", "minLength": 1}
+      }
+    },
+    "next_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "checkpoint", "purpose"],
+      "properties": {
+        "at": {"type": "string", "format": "date-time"},
+        "checkpoint": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "OPEN_15M",
+            "OPEN_30M",
+            "INTRADAY_30_60M",
+            "CLOSE",
+            "NEXT_REPORT"
+          ]
+        },
+        "purpose": {"type": "string", "minLength": 1}
+      }
+    },
+    "historical_similarity_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["used", "sample_quality", "summary"],
+      "properties": {
+        "used": {"type": "boolean"},
+        "sample_quality": {
+          "type": "string",
+          "enum": ["UNAVAILABLE", "LOW", "MEDIUM", "HIGH"]
+        },
+        "summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "assessment", "reason"],
+      "properties": {
+        "id": {"type": "integer", "minimum": 1, "maximum": 12},
+        "assessment": {
+          "type": "string",
+          "enum": [
+            "supports",
+            "contradicts",
+            "neutral",
+            "insufficient_data"
+          ]
+        },
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "earnings_day_coverage": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "symbol", "treatment", "summary"],
+        "properties": {
+          "event_id": {"$ref": "#/$defs/hash"},
+          "symbol": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9.-]{0,14}$"
+          },
+          "treatment": {
+            "type": "string",
+            "const": "SCHEDULE_RISK_ONLY"
+          },
+          "summary": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

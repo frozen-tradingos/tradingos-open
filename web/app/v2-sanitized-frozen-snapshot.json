@@ -1,0 +1,400 @@
+{
+  "meta": {
+    "fixture_kind": "SANITIZED_FROZEN_V2_PROJECTION",
+    "source_commit": "f1b99765d5dd26e70b42969070b34ca68a5d8bb0",
+    "reference_test_date": "2026-07-29",
+    "timezone": "America/Los_Angeles",
+    "runtime_evidence_included": false,
+    "production_directory_read": false,
+    "usage": "Synthetic contract-reference projection only; never runtime evidence."
+  },
+  "sources": [
+    "contracts/v2/ts-output.schema.json",
+    "contracts/v2/ts-forecast-anchor.schema.json",
+    "contracts/v2/ts-forecast-observations.schema.json",
+    "contracts/v2/ts-forecast-settlement.schema.json",
+    "contracts/v2/ts-settlement-run.schema.json",
+    "contracts/v2/ts-calibration-summary.schema.json",
+    "contracts/v1/a2-half-hour-forecast.schema.json",
+    "contracts/v1/committee-output.schema.json",
+    "contracts/v1/d-output.schema.json",
+    "contracts/v1/delivery-reconciliation.schema.json",
+    "tests/contracts/test_ts_output_v2.py",
+    "tests/contracts/test_a2_half_hour_forecast.py",
+    "tests/acceptance/test_slots.py",
+    "docs/SYSTEM_OUTLINE.md"
+  ],
+  "relationship": {
+    "shared_evidence_keys": [
+      "run_id",
+      "packet_hash",
+      "analysis_freshness_hash"
+    ],
+    "independent_roles": [
+      "TS",
+      "COMMITTEE"
+    ],
+    "downstream_roles": [
+      "D",
+      "A3_REVIEW",
+      "A3"
+    ],
+    "delivery_join_keys": [
+      "delivery_key",
+      "run_id",
+      "packet_hash"
+    ],
+    "required_agent_proof": [
+      "TS",
+      "COMMITTEE",
+      "D",
+      "A3_REVIEW",
+      "A3"
+    ],
+    "required_message_proof": [
+      "A2",
+      "TS",
+      "COMMITTEE",
+      "D",
+      "A3",
+      "OWNER"
+    ]
+  },
+  "timeline": [
+    {
+      "time": "06:30",
+      "label": "开盘正式预测",
+      "contract": "TS_OUTPUT v2",
+      "field": "report_type=OPENING_FORECAST",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "06:45",
+      "label": "开盘 15 分钟验证",
+      "contract": "TS_OUTPUT v2",
+      "field": "report_type=OPEN_15M_CHECK",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "07:00",
+      "label": "开盘 30 分钟验证",
+      "contract": "TS_OUTPUT v2",
+      "field": "report_type=OPEN_30M_CHECK",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "07:30–12:30",
+      "label": "每半小时正式预测",
+      "contract": "TS_OUTPUT v2",
+      "field": "report_type=INTRADAY_30_60M × 11",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "13:03 / 13:04",
+      "label": "收盘守护验收证明",
+      "contract": "acceptance",
+      "field": "closing guard checkpoints",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "13:15",
+      "label": "不可变历史归档",
+      "contract": "acceptance",
+      "field": "HISTORY_ARCHIVE",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "13:50",
+      "label": "TS 独立结算",
+      "contract": "TS_SETTLEMENT_RUN v2",
+      "field": "status=COMPLETED",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "18:00",
+      "label": "次日正式分析",
+      "contract": "TS_OUTPUT v2",
+      "field": "report_type=NEXT_SESSION",
+      "expected": "REQUIRED",
+      "observed": null
+    },
+    {
+      "time": "18:20",
+      "label": "每日复盘",
+      "contract": "acceptance",
+      "field": "daily review",
+      "expected": "REQUIRED",
+      "observed": null
+    }
+  ],
+  "acceptance_requirements": [
+    {
+      "label": "A1 心跳",
+      "expected": 27,
+      "unit": "次",
+      "observed": null
+    },
+    {
+      "label": "本地守护",
+      "expected": 79,
+      "unit": "次",
+      "observed": null
+    },
+    {
+      "label": "Codex 守护",
+      "expected": 79,
+      "unit": "次",
+      "observed": null
+    },
+    {
+      "label": "Position Monitor",
+      "expected": 391,
+      "unit": "次",
+      "observed": null
+    },
+    {
+      "label": "完整盘中分析",
+      "expected": 5,
+      "unit": "次",
+      "observed": null
+    },
+    {
+      "label": "TS 正式预测",
+      "expected": 14,
+      "unit": "份",
+      "observed": null
+    },
+    {
+      "label": "TS 13:50 结算",
+      "expected": 1,
+      "unit": "份",
+      "observed": null
+    },
+    {
+      "label": "18:20 每日复盘",
+      "expected": 1,
+      "unit": "份",
+      "observed": null
+    }
+  ],
+  "system_health": [
+    {
+      "name": "TS 正式预测",
+      "contract": "TS_OUTPUT v2",
+      "schema_state": "SCHEMA_READ",
+      "runtime_state": null,
+      "expected": "14 个正式槽位；13:50 独立结算",
+      "fields": [
+        "report_type",
+        "forecast_window",
+        "forecast_update",
+        "evidence_snapshot"
+      ]
+    },
+    {
+      "name": "A2 旧 Shadow",
+      "contract": "A2_HALF_HOUR_FORECAST v1",
+      "schema_state": "SCHEMA_READ",
+      "runtime_state": null,
+      "expected": "mode=SHADOW · actionable=false · status=INACTIVE · 空库存",
+      "fields": [
+        "status",
+        "session_issued_forecast_ids",
+        "resolved_forecast_ids",
+        "pending_overdue_forecast_ids"
+      ]
+    },
+    {
+      "name": "Delivery",
+      "contract": "delivery-reconciliation v1",
+      "schema_state": "SCHEMA_READ",
+      "runtime_state": null,
+      "expected": "COMPLETED 或 DEGRADED；回执必须可重算",
+      "fields": [
+        "status",
+        "reconciled_position_event_ids",
+        "suppressed_stale_position_event_ids",
+        "failures"
+      ]
+    },
+    {
+      "name": "Acceptance",
+      "contract": "tests/acceptance/test_slots.py",
+      "schema_state": "RULES_READ",
+      "runtime_state": null,
+      "expected": "连续 3 个有效交易日；证据哈希互相一致",
+      "fields": [
+        "valid",
+        "valid_streak",
+        "counts",
+        "checkpoint_failures"
+      ]
+    }
+  ],
+  "ts_projection": {
+    "contract_version": "v2",
+    "role": "TS",
+    "report_types": [
+      "WEEKEND_OUTLOOK",
+      "NEXT_SESSION",
+      "OPENING_FORECAST",
+      "OPEN_15M_CHECK",
+      "OPEN_30M_CHECK",
+      "INTRADAY_30_60M"
+    ],
+    "directions": [
+      "BULLISH",
+      "BEARISH",
+      "RANGE"
+    ],
+    "tradeability_states": [
+      "WAIT",
+      "CONDITIONAL",
+      "READY_FOR_D_REVIEW"
+    ],
+    "scenario_rule": "main + reverse + extreme = 100%; probability_pct uses 5% steps",
+    "runtime_values": {
+      "report_type": null,
+      "forecast_window": null,
+      "current_pattern": null,
+      "path_bias": null,
+      "symbol_outlooks": null,
+      "scenario_probabilities": null,
+      "evidence_maturity": null,
+      "tradeability": null
+    }
+  },
+  "formal_forecast_slots": [
+    {
+      "time": "06:30",
+      "report_type": "OPENING_FORECAST",
+      "horizon": "OPEN_TO_60_MINUTES",
+      "update_mode": "NEW"
+    },
+    {
+      "time": "06:45",
+      "report_type": "OPEN_15M_CHECK",
+      "horizon": null,
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "07:00",
+      "report_type": "OPEN_30M_CHECK",
+      "horizon": null,
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "07:30",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "08:00",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "08:30",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "09:00",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "09:30",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "10:00",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "10:30",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "11:00",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "11:30",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "12:00",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    },
+    {
+      "time": "12:30",
+      "report_type": "INTRADAY_30_60M",
+      "horizon": "NEXT_30_TO_60_MINUTES",
+      "update_mode": "CHECK"
+    }
+  ],
+  "lane_comparison": [
+    {
+      "field": "责任",
+      "formal": "TS：正式市场路径预测",
+      "shadow": "A2：旧半小时 Shadow 证明"
+    },
+    {
+      "field": "契约",
+      "formal": "TS_OUTPUT v2",
+      "shadow": "A2_HALF_HOUR_FORECAST v1"
+    },
+    {
+      "field": "动作边界",
+      "formal": "READY_FOR_D_REVIEW 也不是批准或下单",
+      "shadow": "actionable=false"
+    },
+    {
+      "field": "正式库存",
+      "formal": "验收要求 14 份；本样本未导入",
+      "shadow": "验收只接受 INACTIVE 空库存"
+    },
+    {
+      "field": "结算",
+      "formal": "TS_FORECAST_SETTLEMENT v2 + 13:50 run",
+      "shadow": "禁止发行、结算或参与判断"
+    },
+    {
+      "field": "绩效",
+      "formal": "缺少脱敏 settlement/calibration",
+      "shadow": "结构上不可比较"
+    }
+  ],
+  "missing": [
+    "经授权导出的不可变 TS_OUTPUT v2、forecast anchor、observations 和 settlement 样本",
+    "与同一 run_id / packet_hash 绑定的 Committee、D、A3_REVIEW、A3 脱敏输出",
+    "delivery_key、message_id 内容证明及 delivery reconciliation 结果",
+    "自然交易日 acceptance ledger、13:50 settlement checkpoint 和连续三日状态",
+    "A2 current_state、trend_pullback 与空 Shadow 库存的脱敏证明",
+    "Windows 进程、九个计划任务和守护检查的脱敏健康快照"
+  ]
+}

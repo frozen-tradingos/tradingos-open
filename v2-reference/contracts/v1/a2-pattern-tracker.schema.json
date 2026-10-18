@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "status",
+    "updated_at",
+    "cadence_minutes",
+    "confirmation_bars",
+    "symbols"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "status": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "INACTIVE", "INITIALIZING"]
+    },
+    "updated_at": {"type": "string"},
+    "cadence_minutes": {"type": "integer", "const": 15},
+    "confirmation_bars": {"type": "integer", "const": 3},
+    "symbols": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SPY", "QQQ"],
+      "properties": {
+        "SPY": {"$ref": "#/$defs/symbol_state"},
+        "QQQ": {"$ref": "#/$defs/symbol_state"}
+      }
+    }
+  },
+  "$defs": {
+    "market_state": {
+      "type": "string",
+      "enum": [
+        "TREND_UP",
+        "TREND_DOWN",
+        "NARROW_RANGE",
+        "WIDE_CHOP",
+        "V_REVERSAL_UP",
+        "V_REVERSAL_DOWN",
+        "FALSE_BREAKOUT",
+        "FALSE_BREAKDOWN",
+        "TRANSITION",
+        "UNKNOWN"
+      ]
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transition_id",
+        "symbol",
+        "from_state",
+        "to_state",
+        "confirmed_at",
+        "data_time"
+      ],
+      "properties": {
+        "transition_id": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "enum": ["SPY", "QQQ"]},
+        "from_state": {"$ref": "#/$defs/market_state"},
+        "to_state": {"$ref": "#/$defs/market_state"},
+        "confirmed_at": {"type": "string"},
+        "data_time": {"type": "string"}
+      }
+    },
+    "symbol_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "current_state",
+        "candidate_state",
+        "candidate_bars",
+        "direction",
+        "structure",
+        "volatility",
+        "speed",
+        "data_time",
+        "state_since",
+        "last_processed_bar_time",
+        "last_transition"
+      ],
+      "properties": {
+        "symbol": {"type": "string", "enum": ["SPY", "QQQ"]},
+        "current_state": {"$ref": "#/$defs/market_state"},
+        "candidate_state": {"$ref": "#/$defs/market_state"},
+        "candidate_bars": {"type": "integer", "minimum": 0, "maximum": 3},
+        "direction": {
+          "type": "string",
+          "enum": ["bullish", "bearish", "neutral", "unknown"]
+        },
+        "structure": {
+          "type": "string",
+          "enum": [
+            "trend",
+            "range",
+            "chop",
+            "reversal",
+            "breakout_failure",
+            "transition",
+            "unknown"
+          ]
+        },
+        "volatility": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "unknown"]
+        },
+        "speed": {
+          "type": "string",
+          "enum": ["slow", "normal", "fast", "unknown"]
+        },
+        "data_time": {"type": "string"},
+        "state_since": {"type": "string"},
+        "last_processed_bar_time": {"type": "string"},
+        "last_transition": {
+          "anyOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/transition"}
+          ]
+        }
+      }
+    }
+  }
+}

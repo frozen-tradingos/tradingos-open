@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v1/agent-input-freshness.schema.json",
+  "title": "Trading OS V2 Agent Input Freshness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "status",
+    "run_id",
+    "packet_hash",
+    "packet_created_at",
+    "source_collected_at",
+    "session_mode",
+    "market_clock",
+    "symbols",
+    "freshness_hash"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "v1"
+    },
+    "component": {
+      "type": "string",
+      "const": "AGENT_INPUT_FRESHNESS"
+    },
+    "status": {
+      "type": "string",
+      "const": "HEALTHY"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packet_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "packet_created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_collected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_mode": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "NON_OPEN"
+      ]
+    },
+    "market_clock": {
+      "$ref": "#/$defs/market_clock"
+    },
+    "symbols": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "SPY",
+        "QQQ"
+      ],
+      "properties": {
+        "SPY": {
+          "$ref": "#/$defs/symbol"
+        },
+        "QQQ": {
+          "$ref": "#/$defs/symbol"
+        }
+      }
+    },
+    "freshness_hash": {
+      "$ref": "#/$defs/hash"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "market_clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "date",
+        "observed_at"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "closed",
+            "premarket",
+            "postmarket"
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "structure_price",
+        "structure_quote_at",
+        "contract_quote_status",
+        "contract_quote_dates",
+        "expiration_count",
+        "expirations"
+      ],
+      "properties": {
+        "structure_price": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "structure_quote_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "contract_quote_status": {
+          "type": "string",
+          "enum": [
+            "CURRENT_DATE",
+            "MARKET_CLOSED"
+          ]
+        },
+        "contract_quote_dates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "expiration_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "expirations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/expiration"
+          }
+        }
+      }
+    },
+    "expiration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expiration",
+        "dte",
+        "contract_count",
+        "usable_call_count",
+        "usable_put_count",
+        "oldest_bbo_at",
+        "newest_bbo_at"
+      ],
+      "properties": {
+        "expiration": {
+          "type": "string",
+          "format": "date"
+        },
+        "dte": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "contract_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "usable_call_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "usable_put_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "oldest_bbo_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "newest_bbo_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

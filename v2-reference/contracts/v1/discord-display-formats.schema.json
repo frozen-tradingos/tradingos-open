@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v1/discord-display-formats.schema.json",
+  "title": "Trading OS V2 Agent Cycle Discord Display",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "ts_discord_format_version",
+    "a2_discord_format_version"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "v1"
+    },
+    "component": {
+      "type": "string",
+      "const": "AGENT_CYCLE_DISCORD_DISPLAY"
+    },
+    "ts_discord_format_version": {
+      "type": "string",
+      "enum": ["compact-v4", "compact-v3", "compact-v2", "compact-v1", "full-v1"],
+      "default": "compact-v4",
+      "x-previous": "compact-v3",
+      "x-retained": ["compact-v2", "compact-v1"],
+      "x-legacy": "full-v1"
+    },
+    "a2_discord_format_version": {
+      "type": "string",
+      "enum": ["compact-v1", "full-v1"],
+      "default": "compact-v1",
+      "x-legacy": "full-v1"
+    }
+  }
+}

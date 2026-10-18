@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v1/a1-market-context-digest.schema.json",
+  "title": "Trading OS V2 A1 Market Context Digest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "snapshot_day",
+    "generated_at",
+    "evidence_run_id",
+    "evidence_packet_hash",
+    "information_hash",
+    "display_only",
+    "ts_causal_eligible",
+    "provider_status",
+    "entries",
+    "digest_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "A1_MARKET_CONTEXT_DIGEST"},
+    "snapshot_day": {"$ref": "#/$defs/day"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "evidence_run_id": {"$ref": "#/$defs/run_id"},
+    "evidence_packet_hash": {"$ref": "#/$defs/hash"},
+    "information_hash": {"$ref": "#/$defs/hash"},
+    "display_only": {"type": "boolean", "const": true},
+    "ts_causal_eligible": {"type": "boolean", "const": false},
+    "provider_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finnhub", "official_news", "google_news_rss"],
+      "properties": {
+        "finnhub": {"$ref": "#/$defs/provider_state"},
+        "official_news": {"$ref": "#/$defs/provider_state"},
+        "google_news_rss": {"$ref": "#/$defs/provider_state"}
+      }
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "digest_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "day": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "provider_state": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "FAILED", "MISSING_CREDENTIAL", "UNKNOWN"]
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_hash",
+        "headline",
+        "source",
+        "published_at",
+        "url",
+        "provider",
+        "confidence",
+        "verification_state",
+        "display_class",
+        "ts_causal_eligible"
+      ],
+      "properties": {
+        "item_hash": {"$ref": "#/$defs/hash"},
+        "headline": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "published_at": {"type": "string", "format": "date-time"},
+        "url": {"type": "string"},
+        "provider": {"type": "string", "minLength": 1},
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "official",
+            "primary_aggregator",
+            "cross_check_candidate",
+            "discovery_only"
+          ]
+        },
+        "verification_state": {
+          "type": "string",
+          "enum": ["STRICT_VERIFIED", "SOURCE_REPORTED", "DISCOVERY_ONLY"]
+        },
+        "display_class": {
+          "type": "string",
+          "enum": ["VERIFIED_MAJOR", "ROUTINE_HEADLINE"]
+        },
+        "ts_causal_eligible": {"type": "boolean", "const": false}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"confidence": {"const": "discovery_only"}},
+            "required": ["confidence"]
+          },
+          "then": {
+            "properties": {
+              "verification_state": {"const": "DISCOVERY_ONLY"},
+              "display_class": {"const": "ROUTINE_HEADLINE"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

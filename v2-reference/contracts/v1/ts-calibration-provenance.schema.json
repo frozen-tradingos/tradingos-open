@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v1/ts-calibration-provenance.schema.json",
+  "title": "Trading OS V2 TS Calibration Provenance v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "forecast_run_id",
+    "forecast_hash",
+    "record_hash",
+    "cohort_id",
+    "release_commit",
+    "forecast_role",
+    "report_type",
+    "forecast_window",
+    "official_slot",
+    "delivery_proof",
+    "ownership_proof",
+    "parent_forecast_hash",
+    "eligibility",
+    "exclusion_reason",
+    "provenance_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "TS_CALIBRATION_PROVENANCE"},
+    "forecast_run_id": {"$ref": "#/$defs/run_id"},
+    "forecast_hash": {"$ref": "#/$defs/hash"},
+    "record_hash": {"$ref": "#/$defs/hash"},
+    "cohort_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "release_commit": {"$ref": "#/$defs/release_commit"},
+    "forecast_role": {
+      "type": "string",
+      "enum": [
+        "FORMAL_SLOT",
+        "MATERIAL_REVISION",
+        "UNDELIVERED_DRAFT",
+        "TEST"
+      ]
+    },
+    "report_type": {"$ref": "#/$defs/report_type"},
+    "forecast_window": {
+      "$ref": "../v2/ts-output.schema.json#/$defs/forecast_window"
+    },
+    "official_slot": {"$ref": "#/$defs/nullable_datetime"},
+    "delivery_proof": {"$ref": "#/$defs/nullable_delivery_proof"},
+    "ownership_proof": {"$ref": "#/$defs/nullable_ownership_proof"},
+    "parent_forecast_hash": {"$ref": "#/$defs/nullable_hash"},
+    "eligibility": {
+      "type": "string",
+      "enum": ["OFFICIAL_CALIBRATION", "EXCLUDED"]
+    },
+    "exclusion_reason": {"$ref": "#/$defs/nullable_exclusion_reason"},
+    "provenance_hash": {"$ref": "#/$defs/hash"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"forecast_role": {"const": "FORMAL_SLOT"}},
+        "required": ["forecast_role"]
+      },
+      "then": {
+        "properties": {
+          "official_slot": {"type": "string", "format": "date-time"},
+          "delivery_proof": {"$ref": "#/$defs/delivery_proof"},
+          "parent_forecast_hash": {"type": "null"}
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "eligibility": {"const": "OFFICIAL_CALIBRATION"},
+              "exclusion_reason": {"type": "null"}
+            }
+          },
+          {
+            "properties": {
+              "eligibility": {"const": "EXCLUDED"},
+              "exclusion_reason": {"const": "LEGACY_COHORT"}
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "forecast_role": {"const": "FORMAL_SLOT"},
+          "report_type": {
+            "enum": [
+              "OPENING_FORECAST",
+              "OPEN_15M_CHECK",
+              "OPEN_30M_CHECK",
+              "INTRADAY_30_60M"
+            ]
+          }
+        },
+        "required": ["forecast_role", "report_type"]
+      },
+      "then": {
+        "properties": {
+          "ownership_proof": {"$ref": "#/$defs/ownership_proof"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "forecast_role": {"const": "FORMAL_SLOT"},
+          "report_type": {
+            "enum": ["WEEKEND_OUTLOOK", "NEXT_SESSION"]
+          }
+        },
+        "required": ["forecast_role", "report_type"]
+      },
+      "then": {
+        "properties": {"ownership_proof": {"type": "null"}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"forecast_role": {"const": "MATERIAL_REVISION"}},
+        "required": ["forecast_role"]
+      },
+      "then": {
+        "properties": {
+          "official_slot": {"type": "null"},
+          "delivery_proof": {"$ref": "#/$defs/delivery_proof"},
+          "ownership_proof": {"type": "null"},
+          "parent_forecast_hash": {"$ref": "#/$defs/hash"},
+          "eligibility": {"const": "EXCLUDED"},
+          "exclusion_reason": {"const": "MATERIAL_REVISION"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"forecast_role": {"const": "UNDELIVERED_DRAFT"}},
+        "required": ["forecast_role"]
+      },
+      "then": {
+        "properties": {
+          "official_slot": {"type": "null"},
+          "delivery_proof": {"type": "null"},
+          "ownership_proof": {"type": "null"},
+          "parent_forecast_hash": {"type": "null"},
+          "eligibility": {"const": "EXCLUDED"},
+          "exclusion_reason": {"const": "UNDELIVERED_DRAFT"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"forecast_role": {"const": "TEST"}},
+        "required": ["forecast_role"]
+      },
+      "then": {
+        "properties": {
+          "official_slot": {"type": "null"},
+          "ownership_proof": {"type": "null"},
+          "parent_forecast_hash": {"type": "null"},
+          "eligibility": {"const": "EXCLUDED"},
+          "exclusion_reason": {"const": "TEST_EVENT"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullable_hash": {
+      "oneOf": [
+        {"$ref": "#/$defs/hash"},
+        {"type": "null"}
+      ]
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "release_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "WEEKEND_OUTLOOK",
+        "NEXT_SESSION",
+        "OPENING_FORECAST",
+        "OPEN_15M_CHECK",
+        "OPEN_30M_CHECK",
+        "INTRADAY_30_60M"
+      ]
+    },
+    "nullable_datetime": {
+      "oneOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "delivery_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delivery_kind",
+        "delivery_key",
+        "completed_at",
+        "discord_message_id",
+        "discord_content_hash"
+      ],
+      "properties": {
+        "delivery_kind": {
+          "type": "string",
+          "enum": ["AGENT_CYCLE", "TS_INTRADAY"]
+        },
+        "delivery_key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+$"
+        },
+        "completed_at": {"type": "string", "format": "date-time"},
+        "discord_message_id": {"type": "string", "pattern": "^[0-9]+$"},
+        "discord_content_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "nullable_delivery_proof": {
+      "oneOf": [
+        {"$ref": "#/$defs/delivery_proof"},
+        {"type": "null"}
+      ]
+    },
+    "ownership_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "slot", "ownership_hash"],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "enum": ["FULL_CYCLE", "TS_INTRADAY"]
+        },
+        "slot": {"type": "string", "format": "date-time"},
+        "ownership_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "nullable_ownership_proof": {
+      "oneOf": [
+        {"$ref": "#/$defs/ownership_proof"},
+        {"type": "null"}
+      ]
+    },
+    "nullable_exclusion_reason": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "LEGACY_COHORT",
+            "MATERIAL_REVISION",
+            "UNDELIVERED_DRAFT",
+            "TEST_EVENT"
+          ]
+        },
+        {"type": "null"}
+      ]
+    }
+  }
+}

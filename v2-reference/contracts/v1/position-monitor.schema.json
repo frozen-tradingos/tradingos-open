@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "status",
+    "checked_at",
+    "cadence_seconds",
+    "open_position_count",
+    "positions",
+    "pending_events"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "status": {
+      "type": "string",
+      "enum": ["IDLE", "HEALTHY", "DEGRADED", "INACTIVE"]
+    },
+    "checked_at": {"type": "string"},
+    "cadence_seconds": {"type": "integer", "const": 60},
+    "open_position_count": {"type": "integer", "minimum": 0, "maximum": 3},
+    "positions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/position"}
+    },
+    "pending_events": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/event"}
+    }
+  },
+  "$defs": {
+    "nullable_number": {
+      "type": ["number", "null"]
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "event_id",
+        "event_type",
+        "position_id",
+        "plan_run_id",
+        "detected_at",
+        "source_data_time",
+        "condition_id",
+        "requires_agent_cycle",
+        "facts"
+      ],
+      "properties": {
+        "contract_version": {"type": "string", "const": "v1"},
+        "event_id": {"type": "string", "minLength": 1},
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "PLAN_REQUIRED",
+            "STOP_LOSS_REACHED",
+            "TAKE_PROFIT_REACHED",
+            "QUOTE_FAULT",
+            "EXPIRY_RISK"
+          ]
+        },
+        "position_id": {"type": "string", "minLength": 1},
+        "plan_run_id": {"type": "string"},
+        "detected_at": {"type": "string", "minLength": 1},
+        "source_data_time": {"type": "string"},
+        "condition_id": {"type": "string", "minLength": 1},
+        "requires_agent_cycle": {"type": "boolean"},
+        "facts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "exit_return_pct",
+            "threshold_pct",
+            "dte",
+            "quote_status",
+            "message"
+          ],
+          "properties": {
+            "exit_return_pct": {"$ref": "#/$defs/nullable_number"},
+            "threshold_pct": {"$ref": "#/$defs/nullable_number"},
+            "dte": {"type": ["integer", "null"]},
+            "quote_status": {
+              "type": "string",
+              "enum": ["HEALTHY", "NO_BID", "UNAVAILABLE"]
+            },
+            "message": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position_id",
+        "position_snapshot_hash",
+        "option_symbol",
+        "monitor_status",
+        "quote_status",
+        "checked_at",
+        "source_quote_at",
+        "bid",
+        "ask",
+        "exit_return_pct",
+        "peak_exit_return_pct",
+        "trough_exit_return_pct",
+        "max_drawdown_from_peak_pct",
+        "dte",
+        "plan_status",
+        "plan_run_id",
+        "plan_receipt_hash",
+        "stop_loss_pct",
+        "take_profit_pct",
+        "invalidation",
+        "pending_event_ids"
+      ],
+      "properties": {
+        "position_id": {"type": "string", "minLength": 1},
+        "position_snapshot_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "option_symbol": {"type": "string", "minLength": 1},
+        "monitor_status": {
+          "type": "string",
+          "enum": ["HEALTHY", "DEGRADED", "PENDING_REVIEW", "EXIT_RECOMMENDED"]
+        },
+        "quote_status": {
+          "type": "string",
+          "enum": ["HEALTHY", "NO_BID", "UNAVAILABLE"]
+        },
+        "checked_at": {"type": "string", "minLength": 1},
+        "source_quote_at": {"type": "string"},
+        "bid": {"$ref": "#/$defs/nullable_number"},
+        "ask": {"$ref": "#/$defs/nullable_number"},
+        "exit_return_pct": {"$ref": "#/$defs/nullable_number"},
+        "peak_exit_return_pct": {"$ref": "#/$defs/nullable_number"},
+        "trough_exit_return_pct": {"$ref": "#/$defs/nullable_number"},
+        "max_drawdown_from_peak_pct": {"$ref": "#/$defs/nullable_number"},
+        "dte": {"type": "integer"},
+        "plan_status": {
+          "type": "string",
+          "enum": ["PENDING_REVIEW", "ACTIVE", "EXIT_RECOMMENDED"]
+        },
+        "plan_run_id": {"type": "string"},
+        "plan_receipt_hash": {"type": "string"},
+        "stop_loss_pct": {"$ref": "#/$defs/nullable_number"},
+        "take_profit_pct": {"$ref": "#/$defs/nullable_number"},
+        "invalidation": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "pending_event_ids": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

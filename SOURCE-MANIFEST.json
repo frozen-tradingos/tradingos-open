@@ -1,0 +1,1802 @@
+{
+  "version": 1,
+  "license": "MIT",
+  "release_status": "EXPERIMENTAL_PREVIEW",
+  "files": [
+    {
+      "path": ".agents/skills/tradingos-research/SKILL.md",
+      "bytes": 4550,
+      "sha256": "c965750f47b85f2e4e0fa0d1c9b3aad7e91db8bdf8f7e8fa506c56e83d7c8016"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 503,
+      "sha256": "60b9bf029d902da003e4d350212c49d0c67db3fd5a428b6912e4ef32ace062c7"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 1559,
+      "sha256": "63087fb994a4ee59f36d26cd712121b06921ad01340358daf0d2c65cf2f8e9e5"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1105,
+      "sha256": "21d57295d79fa5fc442735a7e3624175953b0564b4c7c9c21a33cc51075c5805"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6974,
+      "sha256": "7e8f3e42a1e144115845ad118710920c6a816fdf43f74c8c53ee79b8fc61affc"
+    },
+    {
+      "path": "Start.cmd",
+      "bytes": 89,
+      "sha256": "4ac485c47831a1a4a1a57085d3c0a17af7a912fa38be23ea2cfd163e268dcc93"
+    },
+    {
+      "path": "Start.ps1",
+      "bytes": 330,
+      "sha256": "2023bb031b15419210e9e6a24ce7628a9cf885d2168307188e0245a08e5c7689"
+    },
+    {
+      "path": "THIRD-PARTY-NOTICES.md",
+      "bytes": 1910,
+      "sha256": "5fa11cffe8c5e1976653d7bd6de36d15f2a2775743acb763999056f23789c9e5"
+    },
+    {
+      "path": "package.json",
+      "bytes": 779,
+      "sha256": "ec56c6ce099e06c0b97b5af3ef6d4439a615663e4508fad9c17a1361c1e0d9b5"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 114,
+      "sha256": "17c814b167307942d3609c7b9d916ceddb85839573ab39baa114e30edb132a1a"
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 94,
+      "sha256": "8cd141182cffd9c462e19092556f85da43cf4d41fdfac4ca093a86d6e973308f"
+    },
+    {
+      "path": "tests/contained-app.test.mjs",
+      "bytes": 4069,
+      "sha256": "2026961ac82b54b06f60317ba97ccb0fff536c043f4879f7e582382d485ab5f6"
+    },
+    {
+      "path": "tests/public-entry.test.mjs",
+      "bytes": 5219,
+      "sha256": "3292720adb4a628b5a0fc77f038e19171faf6cf0a4d3a6ca1e16419ca5db3069"
+    },
+    {
+      "path": "tests/public-privacy.test.mjs",
+      "bytes": 5457,
+      "sha256": "1a86ad072610a54a7797377fb9c08611b5dbe888696f51084aebec7c3d2b709e"
+    },
+    {
+      "path": "tests/release-package.test.mjs",
+      "bytes": 2154,
+      "sha256": "03ab45ea272e7e5294405ba79d5c2178286a95df4f00c89a6b3d8c8c02f55cdf"
+    },
+    {
+      "path": "tests/research-profile.test.mjs",
+      "bytes": 8105,
+      "sha256": "ecbbdfd64d3405bff26ff644095cb8c4363e3f9c2fe4f545bd0ee0bda7453fb4"
+    },
+    {
+      "path": "tools/check-local.mjs",
+      "bytes": 1913,
+      "sha256": "161db9076d82f1504b4f0e9608b7853c40510cb9974660d0c6ec953e3273e7b5"
+    },
+    {
+      "path": "tools/clean-install.mjs",
+      "bytes": 5240,
+      "sha256": "fb8ef7ed7cf89215b9c25cd00a13d6a23dbce11c5b0d64cc8307f02bb1d07a5c"
+    },
+    {
+      "path": "tools/public-entry.mjs",
+      "bytes": 15026,
+      "sha256": "b5a999790712f2cf7d7d8b0934defd6a4fdaa980bee2fa04d704694adcfe2ede"
+    },
+    {
+      "path": "tools/release-package.mjs",
+      "bytes": 6176,
+      "sha256": "01a19633a12111e310d8b637468a3aad05efd9d6f54f94e9046665c988b0ee61"
+    },
+    {
+      "path": "tools/research-profile.mjs",
+      "bytes": 8468,
+      "sha256": "ab8097e2922b56c4453268bf90c2065ffd105cbad66908304b1110e800cfa5e7"
+    },
+    {
+      "path": "tools/run-contained-app.ps1",
+      "bytes": 3562,
+      "sha256": "21877479eccf5a4708e666b626d56d88e4f096bc8ae2aef269ca190cf4e27dde"
+    },
+    {
+      "path": "tools/set-local-password.ps1",
+      "bytes": 920,
+      "sha256": "9b5c00214c27a2871399f471fbaba88bb1ffc739e17285c7e837897406e0744c"
+    },
+    {
+      "path": "v2-reference/config/system.json",
+      "bytes": 4098,
+      "sha256": "9c55a1f609a70638b194a1ff8ccbc0756ead8b4212222f28bfaa527fa8f6b68a"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a1-earnings-recovery-day.schema.json",
+      "bytes": 3031,
+      "sha256": "2a404d2ad86855ad98915495eacdea816b20024257acb9c49783a2f4dac2a7cb"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a1-earnings-watch.schema.json",
+      "bytes": 2520,
+      "sha256": "18d0b7fd4856e92d5f98943f4333483c67942dfb08027d42fc9dbe7bb43d310d"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a1-macro-result.schema.json",
+      "bytes": 9641,
+      "sha256": "2c20c408cc1f0f85e18da37f25ea607625bed583154ea681c8596f43bc9b4b3d"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a1-macro-watch.schema.json",
+      "bytes": 2652,
+      "sha256": "f2bebd1b6b06f4e602f4cc44fbbca9359f7254245177a8e2cdc1f4c3333a3547"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a1-market-context-digest.schema.json",
+      "bytes": 3629,
+      "sha256": "c56c863703f3987ffe77a454611b1be7b9b89b0df40704fd2cacf68292ac34ff"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a2-half-hour-forecast.schema.json",
+      "bytes": 1720,
+      "sha256": "7646712c443284e24ec2de1fe12ef8352bc04fd9d08cbb9b0742cfba14a75131"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a2-pattern-tracker.schema.json",
+      "bytes": 3357,
+      "sha256": "d414cb41f166b8b555396d37c4a45cd0cd089154473acbcea30b5225d203cd3a"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a2-trend-pullback.schema.json",
+      "bytes": 2242,
+      "sha256": "585a14e00e5b8692252e5deaeb32641156c474006dee5786e4b26afad35c97f4"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a3-final.schema.json",
+      "bytes": 2539,
+      "sha256": "3bb162044e981b33359ffd3ab2b35a5f8b6c603c1aaf43a238c02e6f02586e06"
+    },
+    {
+      "path": "v2-reference/contracts/v1/a3-review.schema.json",
+      "bytes": 856,
+      "sha256": "d38685e7da78f660b2a2225c8057bb364c274c98454a64d6e926cc6f8cbfb4bd"
+    },
+    {
+      "path": "v2-reference/contracts/v1/agent-input-freshness.schema.json",
+      "bytes": 4436,
+      "sha256": "2fad1d396e6fa92b58fc02d1de7d366ddd528258e9bc305140e15a56434ae5e5"
+    },
+    {
+      "path": "v2-reference/contracts/v1/codex-guard.schema.json",
+      "bytes": 634,
+      "sha256": "6e4d630dfec40e7a40a57b8eba072cb305af9737247a959bcb67cbdacb2e608e"
+    },
+    {
+      "path": "v2-reference/contracts/v1/committee-output.schema.json",
+      "bytes": 1090,
+      "sha256": "77acf58e2f92df4fa78a27ad1c5c7112f17fc1b6e1e6713f782e56042501ff3a"
+    },
+    {
+      "path": "v2-reference/contracts/v1/d-output.schema.json",
+      "bytes": 1571,
+      "sha256": "4debef83e9235d10f7fc14c493ed7f9b478122161fbaec319c046594dee61084"
+    },
+    {
+      "path": "v2-reference/contracts/v1/delivery-reconciliation.schema.json",
+      "bytes": 1510,
+      "sha256": "c4e37430cbc8cfa31f4f08e82a63715642a989f8d7bc1d8cfef8836c899f99af"
+    },
+    {
+      "path": "v2-reference/contracts/v1/discord-display-formats.schema.json",
+      "bytes": 1041,
+      "sha256": "1f10f278b6ff520406e10fe27a78d1a1cf151dfb0b138440fa9907964ff49172"
+    },
+    {
+      "path": "v2-reference/contracts/v1/earnings-day-context.schema.json",
+      "bytes": 2841,
+      "sha256": "1d2bbe079b2a80ca3444de77f41014d15eac04ab0a14d6d73aff2e47bb3c1d7b"
+    },
+    {
+      "path": "v2-reference/contracts/v1/history-archive-checkpoint.schema.json",
+      "bytes": 1601,
+      "sha256": "24fa6b0398d6083ef055de73db3de952831889d52a43e97119648a7c024e92f1"
+    },
+    {
+      "path": "v2-reference/contracts/v1/market-history-dataset.schema.json",
+      "bytes": 1930,
+      "sha256": "468c9b02e96d00c2c57a5b63bb5ad3989525a99c509920d1990d94173989f74f"
+    },
+    {
+      "path": "v2-reference/contracts/v1/pattern-transition-receipts.schema.json",
+      "bytes": 2726,
+      "sha256": "8c0877f23fc0a156fbf55d0b68e435aad2d266312f0311203e7cd98e6fdac539"
+    },
+    {
+      "path": "v2-reference/contracts/v1/position-event-receipts.schema.json",
+      "bytes": 4751,
+      "sha256": "1ed37ebdef0303bcfaa37e74594cc6075f0b64d94025623e66856c6d0329e7e1"
+    },
+    {
+      "path": "v2-reference/contracts/v1/position-management-plans.schema.json",
+      "bytes": 2050,
+      "sha256": "9933599fbd91508b57d4cc896d72e8098a6eb25d5ba586571dda1d239ca08923"
+    },
+    {
+      "path": "v2-reference/contracts/v1/position-monitor.schema.json",
+      "bytes": 4918,
+      "sha256": "3c811d4228afe47a1dd9e3ed64f92692f57c0e184195aeeb6a77b4b03e571efc"
+    },
+    {
+      "path": "v2-reference/contracts/v1/ts-calibration-provenance.schema.json",
+      "bytes": 7486,
+      "sha256": "66e5fb4a1f3dd76c5ac09b92a5896c79e8afa5df7c72b06ad5aa76961c7b980d"
+    },
+    {
+      "path": "v2-reference/contracts/v1/ts-output.schema.json",
+      "bytes": 2559,
+      "sha256": "2d50113a449268b700d85a16f4ae4f07487e7dce95482ac65aa4db06d166dcf4"
+    },
+    {
+      "path": "v2-reference/contracts/v1/ts-swing-scorecard.schema.json",
+      "bytes": 4030,
+      "sha256": "988432576a50cb8a5cd7a92c1a1d49863a355e87947ac7bc796e1d717b708fb4"
+    },
+    {
+      "path": "v2-reference/contracts/v2/earnings-day-analysis-link.schema.json",
+      "bytes": 1786,
+      "sha256": "8a06a9ce35c46ec135aa7cf14d83d046ef44e12808ec55035e965086ec29896c"
+    },
+    {
+      "path": "v2-reference/contracts/v2/ts-calibration-summary.schema.json",
+      "bytes": 2814,
+      "sha256": "5b84415b85ca540f56b727d8ca49ede925245b9c3bddde25ad2de8c0e669df22"
+    },
+    {
+      "path": "v2-reference/contracts/v2/ts-forecast-anchor.schema.json",
+      "bytes": 1226,
+      "sha256": "3d68571b39d48679cafbed39a242819a918233a21558ad5b707ffb1d43fc0df4"
+    },
+    {
+      "path": "v2-reference/contracts/v2/ts-forecast-observations.schema.json",
+      "bytes": 2288,
+      "sha256": "768cb4ec757143543aa5651017c419bba4ae637efa95bc3ce44436601685f023"
+    },
+    {
+      "path": "v2-reference/contracts/v2/ts-forecast-settlement.schema.json",
+      "bytes": 4588,
+      "sha256": "31c6afc418f6f97551e82050fd50a1f7729a47402c9daa5c4964aa9b4d52f5b7"
+    },
+    {
+      "path": "v2-reference/contracts/v2/ts-output.schema.json",
+      "bytes": 16573,
+      "sha256": "8a491fbeb603e8f5a7d81df23f04d22bfd32794d5d975a9a6452dc92863cb262"
+    },
+    {
+      "path": "v2-reference/contracts/v2/ts-settlement-run.schema.json",
+      "bytes": 2385,
+      "sha256": "e725f5211e3468610f71303a0d05ed7fd51da4c32029970fd50e2d260b5f3959"
+    },
+    {
+      "path": "v2-reference/contracts/v3/ts-forecast-settlement.schema.json",
+      "bytes": 4594,
+      "sha256": "874669df6ff4874a383108858e5911600f724facdfa65dd5f8a4cc453dd02977"
+    },
+    {
+      "path": "v2-reference/pyproject.toml",
+      "bytes": 260,
+      "sha256": "75bab3314a360a28f2f5ce56df2b063fba344dc893c35381fd480cc4e0bce1ce"
+    },
+    {
+      "path": "v2-reference/tests/__init__.py",
+      "bytes": 27,
+      "sha256": "1903a31a5616da2acf29063776d9aa38bd73e118a5c99c7fc83fc6f7dfce7420"
+    },
+    {
+      "path": "v2-reference/tests/a1/__init__.py",
+      "bytes": 16,
+      "sha256": "edba6a71f945dc8c77c72a055fc8f3e82d16bdc2c20eaaddd3718624e2f0cc9f"
+    },
+    {
+      "path": "v2-reference/tests/a1/test_history_archive.py",
+      "bytes": 14909,
+      "sha256": "d92498fa8f54b3d197a709ec339872de929d3194e087f9be3c75d5f26672a071"
+    },
+    {
+      "path": "v2-reference/tests/a1/test_official_feeds.py",
+      "bytes": 78725,
+      "sha256": "88c86edda750e79d795f7bc782a3c85ae61b10116be25d3fa1d5314e2d95f1e5"
+    },
+    {
+      "path": "v2-reference/tests/a1/test_position_monitor.py",
+      "bytes": 31597,
+      "sha256": "792b99fd12bed1ce1202e6f23582faea310e0e26a5b3527907eabeac319484e8"
+    },
+    {
+      "path": "v2-reference/tests/a1/test_position_state.py",
+      "bytes": 36617,
+      "sha256": "0698a7f216c98416303b6ab7ab2d4b419bdceddcba3648ac9e5ffbf8818b2ed3"
+    },
+    {
+      "path": "v2-reference/tests/a2/__init__.py",
+      "bytes": 16,
+      "sha256": "e418f642d3b26f6ff9d87371cbbc0ec0f8e5c3232676c46f281ad5a59de20421"
+    },
+    {
+      "path": "v2-reference/tests/a2/test_analysis.py",
+      "bytes": 30474,
+      "sha256": "17cf058f049bc9cc5b7a18c4f69a8b4108996031d2f3bf42152845c765469633"
+    },
+    {
+      "path": "v2-reference/tests/a2/test_half_hour_forecast.py",
+      "bytes": 34731,
+      "sha256": "e0631bfe9a2df4dca5d89671b7b3b710567788f94478ec02fb24d2677542cdf0"
+    },
+    {
+      "path": "v2-reference/tests/a2/test_half_hour_validation.py",
+      "bytes": 14331,
+      "sha256": "09d22ce2f47fd604e51b18225e34a6d7a5b7b1669910be5191378d781aa91cce"
+    },
+    {
+      "path": "v2-reference/tests/a2/test_macro_results.py",
+      "bytes": 13784,
+      "sha256": "89d89898a869c11eb362b323a950c56338606b71ea289eefba901dc4e7cfd1f9"
+    },
+    {
+      "path": "v2-reference/tests/a2/test_pattern_tracker.py",
+      "bytes": 19014,
+      "sha256": "01b89909e909ec925c45e13b67fe03997cbd9f818d3aee7a143742c812759c52"
+    },
+    {
+      "path": "v2-reference/tests/a2/test_trend_pullback.py",
+      "bytes": 11679,
+      "sha256": "23b5f885df4cab4745a7bebd6dacbfcfaecd116cba8e57d5a0b6a7f69e90553e"
+    },
+    {
+      "path": "v2-reference/tests/a3/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/a3/test_instructions.py",
+      "bytes": 10477,
+      "sha256": "6926e9da778b18d88674d3e547a7ffed9fa0e02eb40a9e199ca3bdf60ccfe46a"
+    },
+    {
+      "path": "v2-reference/tests/acceptance/__init__.py",
+      "bytes": 24,
+      "sha256": "d79d75a49678002ac23c04b9f659370498927fe4e690edbfbabf81b8f85c3274"
+    },
+    {
+      "path": "v2-reference/tests/acceptance/test_slots.py",
+      "bytes": 202176,
+      "sha256": "5e241016feacd07c6c2e9db6353b69d1866c9814b86143ebd95b638dd7a656ee"
+    },
+    {
+      "path": "v2-reference/tests/agent_runtime/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/agent_runtime/test_contract_versions.py",
+      "bytes": 49881,
+      "sha256": "73fdf8e1a2581dcfdb87ed3939a1870cc180aa327232c8f76723a3c6cf57241e"
+    },
+    {
+      "path": "v2-reference/tests/agent_runtime/test_ts_output_v2.py",
+      "bytes": 54422,
+      "sha256": "05ee9e430732e1c8fe3fd992ddb9ad8624f1e6e99d708f6adad29a996ceab984"
+    },
+    {
+      "path": "v2-reference/tests/committee/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/committee/test_instructions.py",
+      "bytes": 2875,
+      "sha256": "2479029bce4c9c33459d5c2c26c99cee8649aa8383ba7d5ebf1daf0e5a1c741a"
+    },
+    {
+      "path": "v2-reference/tests/common/__init__.py",
+      "bytes": 20,
+      "sha256": "531ae38f0b4f113602c33a2635fef38b6c2bfa46e3c24e08dfba3e32402a442c"
+    },
+    {
+      "path": "v2-reference/tests/common/test_agent_input_freshness.py",
+      "bytes": 8591,
+      "sha256": "3914648078cbe1574bf4558010b2829fba3c6be24443a96e61659397c68d5a4a"
+    },
+    {
+      "path": "v2-reference/tests/common/test_config_and_packet.py",
+      "bytes": 7744,
+      "sha256": "e1f1163bcf88322a6d7a472625fb66ac08183a7ab5100e664e72683313b597d6"
+    },
+    {
+      "path": "v2-reference/tests/common/test_discord_display.py",
+      "bytes": 2038,
+      "sha256": "870d258d550778d8ed67202470972d0e87efa7f3f0fb072dd9644540cf0029ec"
+    },
+    {
+      "path": "v2-reference/tests/common/test_lock.py",
+      "bytes": 3349,
+      "sha256": "3b019b15dafd1799a42a95bf9795431aa840b5955c3bd0a8071339b80082eb93"
+    },
+    {
+      "path": "v2-reference/tests/common/test_public_package.py",
+      "bytes": 6670,
+      "sha256": "c84e781a775cfa421afffe7bb272e575d01e0e232cfcd73040fa8a1b589268b0"
+    },
+    {
+      "path": "v2-reference/tests/common/test_scope_guard.py",
+      "bytes": 1252,
+      "sha256": "de3f90805d0be470dbafa66717f5d6ee00459abe5cdb6a0e59fb3ae145ab10b9"
+    },
+    {
+      "path": "v2-reference/tests/config/__init__.py",
+      "bytes": 27,
+      "sha256": "a0e4bcc4c702d1a88526c8a33b3b9d491684c419df27b73898d4382d277af064"
+    },
+    {
+      "path": "v2-reference/tests/config/test_data_config.py",
+      "bytes": 1491,
+      "sha256": "0115db9b6e4f0da46d3bf084395beb419af6cc8c5a0c57c9f2c215592837a280"
+    },
+    {
+      "path": "v2-reference/tests/config/test_guard_schedule_config.py",
+      "bytes": 902,
+      "sha256": "c2e1ab6c6f15b31a3bd4dedfb2ef53aca913809acc4bba17a54608f05c8f67a2"
+    },
+    {
+      "path": "v2-reference/tests/config/test_review_config.py",
+      "bytes": 2842,
+      "sha256": "dfcda83ec16c0b36c5f28a1214051f64f7b24e35d4e05950c337865b145d1fb8"
+    },
+    {
+      "path": "v2-reference/tests/contracts/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_a1_earnings_recovery_day.py",
+      "bytes": 1528,
+      "sha256": "f0848283ba442af321b3078f928ab16b1b77760d3fd1e5ffaaad39b2de570d70"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_a1_earnings_watch.py",
+      "bytes": 1751,
+      "sha256": "55ccc44038b1fcf8e6c94c65f320d4c27b2927d8f31e1519f3829bb526ffa774"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_a1_macro_result.py",
+      "bytes": 6301,
+      "sha256": "b0c1a605324f704a7290f245b1dbf0e8bef633346dc5615730e737270b358710"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_a1_macro_watch.py",
+      "bytes": 2249,
+      "sha256": "072851fc75cb3dc8b152b2638270834fb08a73d176d9b12f503202bda716b2c6"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_a1_market_context_digest.py",
+      "bytes": 2093,
+      "sha256": "0700eea496345aa30bd0d5989ba4d5ece2c8be81738c8d6ede2c10b516bebc4e"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_a2_half_hour_forecast.py",
+      "bytes": 2474,
+      "sha256": "8b832bb08c82f8c5b999f1e87e7481dc7cdbdd81fd4f118c58baa416963ca97d"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_agent_contract_versions.py",
+      "bytes": 8049,
+      "sha256": "1d59dd6a5af33854eea30a223447219cd997e97d7104145a8ba1846fc1de7f97"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_agent_input_freshness.py",
+      "bytes": 2157,
+      "sha256": "cd8518c172707e220920091df5cfe98bfc04266f44ea4866800a47ca4868a7dd"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_discord_display_formats.py",
+      "bytes": 2144,
+      "sha256": "b1849befe2eca15d518a1c6723a5decef04e2685f99ce70e81631f386fecd0d4"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_earnings_day_analysis_link_v2.py",
+      "bytes": 4373,
+      "sha256": "9e0eb2e3891e9ba28f3579cbbf34615ca3b91e1710219a1e72c717b61b4339f2"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_history_archive_checkpoint.py",
+      "bytes": 2288,
+      "sha256": "62191631105ba8a8274260bd69e0a618d2d3d13ea23f5fc6289048d8efc14f12"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_market_history_dataset.py",
+      "bytes": 1374,
+      "sha256": "9114cef856019e1d25951d4d700114197663429b06f506aee21f82b33cacce2d"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_position_event_receipts.py",
+      "bytes": 6984,
+      "sha256": "23fd8b9fd2730f1a47a55b2dcd55327f9b701181bfdae7363e0fb1a0115a240c"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_ts_calibration_provenance.py",
+      "bytes": 7052,
+      "sha256": "7ecf2efa81a5b507f87f2eaa2005e40bd082f52be748f76f236059dd29eb88f3"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_ts_forecast_settlement_v3.py",
+      "bytes": 1577,
+      "sha256": "55c422e96c392483fae37fe1828ffedd5717253ce27c86f777023a129410722b"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_ts_output_v2.py",
+      "bytes": 6673,
+      "sha256": "71a6cbf3cd45e3aab0f9831f43f59a78f52e1a6e4b13c12c80ddc59efc0fd541"
+    },
+    {
+      "path": "v2-reference/tests/contracts/test_ts_swing_scorecard.py",
+      "bytes": 1759,
+      "sha256": "7d1549f213d328a45437de0d6388565de49b23cb4531aa5c47498c4b48a6cbe0"
+    },
+    {
+      "path": "v2-reference/tests/d/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/d/test_instructions.py",
+      "bytes": 8148,
+      "sha256": "c179c928cec7e00bd8993d37ca0a19402a6e7f6903ab1fb116c54ad66ac87cc2"
+    },
+    {
+      "path": "v2-reference/tests/daily_review/__init__.py",
+      "bytes": 26,
+      "sha256": "94a526671674bba6d8aee65c96043531e5d4da986d5a8fe07f63246ee248821e"
+    },
+    {
+      "path": "v2-reference/tests/daily_review/test_service.py",
+      "bytes": 47989,
+      "sha256": "05dc192165650bcb0ca620e3f85b9f55c419d2800218813d95476f1193d52316"
+    },
+    {
+      "path": "v2-reference/tests/discord/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/discord/test_gateway.py",
+      "bytes": 4325,
+      "sha256": "363392c0c5c2cbd9f63df7b344e12edc47580c8572f634dcc943e97314ce4023"
+    },
+    {
+      "path": "v2-reference/tests/discord/test_templates.py",
+      "bytes": 35827,
+      "sha256": "d8329002a37adb124a4c8afc9e3a0509af2015858a4eca1a2e87a3594a792bce"
+    },
+    {
+      "path": "v2-reference/tests/orchestrator/__init__.py",
+      "bytes": 26,
+      "sha256": "5a3c50ad3016154c21e7e96c12f3871559974fff95be2c07ac5f1ef40faf64e0"
+    },
+    {
+      "path": "v2-reference/tests/orchestrator/test_material_change.py",
+      "bytes": 140154,
+      "sha256": "3c6ef1078ff4a34ffe0e769f4d4b5ce41411e72b4ec531b47a329675fd9de899"
+    },
+    {
+      "path": "v2-reference/tests/orchestrator/test_position_events.py",
+      "bytes": 234306,
+      "sha256": "21f636101a499da3bd5092cc8e85f0dfad1f4906ea0a1d9bf7c1302e9a3d2936"
+    },
+    {
+      "path": "v2-reference/tests/orchestrator/test_ts_v2_context.py",
+      "bytes": 90470,
+      "sha256": "137c18418e24edbfbc73c7c32af30f62396be87ec1c488d77b42e1029a2a2e18"
+    },
+    {
+      "path": "v2-reference/tests/risk/__init__.py",
+      "bytes": 18,
+      "sha256": "0ad6de7545409deb07a47dae983301b6cb00fbaa1436bcf827a1012e61060d90"
+    },
+    {
+      "path": "v2-reference/tests/risk/test_rules.py",
+      "bytes": 34003,
+      "sha256": "0c8dc9f3d44603fd13077ae5b280cd63955778020393319f5d2dfd5028089449"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/test_guard_windows.py",
+      "bytes": 10651,
+      "sha256": "ed255df0344451bad55faa6353d9a3f19209386d7916ce8713633136d67a172e"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/test_history_archive.py",
+      "bytes": 15167,
+      "sha256": "3810a52b612973ccc4bbbd88ff5ed718b64881c671f5e08b06e2df4b0af6fa8e"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/test_position_monitor.py",
+      "bytes": 7046,
+      "sha256": "c3ee4d084bf8bcd28858662b4d6ee6cae0d0cae18c0dcee228c6df6558df11df"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/test_scheduled_analysis.py",
+      "bytes": 4460,
+      "sha256": "5312e11e2b15be95d4b3c7e25e197a423f996554c729e7fc10885fd1f497bca4"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/test_ts_intraday.py",
+      "bytes": 3628,
+      "sha256": "517e548b2d2dd1bbcb8d48dd4d870ce1a1a0bc626be17f2f5c3e83933cdf73a1"
+    },
+    {
+      "path": "v2-reference/tests/scheduler/test_ts_settlement.py",
+      "bytes": 5755,
+      "sha256": "424f4ecd170e60d564934e41c12d20d176e2af1de1f7591e01fe332a4a5413ef"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/__init__.py",
+      "bytes": 24,
+      "sha256": "5e891a1732d83ef0ec1c14718ba23ae250b33191cfbf0ccc1ac0c269cb47100a"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_a1_bulletins.py",
+      "bytes": 96381,
+      "sha256": "7ddb51d261dae688326bba3686628610e769c4a68748b624a0cf9766d8d7fb1c"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_fault_notifications.py",
+      "bytes": 35465,
+      "sha256": "9c037702046c452cebcbe537600dbe92bf2a18cdf822ad4898000a8ce2c32673"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_half_hour_forecast_health.py",
+      "bytes": 24603,
+      "sha256": "9b1cbd6df2a74f53c577782b54c3927a87b226c7254348b967c370a6450b9375"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_local_guard_position_events.py",
+      "bytes": 17980,
+      "sha256": "0c339d48519bfefbfe3cd2c3d83d878cde2b315f86d4611e6bee371f929841cb"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_order_surface.py",
+      "bytes": 3780,
+      "sha256": "d2c98662d6439864e9bd48ed2d2857255e01eb261efc56321f63ecbc7c8e4422"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_pattern_tracker.py",
+      "bytes": 10599,
+      "sha256": "46a7df9c52aca8dc00fa04da80a5288ddffd0dbc385477210b7f3372478985ad"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_position_monitor.py",
+      "bytes": 31611,
+      "sha256": "f5aed78fe44e418aa87dfb50f80bf3538c1fa9419d0d9db53bece33dc81f88dd"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_restart_process_gate.py",
+      "bytes": 16555,
+      "sha256": "669c378a24c47192919f767d2cea7bc8688c1228732e0b473b1a536bbda2f07e"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_trend_pullback_health.py",
+      "bytes": 7815,
+      "sha256": "7d7ca507ea6e972ee1829b58f09b16a3b2989277739506c6ac4c0f9c2030735b"
+    },
+    {
+      "path": "v2-reference/tests/supervisor/test_windows_probes.py",
+      "bytes": 18471,
+      "sha256": "e9754b17d0d99372dd86d2f07a4a06af4941b67dc3aa20216b93a3bdf2fb4d45"
+    },
+    {
+      "path": "v2-reference/tests/ts/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "v2-reference/tests/ts/test_calibration.py",
+      "bytes": 40412,
+      "sha256": "0b811c4d55a6604c5486199011b8653db8d352283a37de1ac79c3b9eec2e9da0"
+    },
+    {
+      "path": "v2-reference/tests/ts/test_instructions.py",
+      "bytes": 7778,
+      "sha256": "878be11533e1e04d3ca77612fd5e232180a8104846e9247d560b48a7f9b0a031"
+    },
+    {
+      "path": "v2-reference/tests/ts/test_provenance.py",
+      "bytes": 21092,
+      "sha256": "a6ce26669a045f82c0eaa47f6b9e00373ed540b4ab877f078bff2a7b8177d6d9"
+    },
+    {
+      "path": "v2-reference/tests/ts/test_public.py",
+      "bytes": 22226,
+      "sha256": "d9d43a9a2a1be9751427cc12b82258935275d043779be0b692ee31f770f19b00"
+    },
+    {
+      "path": "v2-reference/tests/ts/test_settlement.py",
+      "bytes": 20050,
+      "sha256": "21b18f1e55e70ab05c5bbeaaa7413695d7aefadbb2e436d0bbc4e241545565d7"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/__init__.py",
+      "bytes": 45,
+      "sha256": "ee4bb5766c74d97fd008f740f1098cd93f0429a088272bc77639795bf70e1c01"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a1/__init__.py",
+      "bytes": 83,
+      "sha256": "4cf1b0b58145ba0fae84fa025fbc89c1db49fe7c77c60931c1f8e5a5d7c81041"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a1/history_archive.py",
+      "bytes": 20521,
+      "sha256": "71ad229195a7694a662c401a63340d66c9d1552ea86cbd732ffbe65d9104e00c"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a1/position_monitor.py",
+      "bytes": 37542,
+      "sha256": "0bbfa2249a9d7fb27630e534eae3b23841026a3c331f6841e11c5f113cfea0ec"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a1/service.py",
+      "bytes": 79893,
+      "sha256": "b0b0dd9c3c3e3fd30e87bc95a883f8f36780b77a1263fe997e3b04136f71608a"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a1/state.py",
+      "bytes": 27377,
+      "sha256": "37dfa878baf634ec81e5d5967ccb2163a00594f843a89486f9beaf4036533b71"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a2/__init__.py",
+      "bytes": 73,
+      "sha256": "b0034872c4ddc9dc475dc63394d676aee391423d48fb491dce30164bb831e194"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a2/half_hour_forecast.py",
+      "bytes": 38525,
+      "sha256": "9bab3fd0efef30746d1025d15e5975b3015baabc94124a7c58d8022c454214b1"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a2/half_hour_validation.py",
+      "bytes": 27539,
+      "sha256": "44eac4afb3146988d9ad17fbe39d1239b5192a5fdab5e4e5aaecd200140cfacf"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a2/pattern_tracker.py",
+      "bytes": 17112,
+      "sha256": "a3759f24651bab65e5de6fb6eae43a0d06da7e921041ea009eb317ead7aeae27"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a2/service.py",
+      "bytes": 56520,
+      "sha256": "0c942b1d2b7677b151fe49f978e6617447a278cc08a7af244e8398133c1f8653"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a2/trend_pullback.py",
+      "bytes": 16423,
+      "sha256": "febbb31acb6373a5a2e120f6c4a4a374973bb5a93272b4bcfb7131e6cb21b442"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a3/final.md",
+      "bytes": 7618,
+      "sha256": "7e509f0a61999d3e3b39cfaa4c4537428c1e1ee1e005fa294170fac22f3fab4e"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/a3/review.md",
+      "bytes": 3084,
+      "sha256": "ac412eb702f8b44d6c4dc471110f92836c2b0f16bcb88630bb1ff043222c47bf"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/acceptance/__init__.py",
+      "bytes": 45,
+      "sha256": "d861deabf8f0a1a9e3b64914266f5785977a0a26063bef8f940d74038b53319d"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/acceptance/service.py",
+      "bytes": 204669,
+      "sha256": "d3967e4d31c89c8ed7661d6447568bd8f99ce06adc7f15ac45b06f0887602b28"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/agent_runtime/__init__.py",
+      "bytes": 81,
+      "sha256": "5c1ba79b6797686889770cedd274b59acc11bb263432648136b28c3e053ee966"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/agent_runtime/service.py",
+      "bytes": 78679,
+      "sha256": "e94af68a3d521c5c015c898a382ca4b763972d1001f30a7e61e15129f21eb292"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/cli.py",
+      "bytes": 31266,
+      "sha256": "32fe9db03912bbf3869c51a93d72aa26f1d1e2cbeaf4286de72f68aed8c5b2e8"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/codex_guard/instructions.md",
+      "bytes": 625,
+      "sha256": "b78c84140d65039c331da181dc35b46a11ffe63b0151338d5b642f2839d2c19b"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/committee/instructions.md",
+      "bytes": 2911,
+      "sha256": "8f9c3a938ece03c2731466698b631ac7fa62c1cc913b64282ba04e58ac362128"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/common/__init__.py",
+      "bytes": 76,
+      "sha256": "1576eb42cd2a5d4c7edc9723de3173bbce6dfcb9122a0a9ec666a926f7132e25"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/common/agent_input_freshness.py",
+      "bytes": 17048,
+      "sha256": "fd5c00b210d01b0b1203226b5f80b4d68468990625a2024363887c6ca17b842c"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/common/config.py",
+      "bytes": 5447,
+      "sha256": "ff51e2a356c7c3b7fe576b114dd8b48375154c87e02cfd1b793a1574df6db825"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/common/discord_display.py",
+      "bytes": 3409,
+      "sha256": "c2c18579fbdb14243c40bdbc65baed9b43240014e3f9d831e05bcb71bd68ddbd"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/common/io.py",
+      "bytes": 1289,
+      "sha256": "e7d2cd7044f220532986f661e349484c9e8ca59105350c04658425bd09fcf2ef"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/common/lock.py",
+      "bytes": 4348,
+      "sha256": "b76a3cb6889c16053872be1b92aa62121ec3927204ed8450057fc1641da536ab"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/d/instructions.md",
+      "bytes": 7920,
+      "sha256": "4b18d4ecd78fff3c8dde232ce377f288c3f9692671cadb4dc8cb668abaf45f3c"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/daily_review/__init__.py",
+      "bytes": 41,
+      "sha256": "0bce8fd92a22c7295e80b1a108bae26889b4a996fa0df9b6e0834829e9bde154"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/daily_review/service.py",
+      "bytes": 52754,
+      "sha256": "484a0c726e873746b2912231764616a33d33f19569c88a809a18f9d5c01da901"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/discord_gateway/__init__.py",
+      "bytes": 62,
+      "sha256": "a59121092c52fdede31c47120f0dc9d25b87bc7ddbaa2212aa60e2ffffba78a6"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/discord_gateway/service.py",
+      "bytes": 54044,
+      "sha256": "0f377395e7a1e49862722d5ddf6efc0bd9c43f5157f3aced666a8dc03e6e4004"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/orchestrator/__init__.py",
+      "bytes": 43,
+      "sha256": "50991a17802d5c12ce4dbaf78397983742899cb5eede3619777e31b70fc6557b"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/orchestrator/service.py",
+      "bytes": 393457,
+      "sha256": "0694cc9cc4f540ddafabe6b5e9b913d76304250ea4787ee19224800a5c0cad8d"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/risk/__init__.py",
+      "bytes": 46,
+      "sha256": "b18a185a05c9a351ab15ef27a6788b4eb766ffec503cb4f26274f58f7f2f456d"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/risk/service.py",
+      "bytes": 21529,
+      "sha256": "30c6b879011ce6a187ea2192e7b6898a23e0f3cb874e5f6783d8e92782351b44"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/supervisor/__init__.py",
+      "bytes": 42,
+      "sha256": "a245d433d6490e4c5e48c9617a1769df2529072a31f6f69be2f1bc48333d26a5"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/supervisor/service.py",
+      "bytes": 232642,
+      "sha256": "134bf0a9a8a8b6569658973dda3fec79ada1d44a3beb8e93de9c09afcbf7f1fb"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/ts/calibration.py",
+      "bytes": 81074,
+      "sha256": "0e9a979bd28650565897a6b118f68040bb77e66ad457d6fe3a604905c65f75a4"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/ts/instructions.md",
+      "bytes": 14649,
+      "sha256": "cb74f7a57124bdd047e6c84d7c25804183da178d3ce66c18bfac58b9e5563706"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/ts/public.py",
+      "bytes": 13170,
+      "sha256": "30127ec832c198052a84c5033e5dc00de5512148ac801f17fceaf8f067cca8ba"
+    },
+    {
+      "path": "v2-reference/trading_os_v2/ts/settlement.py",
+      "bytes": 24320,
+      "sha256": "f304d6245418071df8628ddac1fca1ca8a30cd33c0b639fa1cb4cc395b87c72e"
+    },
+    {
+      "path": "web/.openai/hosting.json",
+      "bytes": 31,
+      "sha256": "d532abb65cf9ae20634b464d954cb4a08a0de9f3cd3cdf7f9c3ec8948826d947"
+    },
+    {
+      "path": "web/PROJECT_BOUNDARY.json",
+      "bytes": 330,
+      "sha256": "96841aa0ad68a53dbf847ad9c720edb789b9db6766ecd179ae383a7280a31420"
+    },
+    {
+      "path": "web/app/ApprovedBrokerChartPrototype.tsx",
+      "bytes": 97545,
+      "sha256": "c3c05a907b9926f532f6cb790a9ab0e972aab2491d46c7868b6700c631ee3adb"
+    },
+    {
+      "path": "web/app/CompanyEvidence.tsx",
+      "bytes": 4679,
+      "sha256": "a29a06152276b1840ce4a1a2f6095598d3a088c28cd2cd9d6507618ce5592789"
+    },
+    {
+      "path": "web/app/ComplaintBox.tsx",
+      "bytes": 15042,
+      "sha256": "61a9814a33d4185af2f5503fd0367f6b2e894fe8528bf96b9a1f542ebe23e141"
+    },
+    {
+      "path": "web/app/DetailSheet.tsx",
+      "bytes": 1172,
+      "sha256": "8def47a37c6c8df1d7bd88bd7f11fd0b112624ee55a5b7f7ea504ac5cd3f6ac8"
+    },
+    {
+      "path": "web/app/LiveMarketChart.tsx",
+      "bytes": 54951,
+      "sha256": "ff64b3f070a20fdf666d5f666c681ef5ff8589a04df1ef8ae586759c801bac02"
+    },
+    {
+      "path": "web/app/MacroEventNotice.tsx",
+      "bytes": 2374,
+      "sha256": "4e618a94eb36f5ca6dcd0c8bee32c77eadf91be5bfdb67abbc56fd485da29ade"
+    },
+    {
+      "path": "web/app/MarketRadar.tsx",
+      "bytes": 22352,
+      "sha256": "7c508906e8f4b396a9eba8cfa02866a7e4a8ded7c443386f5e5fae35f86ee2bb"
+    },
+    {
+      "path": "web/app/NextSessionObservationCard.tsx",
+      "bytes": 2599,
+      "sha256": "4ec17c3fd1eca73fd6e6e26fc2fc1fcb87a89a24e0f25bb92f4902bb4785cf4e"
+    },
+    {
+      "path": "web/app/OptionsPositionPanel.tsx",
+      "bytes": 23599,
+      "sha256": "9cc7d1f6200324695800f6fa03155504d34d1fd4e584e72d98d1805fb727f4cd"
+    },
+    {
+      "path": "web/app/OwnerManualPlans.tsx",
+      "bytes": 10184,
+      "sha256": "3d7dd0e9efd8766a2e2c0a1ee5f44abf7b0a161116111e2517ec816391e6674e"
+    },
+    {
+      "path": "web/app/OwnerPositionPlans.tsx",
+      "bytes": 16584,
+      "sha256": "b8cf1dffa1268cf73136cab84b27a2c510f84d9ab99f4ee6aabdf1e3bc950cb8"
+    },
+    {
+      "path": "web/app/PaperPlans.tsx",
+      "bytes": 48908,
+      "sha256": "9c41fc5da106b0a1c97e638fb85d2ca846902792ad4fa95d49e97313c315211a"
+    },
+    {
+      "path": "web/app/TodayActionCard.tsx",
+      "bytes": 9201,
+      "sha256": "f011981b60a4c177a8590a7fc73383370ab42b6c9be75afb473af16a7555dd70"
+    },
+    {
+      "path": "web/app/WorkspaceNav.tsx",
+      "bytes": 3160,
+      "sha256": "29473a53701c2de5fa84979108ae4dbbdad92fa42a412f5348482e9a83f9502c"
+    },
+    {
+      "path": "web/app/agent-ledger.ts",
+      "bytes": 24128,
+      "sha256": "980765cb1005c0619a04c1a7a72d4a3029c0cc5a67b242080f2231e029fbb6d8"
+    },
+    {
+      "path": "web/app/approved-broker-chart.css",
+      "bytes": 43685,
+      "sha256": "f9c86ae389288ee99f521d720f602f175601012edce28c070381102322d233b9"
+    },
+    {
+      "path": "web/app/capability-retention.ts",
+      "bytes": 10950,
+      "sha256": "bd924adf3de90dc4146b640c568265488c24a10adb45f43a08bdb720a59b83f8"
+    },
+    {
+      "path": "web/app/client-request-id.ts",
+      "bytes": 626,
+      "sha256": "d7b8da22170352b75c20184e7fdd45faf5904ed5d4d2016ec549261e1f707b65"
+    },
+    {
+      "path": "web/app/codex-manager.ts",
+      "bytes": 23750,
+      "sha256": "542db81446ab6bfef56b1fc390222f63c93713ff657c8be23fed81668729fca6"
+    },
+    {
+      "path": "web/app/codex-production-manager-instructions.md",
+      "bytes": 6570,
+      "sha256": "4e4c64d8f349fa5375a9bd50e8896c7a76c029c0019897b6a4928fbe44a60eb5"
+    },
+    {
+      "path": "web/app/codex-production-manager.ts",
+      "bytes": 9470,
+      "sha256": "47cd5ffcd9721a5876c676dadba9db85626e2190f8f621d71ba7f4cc20b036ba"
+    },
+    {
+      "path": "web/app/company-evidence.ts",
+      "bytes": 3989,
+      "sha256": "96d8a380e890d0bb3514cc433248490126c5d17580e2e11454d9c3b261272f4f"
+    },
+    {
+      "path": "web/app/company/page.tsx",
+      "bytes": 119,
+      "sha256": "3e11841690dd1f426a65d70dc4ff18a52a45e7482786a28f5ad358c0e78a16ac"
+    },
+    {
+      "path": "web/app/current-truth.ts",
+      "bytes": 21668,
+      "sha256": "5ba5c7f5c3465b10435390a1dbef2c960144c8d14cca9be23cbe8ff11519ca49"
+    },
+    {
+      "path": "web/app/decision-review.ts",
+      "bytes": 14669,
+      "sha256": "17531371b62d5f06467008981895d08196c885fd3027f43db1779b792dff48d9"
+    },
+    {
+      "path": "web/app/external-expert.ts",
+      "bytes": 9733,
+      "sha256": "27fbdd845725860ca49270b2f9e33bddaf2e5f41c5b22c8ae00d764747f93d70"
+    },
+    {
+      "path": "web/app/forecast/page.tsx",
+      "bytes": 121,
+      "sha256": "50f0d79f9519813b00e70e9bef97282d9f8ec37d9b676d9309f5d58f877d53f3"
+    },
+    {
+      "path": "web/app/globals.css",
+      "bytes": 120598,
+      "sha256": "29782a0ba8ba7f18879026dc9d4b0960cd6de3a97033066d6d3f357770404874"
+    },
+    {
+      "path": "web/app/health-overview.ts",
+      "bytes": 24036,
+      "sha256": "a091d42de13c0a6b9821818a9e96571b0062a8df16f415960459d719a1373e8f"
+    },
+    {
+      "path": "web/app/health/page.tsx",
+      "bytes": 117,
+      "sha256": "4d7eb7294785013d56cf862e8e09499a4ae37c2de3593349a86e4aad964bd7ab"
+    },
+    {
+      "path": "web/app/intraday-regime.ts",
+      "bytes": 17117,
+      "sha256": "cb870ef882ce5bdef4e94d64b2cc6aff42b782b96c125b0814e2d577ddf06331"
+    },
+    {
+      "path": "web/app/investment-kernel.ts",
+      "bytes": 12324,
+      "sha256": "8a5975d186c7c8f6e86c67417c219880cc82b1c09073827781442d577f6a5a14"
+    },
+    {
+      "path": "web/app/issues/page.tsx",
+      "bytes": 117,
+      "sha256": "0145500f39796bb0716dadfda552debd5fde39c22b7e6f3e145accdb5fd36b37"
+    },
+    {
+      "path": "web/app/layout.tsx",
+      "bytes": 574,
+      "sha256": "2e42af69c3f00015b2a9da7c54eb3cd2cb53cf0c1b2fc9af007cc32082fdccf9"
+    },
+    {
+      "path": "web/app/macro-event-learning.ts",
+      "bytes": 20799,
+      "sha256": "0e74b4c6b2661419bec48d8ca4dcb89e3668a399f4144d6ac12de2f54c54b376"
+    },
+    {
+      "path": "web/app/market-chart.ts",
+      "bytes": 9035,
+      "sha256": "5d00321d2cbec109eb54e56e5301a974703b728a9fcade72671fabb3226b7a14"
+    },
+    {
+      "path": "web/app/market-intelligence.ts",
+      "bytes": 4794,
+      "sha256": "4f4c632b3d1de536efe5ec8b0cdbe4f24ee97432a24e8dc2d49c2fa5d2553fd6"
+    },
+    {
+      "path": "web/app/market-time.ts",
+      "bytes": 8472,
+      "sha256": "32626fb25f7fdbba35ade8ead31aef0350f334aeaef1d7afb9374fb7c54bc2db"
+    },
+    {
+      "path": "web/app/next-session-observation.ts",
+      "bytes": 7944,
+      "sha256": "d14763e77405737a250bed190405e268e0a2a4f4df26150a16f8064bfd21446e"
+    },
+    {
+      "path": "web/app/option-lifecycle.ts",
+      "bytes": 14579,
+      "sha256": "f1611c6878107c27b9b44de5a760d1076f61dfefccb500c92f1a99bc462cb8f9"
+    },
+    {
+      "path": "web/app/options/page.tsx",
+      "bytes": 119,
+      "sha256": "10b711856096802377152d096d4af72ad45a235536ad6ae412f29b8b10c1a0ea"
+    },
+    {
+      "path": "web/app/owner-manual-plan.ts",
+      "bytes": 18505,
+      "sha256": "8fd30390a77c627330f8fb4d7e2d3aacaefa71a06f3e275358f0fbb9eb1b65ee"
+    },
+    {
+      "path": "web/app/owner-market-decisions.ts",
+      "bytes": 5044,
+      "sha256": "f141ce501407bd67d7af3382590f6877af95aa4afbb41920fec2da6ddcc689de"
+    },
+    {
+      "path": "web/app/owner-market-health.ts",
+      "bytes": 1541,
+      "sha256": "659fdb7aa77c9a53ad108d370bf5ce4d7c6f66a6f2ee9b842cb08b113ba7aecd"
+    },
+    {
+      "path": "web/app/owner-position-plan.ts",
+      "bytes": 13530,
+      "sha256": "ee188e5a021cd9ee943604cb23db180efc1f96ddb5324c3e5ee2b388b95400ce"
+    },
+    {
+      "path": "web/app/page.tsx",
+      "bytes": 171900,
+      "sha256": "fecdd3a84e8a2a2c609cb67dea0edd3229b8a3e8ae3756e6939c432f159cfb4a"
+    },
+    {
+      "path": "web/app/paper-plan.ts",
+      "bytes": 70454,
+      "sha256": "570d2486a2e280c91588c00978e8c2a4332db8d575512c727a811c937c204df0"
+    },
+    {
+      "path": "web/app/paper-selection.ts",
+      "bytes": 8226,
+      "sha256": "3b3ff38a3f5b77c526d96ba1d8a961ae78ed11b9b7520888b77c61d546a9d813"
+    },
+    {
+      "path": "web/app/reviewed-market-events.ts",
+      "bytes": 3024,
+      "sha256": "54a00ab8c4f2630843cb306ea3adb83447ed4790db96a18d382c113d90ebd50b"
+    },
+    {
+      "path": "web/app/settlements/page.tsx",
+      "bytes": 127,
+      "sha256": "db61cca6310c85c4c85fc9a80c9a0a6a6c5c7999b708c3c95c06c42461c8719f"
+    },
+    {
+      "path": "web/app/snapshot-import.ts",
+      "bytes": 177997,
+      "sha256": "1f564ee07a547b47974e1510f7688b79c5f2796567be0cb23f344d226eec6cd2"
+    },
+    {
+      "path": "web/app/spx-convexity-ledger.ts",
+      "bytes": 18162,
+      "sha256": "7738c4e7bc15e592a0fef613767f1b7ccfa643bd942e6477f7c4b39e4542fa32"
+    },
+    {
+      "path": "web/app/spx-data-contract.ts",
+      "bytes": 4545,
+      "sha256": "5030f0947a74e59166804de7b5eeb2a7f47dea12256ef6501b209b3637692759"
+    },
+    {
+      "path": "web/app/spx-observation-lifecycle.ts",
+      "bytes": 2878,
+      "sha256": "9f520abad9035035cd87b80832d9e55a34746e4e4fa43cb573f9383778408c53"
+    },
+    {
+      "path": "web/app/stock-manual-plan.ts",
+      "bytes": 48620,
+      "sha256": "c8799f64d5c60ec18473bc5cf1d67d434541e4a62fb6be2d49948835c90f782c"
+    },
+    {
+      "path": "web/app/timeline-schedule.ts",
+      "bytes": 15615,
+      "sha256": "9d9bb60c81e8104e6f232c97ad44345fce8e2e2e63d24102e3a4a3d2d07b29ec"
+    },
+    {
+      "path": "web/app/today-action.ts",
+      "bytes": 5307,
+      "sha256": "b2695366f0b4059cf2237204cc0880346672a63f9600e5439848b600e46c93ce"
+    },
+    {
+      "path": "web/app/ts-forecast-state.ts",
+      "bytes": 16432,
+      "sha256": "4eed0d134ff7b58968d1e2498f71659bc9e9e3bc6e6337099dc2f60689686992"
+    },
+    {
+      "path": "web/app/ts-owner-trigger.ts",
+      "bytes": 18629,
+      "sha256": "c0c031a82349046093d75c50ffe92008ac6a7ac6f32ce998d0086744675b07a6"
+    },
+    {
+      "path": "web/app/ts-regime-risk.ts",
+      "bytes": 19586,
+      "sha256": "6aff6f92424b7012d7428b96e2b319cfed7dac4a0a4b97ab55b22cc1235c9f9e"
+    },
+    {
+      "path": "web/app/ts-settlement.ts",
+      "bytes": 45371,
+      "sha256": "463da7143a78478c0e7c1151812faab43cc2867d03171cfe37a532bcda5bf4fa"
+    },
+    {
+      "path": "web/app/ts-signal-candidate.ts",
+      "bytes": 13165,
+      "sha256": "eb15249ec2492b85721a9288193f2ff0faf73317676785adf1b1e50e29e62d89"
+    },
+    {
+      "path": "web/app/v2-sanitized-frozen-snapshot.json",
+      "bytes": 10177,
+      "sha256": "5f5f3e0c824fcd981996e4e4fca893967b2824eb784c1d567e8da2bcd28d897c"
+    },
+    {
+      "path": "web/app/workspace.css",
+      "bytes": 33128,
+      "sha256": "1ff96a59e0cdd4c3580724b84a6738bd23019f7718b80bb8684f5a101914e58c"
+    },
+    {
+      "path": "web/build/local-data-core.ts",
+      "bytes": 302479,
+      "sha256": "31fd153b4e12004eb49491b90bb460bfb66686425cb8c132e03af329dc38ba8d"
+    },
+    {
+      "path": "web/build/sites-vite-plugin.ts",
+      "bytes": 1254,
+      "sha256": "81b7cbfaeb970611572256aba0e313425beb3809f6426f63750696c15d9c756b"
+    },
+    {
+      "path": "web/contracts/v1/codex-production-manager.schema.json",
+      "bytes": 5623,
+      "sha256": "2fb8cdc37e06fcdc287e14f5ff919cff160343fcb05f2039986b33215deb9385"
+    },
+    {
+      "path": "web/contracts/v1/paper-selection.schema.json",
+      "bytes": 699,
+      "sha256": "5c5ea6178a2bbd8599fb5a3ac05923f662d8ee0d856dc1f510beec7685fb2e38"
+    },
+    {
+      "path": "web/contracts/v1/stock-plan-decision.schema.json",
+      "bytes": 1852,
+      "sha256": "427c7a03f5b182b323b998443fb2bad12876dde6881df029892e1f83cb3b0819"
+    },
+    {
+      "path": "web/contracts/v2/paper-selection.schema.json",
+      "bytes": 1401,
+      "sha256": "adedeaca48ee390a3ccd8819d1b5495fcb0b5783db890d41e2052710a3af345a"
+    },
+    {
+      "path": "web/contracts/v2/stock-plan-decision.schema.json",
+      "bytes": 2224,
+      "sha256": "c705d94dd2b168c663d9cec9ca7dfca085fa1d2ccb0fb8f949d4b943c19c5377"
+    },
+    {
+      "path": "web/eslint.config.mjs",
+      "bytes": 1009,
+      "sha256": "6090bd544865638d8c77a3443f037b3b289596a7ec1e1dccc3a13677e6d1ca83"
+    },
+    {
+      "path": "web/next-env.d.ts",
+      "bytes": 189,
+      "sha256": "a291a6b60536fec0a3b9d4ffd6d51179b463e9bc20281d7499d756813b4c07d5"
+    },
+    {
+      "path": "web/next.config.ts",
+      "bytes": 133,
+      "sha256": "614bce25b089c3f19b1e17a6346c74b858034040154c6621e7d35303004767cc"
+    },
+    {
+      "path": "web/package.json",
+      "bytes": 1624,
+      "sha256": "73f5b0ee27a8d6ec576b97d2488ed248df4f83fa77cab920dfa4be62edae0596"
+    },
+    {
+      "path": "web/pnpm-lock.yaml",
+      "bytes": 188248,
+      "sha256": "0cb02eacc31c5a29d1bb017ea0cca776032054466c2685fd399bd71559cdd876"
+    },
+    {
+      "path": "web/pnpm-workspace.yaml",
+      "bytes": 59,
+      "sha256": "368fd9e50a46d5ca8af48e7eb08751063280a5d933be56ed5eed91e304cda90e"
+    },
+    {
+      "path": "web/postcss.config.mjs",
+      "bytes": 94,
+      "sha256": "dfac7ac2d86d326a0e5adb024e7943c181393ed17a5fcb8f0315b24c7da6ddde"
+    },
+    {
+      "path": "web/public/samples/v2-snapshot-import-v1.sanitized.json",
+      "bytes": 12124,
+      "sha256": "d0655aca21f219f8c49db5af727e2124934414912f0b2bbbe515dc082099e4fd"
+    },
+    {
+      "path": "web/scripts/invoke-live-shadow-step.ps1",
+      "bytes": 4013,
+      "sha256": "c6e50c29e3d6780c30fea2fa686111bfd978dff4b4095250f698a71a6e3a3964"
+    },
+    {
+      "path": "web/scripts/live-shadow-v2.py",
+      "bytes": 84186,
+      "sha256": "cbe0deb807215a03a0f4c81b888af47f82f325819c3a6bfd37851ede2ef346b3"
+    },
+    {
+      "path": "web/scripts/reselect-paper-plans.ts",
+      "bytes": 2048,
+      "sha256": "1b31cee4c86a5e4e6195659f785689d09af0a0840ea6baedee4a3853fbeb8ab4"
+    },
+    {
+      "path": "web/scripts/setup-finnhub.ps1",
+      "bytes": 1959,
+      "sha256": "ae07e3fbd73138821d710c0de12425310763b6366546a176784cead68570c3d3"
+    },
+    {
+      "path": "web/server/codex-production-manager.ts",
+      "bytes": 59471,
+      "sha256": "1f89d011ff7772c944fd46ee2c8876c93f8dabf145840d9fce315db376e22fd2"
+    },
+    {
+      "path": "web/server/event-disclosure-observation.ts",
+      "bytes": 16155,
+      "sha256": "4e29461a96143a4e7895eb6317a0d80f417bbc6cbb13e88d0672a25c1991f51b"
+    },
+    {
+      "path": "web/server/external-expert-monitor.ts",
+      "bytes": 3690,
+      "sha256": "bbe1e356867a3c3f2389e593d47986dd271a3a923113362b562116879ce2ae77"
+    },
+    {
+      "path": "web/server/finnhub.ts",
+      "bytes": 17543,
+      "sha256": "7d89155cc324e89e4a17883b0c3e05a229fa70b0ba2f4e352368f634c4f6a6b5"
+    },
+    {
+      "path": "web/server/incident-guard.ts",
+      "bytes": 62296,
+      "sha256": "4c38cc35dc54ab9037c3d6ec96647bad9736a3c7d78042c35ba4ce8997fbda74"
+    },
+    {
+      "path": "web/server/live-shadow-runtime.ts",
+      "bytes": 50920,
+      "sha256": "5426a613da7c36bfaa7dea0bf1eb93ff26fef4a5ee4098726a6df10cba72354f"
+    },
+    {
+      "path": "web/server/local-owner-server.ts",
+      "bytes": 93258,
+      "sha256": "f3b806922278ef5e65bd05b168d93412b3f44e98cce84a86115658e48f4d9165"
+    },
+    {
+      "path": "web/server/option-horizon.ts",
+      "bytes": 1617,
+      "sha256": "1cfeb81a4d920e176aa0cef4ec7b3e4324c201be1420473589254603dd46e96c"
+    },
+    {
+      "path": "web/server/option-strategy.ts",
+      "bytes": 26149,
+      "sha256": "51509a67f5165384972a7137bb5f8ea147b503e8358cdefde987f17f74586795"
+    },
+    {
+      "path": "web/server/option-volatility.ts",
+      "bytes": 11444,
+      "sha256": "2ececd5f91156370f5c67f99f23f552163361f317ab060dde32eb1f37aa1a3f8"
+    },
+    {
+      "path": "web/server/owner-snapshot-worker.ts",
+      "bytes": 1660,
+      "sha256": "82423dcd06ff83eee754bbef9a164f48284d68d2ae920105c988421dc45e4587"
+    },
+    {
+      "path": "web/server/paper-codex-selection.ts",
+      "bytes": 52285,
+      "sha256": "784035ffb7246e195f31724c22e4b55389de6aca3be25220d21338f49c56b938"
+    },
+    {
+      "path": "web/server/paper-plan-runtime.ts",
+      "bytes": 40429,
+      "sha256": "8fd91e02235c6762597fa0a640003160e7bbd3109aaff7008c9c4ed6b46e98ab"
+    },
+    {
+      "path": "web/server/paper-plan-store.ts",
+      "bytes": 12467,
+      "sha256": "447d296e0be3496d88dbb2da1c3e2773901b57eea043d24a355b3c7f87686a30"
+    },
+    {
+      "path": "web/server/paper-quote-evidence.ts",
+      "bytes": 9006,
+      "sha256": "2bde7cff7cc7a9a3ddb5a18b54218f950db2c6ffc164d39c21aa942ed3dfccaa"
+    },
+    {
+      "path": "web/server/position-copilot.ts",
+      "bytes": 21560,
+      "sha256": "5da810eee1f7dd2755d24eec085553a1f67ac259bf71c19be382d66f142bba21"
+    },
+    {
+      "path": "web/server/public-runtime.ts",
+      "bytes": 1848,
+      "sha256": "e0859798adc7b3d97f0b0677be8945b50d753a2683b38ddbafdb800c37f6854d"
+    },
+    {
+      "path": "web/server/robinhood-mcp.ts",
+      "bytes": 112149,
+      "sha256": "9739d6e56d6f0c93d2746ef932d6439da037846c7c243ae846d34f641d2090a3"
+    },
+    {
+      "path": "web/server/spx-paper-runtime.ts",
+      "bytes": 7785,
+      "sha256": "12607d2db3133cbe4ca19b1a3ab28af305872ec950e5adf47dfdde86f7bb69c8"
+    },
+    {
+      "path": "web/server/sqlite-maintenance-worker.ts",
+      "bytes": 1629,
+      "sha256": "3c9b65a6c0e0dd17f9f9f9d7ff0e436c892964f140bc304b69b29e65dc7f26c2"
+    },
+    {
+      "path": "web/server/sqlite-maintenance.ts",
+      "bytes": 6530,
+      "sha256": "62864d0dc7c7119484e94ca5eb5ad4145383420ec691e1901a64eb3ac3b794b0"
+    },
+    {
+      "path": "web/server/startup-recovery.ts",
+      "bytes": 8684,
+      "sha256": "9f34b10d210b8570b2a09d713831494bb40cba829153f7afd1f84ab87de2b094"
+    },
+    {
+      "path": "web/server/stock-manual-runtime.ts",
+      "bytes": 9485,
+      "sha256": "f5711f67c17847feccd1987e86e18b0d55cd83eb5e2e9381753f7c640056b9be"
+    },
+    {
+      "path": "web/server/stock-plan-evidence.ts",
+      "bytes": 30000,
+      "sha256": "3358c497d0d67f52e9f1b417c43e399b4ee164318cbdc401fe927f83d0a1e004"
+    },
+    {
+      "path": "web/server/stock-plan-review.ts",
+      "bytes": 23640,
+      "sha256": "e655707b1b20d080f10d89f80317ce0cd58903c9e93c01a21dff61c9de895080"
+    },
+    {
+      "path": "web/server/timeline-scheduler.ts",
+      "bytes": 33012,
+      "sha256": "179eeae1b48469117c1b128f67a564c4753d96b9a5eefc8263df90846aacd185"
+    },
+    {
+      "path": "web/tests/a1-2-intraday-regime.test.mjs",
+      "bytes": 8313,
+      "sha256": "f892ee729be2812dec6a086b77581b031fab54a01784804b80e0050073256278"
+    },
+    {
+      "path": "web/tests/a1-3-convexity-ledger.test.mjs",
+      "bytes": 21968,
+      "sha256": "e25a764dac80a6ec2ca63e39f22d0838874604157217fa9342365adee483292a"
+    },
+    {
+      "path": "web/tests/a1-macro-budget.test.mjs",
+      "bytes": 37688,
+      "sha256": "8ac69231af8b2d8fd0b5873d665036c409064dbbbc1bd1d93a83bf432684035e"
+    },
+    {
+      "path": "web/tests/a2-packet-transport.test.mjs",
+      "bytes": 10322,
+      "sha256": "e66c63ee054fbdc642c9d5d96f7c365e8f76de60b710ec706954790b7f65e317"
+    },
+    {
+      "path": "web/tests/codex-production-manager.test.mjs",
+      "bytes": 78498,
+      "sha256": "4a3032a8d10f7eb26c539212ea39cfc03549696ffd7adba5749b79e8d53edd00"
+    },
+    {
+      "path": "web/tests/company-evidence.test.mjs",
+      "bytes": 7076,
+      "sha256": "4295b500634190269439af041ace783a7e99b39ec1f551ff7743738fbb9e6444"
+    },
+    {
+      "path": "web/tests/core-risk-integration.test.mjs",
+      "bytes": 4924,
+      "sha256": "8d8a36296cdc466cc49392441cae0ec8559b27a2f9e5718c80462eb4b5c66a74"
+    },
+    {
+      "path": "web/tests/current-truth-lifecycle-p0.test.mjs",
+      "bytes": 20567,
+      "sha256": "d04f1ad0a9917ca2c01b16ecc5e6eae1bfbc3fe3ab027f5e17a38fb3d6934b35"
+    },
+    {
+      "path": "web/tests/detail-sheet.test.mjs",
+      "bytes": 1942,
+      "sha256": "c3eb5ddaec7dd241f28ec79bbb2958e71374e7858f90ca6ec784aad559f4852d"
+    },
+    {
+      "path": "web/tests/finnhub-company-news.test.mjs",
+      "bytes": 28494,
+      "sha256": "f8a8cc82bda55e3756d37cff6ecc5db532697e61f8bef21fa4af5b756211d326"
+    },
+    {
+      "path": "web/tests/fixed70-breadth-label.test.mjs",
+      "bytes": 3470,
+      "sha256": "443b15aec5addac1ee838bf09d25182b262f7d3b5e2028632e8843aee3ae4ae6"
+    },
+    {
+      "path": "web/tests/four-decisions-evidence.test.mjs",
+      "bytes": 9458,
+      "sha256": "23e47a0a7dd646ab1ccbecec07aa61e0a3feb351c674a88bec6032b9026eb946"
+    },
+    {
+      "path": "web/tests/four-decisions-market.test.mjs",
+      "bytes": 19989,
+      "sha256": "c5c13f048d9718d70081976dc08621678dcf3896ae65c91f8bcf439ac1419694"
+    },
+    {
+      "path": "web/tests/four-decisions-review.test.mjs",
+      "bytes": 8090,
+      "sha256": "c3f4ef3d0fbeeccde24441e3a8edd8e378fbe5e11ed0c5adbf369d62f1ef977d"
+    },
+    {
+      "path": "web/tests/incident-guard.test.mjs",
+      "bytes": 40601,
+      "sha256": "ad2f1a24fd71958a3256b88d96bcacc8d6c0290a0e4d8fc9b37e15a87a818873"
+    },
+    {
+      "path": "web/tests/legacy-prior-context.test.py",
+      "bytes": 18031,
+      "sha256": "7865bfcfc87e5593351a0eb23d9d74a62823070c24825309175b34f26c71f204"
+    },
+    {
+      "path": "web/tests/live-shadow-runtime.test.mjs",
+      "bytes": 96724,
+      "sha256": "cde8461dc8068fb1aa46d2c14218a6391adbbfdc4d925dc0944170702029d58e"
+    },
+    {
+      "path": "web/tests/local-data-core.test.mjs",
+      "bytes": 92861,
+      "sha256": "96b998abd809bf5b504f0919c5e97824d296ec2c898d4cb3a00db2f8ea95df8f"
+    },
+    {
+      "path": "web/tests/local-owner-server.test.mjs",
+      "bytes": 44809,
+      "sha256": "df3ee662837c9c10e20d5fba5b0e45706b1ede663d2a4730026abbe94dafcd5c"
+    },
+    {
+      "path": "web/tests/maintenance-timing.test.mjs",
+      "bytes": 9558,
+      "sha256": "c0953a7eb4005fbea845f818c9ce14bc6b08bb2a01efef3d04b54a26b4428504"
+    },
+    {
+      "path": "web/tests/manager-authoritative-state.test.mjs",
+      "bytes": 16551,
+      "sha256": "4fed312ded151130d08004446f5ad5fb72f8c423bd0524557861d33ff03c7107"
+    },
+    {
+      "path": "web/tests/market-time-news.test.mjs",
+      "bytes": 23222,
+      "sha256": "e88632733a7a602155c888a38e6f4aef8ca0361e5e06fae187cd8a0c685dc4fe"
+    },
+    {
+      "path": "web/tests/market-ui-refresh.test.mjs",
+      "bytes": 8215,
+      "sha256": "ee6f648babb0289759017f9d74a2b2c71339cbad85e4debdb0d1f3aff668e94a"
+    },
+    {
+      "path": "web/tests/next-session-observation-truth.test.mjs",
+      "bytes": 6702,
+      "sha256": "84f7aa3ebc6b5949c9d539a947e2c296af8d3392df531b2edc93786dd26fda53"
+    },
+    {
+      "path": "web/tests/option-strategy.test.mjs",
+      "bytes": 34168,
+      "sha256": "647e734473a04c6fccab8a277006d472b2e3d75f40f95a9c6879cb0fd3b4a96f"
+    },
+    {
+      "path": "web/tests/owner-manual-plan.test.mjs",
+      "bytes": 29123,
+      "sha256": "ea63f202f4821dd31912531ac9c7e314eaf6ad15564a8f43c6ef2c92da3466f7"
+    },
+    {
+      "path": "web/tests/owner-market-truth.test.mjs",
+      "bytes": 30723,
+      "sha256": "c9871b87f5b7b14be3e140910913ad26a0b89353a7ffa48dc9766d6ce7ad2cb8"
+    },
+    {
+      "path": "web/tests/owner-position-plan.test.mjs",
+      "bytes": 52693,
+      "sha256": "39073f77d9b5f4a5d8035bfccf9e8f2a4252256d02f2864560f19a4b11a10e82"
+    },
+    {
+      "path": "web/tests/owner-watch-news.test.mjs",
+      "bytes": 8438,
+      "sha256": "3bb233f712f251faa159e76ba518590b5e931d53f4b1094716671563f9d81c97"
+    },
+    {
+      "path": "web/tests/paper-codex-selection.test.mjs",
+      "bytes": 67062,
+      "sha256": "fc0c2f75f7902173352225b8feaa6213c8d1a08087c3deadf7d7f0c3a45321c4"
+    },
+    {
+      "path": "web/tests/paper-plan-integration.test.mjs",
+      "bytes": 12902,
+      "sha256": "a5f8b35458af3cc2152d0d657c13b8f097c0510eae0565ec146578176ccefffc"
+    },
+    {
+      "path": "web/tests/paper-plan-runtime.test.mjs",
+      "bytes": 126119,
+      "sha256": "64460a2af852be95d7a4595e3d6782d194ac9cc78fcc6c1a04673483e840ebeb"
+    },
+    {
+      "path": "web/tests/paper-plan-ui.test.mjs",
+      "bytes": 75540,
+      "sha256": "2548d8cbd1b6616038319e084debd9210385614793c76f61d15eaf655b71c939"
+    },
+    {
+      "path": "web/tests/paper-plan.test.mjs",
+      "bytes": 72398,
+      "sha256": "d6eaf6827c0890af4f645a752ad859f3f05657b7611ff76e8d73a7bf6b62c878"
+    },
+    {
+      "path": "web/tests/position-copilot.test.mjs",
+      "bytes": 29027,
+      "sha256": "81a9d76400941277f3127a1ffdc51fe579b6cca9589603be1e5129a22a11e239"
+    },
+    {
+      "path": "web/tests/public-python-core.test.mjs",
+      "bytes": 3462,
+      "sha256": "7c079666ea4c54a6fecb8585e85cf4d7963d1d190d3ad6e18290371c623baf0a"
+    },
+    {
+      "path": "web/tests/rendered-html.test.mjs",
+      "bytes": 108953,
+      "sha256": "86219f2564445d91b31a4db86e5af54332c59f53087b504b0450e0570331e1b5"
+    },
+    {
+      "path": "web/tests/review-causal-baseline.test.mjs",
+      "bytes": 4531,
+      "sha256": "ea054c30022874d8dc39b996d4143896116c88edd1e68845652536b58bbb7dcf"
+    },
+    {
+      "path": "web/tests/review-evidence-chain.test.mjs",
+      "bytes": 12275,
+      "sha256": "13afbac38b1754dd6f756a30f192fce62486afb8267246928abab8f484067b8b"
+    },
+    {
+      "path": "web/tests/review-evidence-storage.test.mjs",
+      "bytes": 22092,
+      "sha256": "dd80ee5de47cae8ec938e9416bd332baf430632e65cab49fcabcef9d47d1a0fb"
+    },
+    {
+      "path": "web/tests/review-option-path-order.test.mjs",
+      "bytes": 3962,
+      "sha256": "a437996297a89066aa1a032986b4fa49af206a6f4b577cb9e72381170e07b78c"
+    },
+    {
+      "path": "web/tests/review-option-window.test.mjs",
+      "bytes": 6580,
+      "sha256": "402b4aba9d3b2a85623cb19de380c5f0ecef1e5f03c9ffe186e4043f65372c90"
+    },
+    {
+      "path": "web/tests/robinhood-core-isolation.test.mjs",
+      "bytes": 34742,
+      "sha256": "964fc2f69858fe353f6b0e0ba90a741cf5911afe2b559e4830e648b0f5c281e6"
+    },
+    {
+      "path": "web/tests/robinhood-timing.test.mjs",
+      "bytes": 6892,
+      "sha256": "04afa7972de98a82b3f492ab631856905e08b8cae93d76805deb43df0a5bbfa2"
+    },
+    {
+      "path": "web/tests/spx-observation-collector.test.mjs",
+      "bytes": 17424,
+      "sha256": "ef79ed4faf072590a1ffc47a079f68c38ec8772fda1ad844744883fae62e8279"
+    },
+    {
+      "path": "web/tests/spx-paper-runtime.test.mjs",
+      "bytes": 13837,
+      "sha256": "c2075c42daf130cd93e0e5547e193d9f5ed0af7d78226d454bb6e867d4e4660e"
+    },
+    {
+      "path": "web/tests/spxw-proxy.test.mjs",
+      "bytes": 39753,
+      "sha256": "161837e2dccc5d8e9edcf775ec09b9495529bc4607e8b11027a51fa32a83de3b"
+    },
+    {
+      "path": "web/tests/sqlite-maintenance.test.mjs",
+      "bytes": 29021,
+      "sha256": "edea092cb8b7a2184b08a15a01ae17bbb6b8183c990fdbb8c39b348731cd49ab"
+    },
+    {
+      "path": "web/tests/stock-manual-plan.test.mjs",
+      "bytes": 52970,
+      "sha256": "123ef6ecb589cfbecd0395b6b56c40e0e47d2469a4fdbe56f6a92522b77cacb5"
+    },
+    {
+      "path": "web/tests/stock-manual-runtime.test.mjs",
+      "bytes": 15589,
+      "sha256": "34f412367cd5f3996af79cddc2d474aad95d282adb6a55797032682176d689b6"
+    },
+    {
+      "path": "web/tests/stock-plan-evidence.test.mjs",
+      "bytes": 84896,
+      "sha256": "49a833819f6d86514c591ba59d2e84e0af105e94e9c39965da290bd659a301e7"
+    },
+    {
+      "path": "web/tests/stock-plan-review.test.mjs",
+      "bytes": 21318,
+      "sha256": "8f646973cba3f92d760a31180bf5a38faeb4a4a3796241dab5525c67ecd5bec4"
+    },
+    {
+      "path": "web/tests/synthetic-investment.mjs",
+      "bytes": 2632,
+      "sha256": "52809eabf7f374031de493fc4fb3e4f06289920431851bee616e526517571b1f"
+    },
+    {
+      "path": "web/tests/timeline-scheduler.test.mjs",
+      "bytes": 52334,
+      "sha256": "9f762a66f83754b5e41ee25be41382a9d0029c2de10f6e44e4d09d27aa150444"
+    },
+    {
+      "path": "web/tests/ts-regime-risk.test.mjs",
+      "bytes": 13933,
+      "sha256": "cf9d3ca5dafea292e795fe71b7b08009dc7bdc012646def733a7f2faef360096"
+    },
+    {
+      "path": "web/tests/ts-signal-candidate.test.mjs",
+      "bytes": 10070,
+      "sha256": "c059bb1a5d6db52000969aef19df95d55089d0f8638f5c5d3c18ee69b2f5f63d"
+    },
+    {
+      "path": "web/tsconfig.json",
+      "bytes": 643,
+      "sha256": "1c9ea4bc25b28d6ff89e0f9fd57ae9a670051b23e1b01f0ca567da1fe391ceb7"
+    },
+    {
+      "path": "web/vite.config.ts",
+      "bytes": 1845,
+      "sha256": "c928a0c000a09e0a4447845138d8866f971e103314ad91cce76cfc569351a18b"
+    },
+    {
+      "path": "web/worker/index.ts",
+      "bytes": 1739,
+      "sha256": "0b8156e320fd2723bd7d5734134ba788faa06d75702809192a55dc0f9b73fd47"
+    }
+  ]
+}

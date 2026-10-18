@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "updated_at", "plans"],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "updated_at": {"type": "string"},
+    "plans": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/plan"}
+    }
+  },
+  "$defs": {
+    "nullable_number": {
+      "type": ["number", "null"]
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position_id",
+        "position_snapshot_hash",
+        "status",
+        "source_run_id",
+        "source_event_id",
+        "packet_hash",
+        "receipt_hash",
+        "action",
+        "recommended_quantity",
+        "stop_loss_pct",
+        "take_profit_pct",
+        "invalidation",
+        "completed_at"
+      ],
+      "properties": {
+        "position_id": {"type": "string", "minLength": 1},
+        "position_snapshot_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "EXIT_RECOMMENDED"]
+        },
+        "source_run_id": {"type": "string", "minLength": 1},
+        "source_event_id": {"type": "string"},
+        "packet_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["OBSERVE", "MANUAL_REDUCE", "MANUAL_EXIT"]
+        },
+        "recommended_quantity": {"type": "integer", "minimum": 0},
+        "stop_loss_pct": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "take_profit_pct": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "invalidation": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "completed_at": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

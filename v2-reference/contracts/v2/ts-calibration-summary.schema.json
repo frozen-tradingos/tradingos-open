@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading-os-v2.local/contracts/v2/ts-calibration-summary.schema.json",
+  "title": "Trading OS V2 TS Calibration Summary v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "generated_at",
+    "settlement_count",
+    "resolved_count",
+    "unresolved_count",
+    "mean_brier_score",
+    "probability_buckets",
+    "symbol_direction_accuracy",
+    "source_settlement_hashes"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v2"},
+    "component": {"type": "string", "const": "TS_CALIBRATION_SUMMARY"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "settlement_count": {"type": "integer", "minimum": 0},
+    "resolved_count": {"type": "integer", "minimum": 0},
+    "unresolved_count": {"type": "integer", "minimum": 0},
+    "mean_brier_score": {
+      "oneOf": [
+        {"type": "number", "minimum": 0, "maximum": 2},
+        {"type": "null"}
+      ]
+    },
+    "probability_buckets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/probability_bucket"}
+    },
+    "symbol_direction_accuracy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SPY", "QQQ"],
+      "properties": {
+        "SPY": {"$ref": "#/$defs/direction_accuracy"},
+        "QQQ": {"$ref": "#/$defs/direction_accuracy"}
+      }
+    },
+    "source_settlement_hashes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash"}
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "probability_bucket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "probability_pct",
+        "forecast_count",
+        "hit_count",
+        "realized_rate"
+      ],
+      "properties": {
+        "probability_pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "multipleOf": 5
+        },
+        "forecast_count": {"type": "integer", "minimum": 0},
+        "hit_count": {"type": "integer", "minimum": 0},
+        "realized_rate": {
+          "oneOf": [
+            {"type": "number", "minimum": 0, "maximum": 1},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "direction_accuracy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forecast_count", "correct_count", "accuracy"],
+      "properties": {
+        "forecast_count": {"type": "integer", "minimum": 0},
+        "correct_count": {"type": "integer", "minimum": 0},
+        "accuracy": {
+          "oneOf": [
+            {"type": "number", "minimum": 0, "maximum": 1},
+            {"type": "null"}
+          ]
+        }
+      }
+    }
+  }
+}

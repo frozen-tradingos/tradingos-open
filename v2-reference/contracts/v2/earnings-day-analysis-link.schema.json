@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "scheduled_day",
+    "bulletin_delivery_key",
+    "bulletin_run_id",
+    "bulletin_packet_hash",
+    "bulletin_information_hash",
+    "analysis_reason",
+    "analysis_run_id",
+    "analysis_packet_hash",
+    "analysis_delivery_key",
+    "analysis_receipt_hash",
+    "analysis_context_hash",
+    "analysis_freshness_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v2"},
+    "scheduled_day": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "bulletin_delivery_key": {
+      "type": "string",
+      "pattern": "^a1-earnings-day-[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "bulletin_run_id": {"$ref": "#/$defs/run_id"},
+    "bulletin_packet_hash": {"$ref": "#/$defs/hash"},
+    "bulletin_information_hash": {"$ref": "#/$defs/hash"},
+    "analysis_reason": {
+      "type": "string",
+      "enum": [
+        "早盘固定分析",
+        "中盘固定分析",
+        "晚盘固定分析",
+        "财报当天二次分析"
+      ]
+    },
+    "analysis_run_id": {"$ref": "#/$defs/run_id"},
+    "analysis_packet_hash": {"$ref": "#/$defs/hash"},
+    "analysis_delivery_key": {"$ref": "#/$defs/delivery_key"},
+    "analysis_receipt_hash": {"$ref": "#/$defs/hash"},
+    "analysis_context_hash": {"$ref": "#/$defs/hash"},
+    "analysis_freshness_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+    },
+    "delivery_key": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    }
+  }
+}

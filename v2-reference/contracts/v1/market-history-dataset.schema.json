@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "source",
+    "interval",
+    "symbols",
+    "start_date",
+    "end_date",
+    "source_hashes",
+    "records",
+    "data_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "source": {"type": "string", "const": "tradier"},
+    "interval": {"type": "string", "const": "5min"},
+    "symbols": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string", "enum": ["SPY", "QQQ"]}
+    },
+    "start_date": {
+      "type": "string",
+      "pattern": "^(|\\d{4}-\\d{2}-\\d{2})$"
+    },
+    "end_date": {
+      "type": "string",
+      "pattern": "^(|\\d{4}-\\d{2}-\\d{2})$"
+    },
+    "source_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/bar"}
+    },
+    "data_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "bar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "start_at",
+        "session_date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "properties": {
+        "symbol": {"type": "string", "enum": ["SPY", "QQQ"]},
+        "start_at": {"type": "string", "format": "date-time"},
+        "session_date": {"type": "string", "format": "date"},
+        "open": {"type": "number", "exclusiveMinimum": 0},
+        "high": {"type": "number", "exclusiveMinimum": 0},
+        "low": {"type": "number", "exclusiveMinimum": 0},
+        "close": {"type": "number", "exclusiveMinimum": 0},
+        "volume": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

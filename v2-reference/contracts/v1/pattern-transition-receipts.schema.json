@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "transitions"],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "transitions": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/transition_receipt"}
+    }
+  },
+  "$defs": {
+    "agent_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "evidence_hash"],
+      "properties": {
+        "contract_version": {"type": "string", "const": "v1"},
+        "evidence_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "transition_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transition_id",
+        "run_id",
+        "packet_hash",
+        "receipt_hash",
+        "completed_at",
+        "agent_proof",
+        "discord_message_ids",
+        "all_messages_delivered"
+      ],
+      "properties": {
+        "transition_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "packet_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "completed_at": {"type": "string", "minLength": 1},
+        "agent_proof": {
+          "type": "object",
+          "required": ["TS", "COMMITTEE", "D", "A3_REVIEW", "A3"],
+          "properties": {
+            "TS": {"$ref": "#/$defs/agent_receipt"},
+            "COMMITTEE": {"$ref": "#/$defs/agent_receipt"},
+            "D": {"$ref": "#/$defs/agent_receipt"},
+            "A3_REVIEW": {"$ref": "#/$defs/agent_receipt"},
+            "A3": {"$ref": "#/$defs/agent_receipt"}
+          },
+          "patternProperties": {
+            "^TARGETED_(TS|COMMITTEE|D)$": {
+              "$ref": "#/$defs/agent_receipt"
+            }
+          },
+          "additionalProperties": false
+        },
+        "discord_message_ids": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["a2", "ts", "committee", "d", "a3", "owner"],
+          "properties": {
+            "a2": {"type": "string", "minLength": 1},
+            "ts": {"type": "string", "minLength": 1},
+            "committee": {"type": "string", "minLength": 1},
+            "d": {"type": "string", "minLength": 1},
+            "a3": {"type": "string", "minLength": 1},
+            "owner": {"type": "string", "minLength": 1}
+          }
+        },
+        "all_messages_delivered": {"type": "boolean", "const": true}
+      }
+    }
+  }
+}

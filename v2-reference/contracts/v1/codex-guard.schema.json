@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "status",
+    "faults",
+    "restart_recommended",
+    "owner_message"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "role": {"type": "string", "enum": ["CODEX_GUARD"]},
+    "status": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "BLOCKED"]
+    },
+    "faults": {"type": "array", "items": {"type": "string"}},
+    "restart_recommended": {"type": "boolean"},
+    "owner_message": {"type": "string"}
+  }
+}

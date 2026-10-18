@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "conflict_detected",
+    "review_required",
+    "review_target",
+    "review_question",
+    "provisional_decision",
+    "reason"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "role": {"type": "string", "enum": ["A3_REVIEW"]},
+    "conflict_detected": {"type": "boolean"},
+    "review_required": {"type": "boolean"},
+    "review_target": {
+      "type": "string",
+      "enum": ["TS", "COMMITTEE", "D", "NONE"]
+    },
+    "review_question": {"type": "string"},
+    "provisional_decision": {
+      "type": "string",
+      "enum": ["NO_TRADE", "OBSERVE", "MANUAL_BUY", "MANUAL_ADJUST", "MANUAL_EXIT"]
+    },
+    "reason": {"type": "string"}
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "actionable",
+    "scheduled_day",
+    "timezone",
+    "sunday_day",
+    "sunday_run_id",
+    "sunday_packet_hash",
+    "sunday_information_hash",
+    "sunday_bulletin_delivery_key",
+    "day_bulletin_delivery_key",
+    "candidates",
+    "candidates_hash",
+    "context_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "EARNINGS_DAY_CONTEXT"},
+    "actionable": {"type": "boolean", "const": false},
+    "scheduled_day": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "timezone": {
+      "type": "string",
+      "const": "America/Los_Angeles"
+    },
+    "sunday_day": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sunday_run_id": {"type": "string", "minLength": 1},
+    "sunday_packet_hash": {"$ref": "#/$defs/hash"},
+    "sunday_information_hash": {"$ref": "#/$defs/hash"},
+    "sunday_bulletin_delivery_key": {"type": "string", "minLength": 1},
+    "day_bulletin_delivery_key": {"type": "string", "minLength": 1},
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {"$ref": "#/$defs/candidate"}
+    },
+    "candidates_hash": {"$ref": "#/$defs/hash"},
+    "context_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "symbol",
+        "date",
+        "session",
+        "eps_estimate",
+        "revenue_estimate",
+        "importance_rank",
+        "market_impact_status",
+        "source",
+        "confidence"
+      ],
+      "properties": {
+        "event_id": {"$ref": "#/$defs/hash"},
+        "symbol": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9.-]{0,14}$"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "session": {
+          "type": "string",
+          "enum": ["BMO", "AMC", "UNKNOWN"]
+        },
+        "eps_estimate": {"type": ["number", "null"]},
+        "revenue_estimate": {"type": ["number", "null"]},
+        "importance_rank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "market_impact_status": {
+          "type": "string",
+          "const": "UNVERIFIED_CANDIDATE"
+        },
+        "source": {
+          "type": "string",
+          "const": "Finnhub Earnings Calendar"
+        },
+        "confidence": {"type": "string", "const": "scheduled_event"}
+      }
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "mode",
+    "actionable",
+    "status",
+    "issue_status",
+    "issued_forecast_id",
+    "issued_forecast_hash",
+    "session_date",
+    "session_issued_forecast_ids",
+    "session_inventory_hash",
+    "resolved_forecast_ids",
+    "pending_overdue_forecast_ids"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {
+      "type": "string",
+      "const": "A2_HALF_HOUR_FORECAST"
+    },
+    "mode": {"type": "string", "const": "SHADOW"},
+    "actionable": {"type": "boolean", "const": false},
+    "status": {
+      "type": "string",
+      "enum": ["HEALTHY", "PENDING", "DEGRADED", "INACTIVE"]
+    },
+    "issue_status": {"type": "string", "minLength": 1},
+    "issued_forecast_id": {
+      "type": "string",
+      "pattern": "^$|^hh-[0-9]{8}T[0-9]{4}Z$"
+    },
+    "issued_forecast_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "session_date": {
+      "type": "string",
+      "pattern": "^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "session_issued_forecast_ids": {
+      "$ref": "#/$defs/forecast_ids"
+    },
+    "session_inventory_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "resolved_forecast_ids": {
+      "$ref": "#/$defs/forecast_ids"
+    },
+    "pending_overdue_forecast_ids": {
+      "$ref": "#/$defs/forecast_ids"
+    }
+  },
+  "$defs": {
+    "forecast_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^hh-[0-9]{8}T[0-9]{4}Z$"
+      }
+    }
+  }
+}

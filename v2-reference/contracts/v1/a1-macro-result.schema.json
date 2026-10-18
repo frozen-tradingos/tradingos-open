@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "component",
+    "actionable",
+    "status",
+    "generated_at",
+    "timezone",
+    "market_date",
+    "selection_rule",
+    "schedule_event_fingerprint",
+    "category",
+    "release_name",
+    "scheduled_at",
+    "published_at",
+    "source",
+    "source_url",
+    "raw_item_hash",
+    "confidence",
+    "metrics",
+    "result_hash"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "component": {"type": "string", "const": "A1_MACRO_RESULT"},
+    "actionable": {"type": "boolean", "const": false},
+    "status": {
+      "type": "string",
+      "enum": ["VERIFIED", "MISSING", "DEGRADED"]
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "timezone": {
+      "type": "string",
+      "const": "America/Los_Angeles"
+    },
+    "market_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "selection_rule": {
+      "type": "string",
+      "const": "BLS_OFFICIAL_MARKET_MOVING_RESULTS_CURRENT_MARKET_DATE"
+    },
+    "schedule_event_fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["employment", "inflation"]
+    },
+    "release_name": {
+      "type": "string",
+      "enum": [
+        "Employment Situation",
+        "Job Openings and Labor Turnover Survey",
+        "Consumer Price Index",
+        "Producer Price Index"
+      ]
+    },
+    "scheduled_at": {"type": "string", "format": "date-time"},
+    "published_at": {
+      "oneOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "source": {
+      "oneOf": [
+        {"type": "string", "const": "BLS"},
+        {"type": "null"}
+      ]
+    },
+    "source_url": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^https://www\\.bls\\.gov/"
+        },
+        {"type": "null"}
+      ]
+    },
+    "raw_item_hash": {
+      "oneOf": [
+        {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        {"type": "null"}
+      ]
+    },
+    "confidence": {
+      "oneOf": [
+        {"type": "string", "const": "official_result"},
+        {"type": "null"}
+      ]
+    },
+    "metrics": {
+      "type": "array",
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/metric"}
+    },
+    "result_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "VERIFIED"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "published_at": {"type": "string", "format": "date-time"},
+          "source": {"type": "string", "const": "BLS"},
+          "source_url": {
+            "type": "string",
+            "pattern": "^https://www\\.bls\\.gov/"
+          },
+          "raw_item_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "confidence": {"type": "string", "const": "official_result"},
+          "metrics": {"minItems": 1}
+        }
+      },
+      "else": {
+        "properties": {
+          "published_at": {"type": "null"},
+          "source": {"type": "null"},
+          "source_url": {"type": "null"},
+          "raw_item_hash": {"type": "null"},
+          "confidence": {"type": "null"},
+          "metrics": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "release_name": {
+            "enum": [
+              "Employment Situation",
+              "Job Openings and Labor Turnover Survey"
+            ]
+          }
+        },
+        "required": ["release_name"]
+      },
+      "then": {"properties": {"category": {"const": "employment"}}},
+      "else": {"properties": {"category": {"const": "inflation"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "release_name": {"const": "Employment Situation"},
+          "status": {"const": "VERIFIED"}
+        },
+        "required": ["release_name", "status"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "allOf": [
+                {"$ref": "#/$defs/metric"},
+                {
+                  "properties": {
+                    "name": {
+                      "enum": [
+                        "PAYROLL_EMPLOYMENT_CHANGE",
+                        "UNEMPLOYMENT_RATE",
+                        "AVERAGE_HOURLY_EARNINGS_CHANGE"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "allOf": [
+              {
+                "contains": {
+                  "properties": {
+                    "name": {"const": "PAYROLL_EMPLOYMENT_CHANGE"}
+                  },
+                  "required": ["name"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "name": {"const": "UNEMPLOYMENT_RATE"}
+                  },
+                  "required": ["name"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "name": {"const": "AVERAGE_HOURLY_EARNINGS_CHANGE"}
+                  },
+                  "required": ["name"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "release_name": {
+            "const": "Job Openings and Labor Turnover Survey"
+          },
+          "status": {"const": "VERIFIED"}
+        },
+        "required": ["release_name", "status"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "allOf": [
+                {"$ref": "#/$defs/metric"},
+                {"properties": {"name": {"const": "JOB_OPENINGS"}}}
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "release_name": {"const": "Consumer Price Index"},
+          "status": {"const": "VERIFIED"}
+        },
+        "required": ["release_name", "status"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "allOf": [
+                {"$ref": "#/$defs/metric"},
+                {
+                  "properties": {
+                    "name": {"const": "CONSUMER_PRICE_INDEX_CHANGE"}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "release_name": {"const": "Producer Price Index"},
+          "status": {"const": "VERIFIED"}
+        },
+        "required": ["release_name", "status"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "allOf": [
+                {"$ref": "#/$defs/metric"},
+                {
+                  "properties": {
+                    "name": {
+                      "const": "PRODUCER_PRICE_INDEX_FINAL_DEMAND_CHANGE"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "unit", "period", "preliminary"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "PAYROLL_EMPLOYMENT_CHANGE",
+            "UNEMPLOYMENT_RATE",
+            "AVERAGE_HOURLY_EARNINGS_CHANGE",
+            "JOB_OPENINGS",
+            "CONSUMER_PRICE_INDEX_CHANGE",
+            "PRODUCER_PRICE_INDEX_FINAL_DEMAND_CHANGE"
+          ]
+        },
+        "value": {
+          "type": "number",
+          "minimum": -1000000000000,
+          "maximum": 1000000000000
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["JOBS", "PERCENT", "USD"]
+        },
+        "period": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+        },
+        "preliminary": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": ["PAYROLL_EMPLOYMENT_CHANGE", "JOB_OPENINGS"]
+              }
+            },
+            "required": ["name"]
+          },
+          "then": {"properties": {"unit": {"const": "JOBS"}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "UNEMPLOYMENT_RATE",
+                  "CONSUMER_PRICE_INDEX_CHANGE",
+                  "PRODUCER_PRICE_INDEX_FINAL_DEMAND_CHANGE"
+                ]
+              }
+            },
+            "required": ["name"]
+          },
+          "then": {"properties": {"unit": {"const": "PERCENT"}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {"const": "AVERAGE_HOURLY_EARNINGS_CHANGE"}
+            },
+            "required": ["name"]
+          },
+          "then": {"properties": {"unit": {"const": "USD"}}}
+        }
+      ]
+    }
+  }
+}

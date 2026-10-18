@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "status",
+    "reconciled_position_event_ids",
+    "suppressed_stale_position_event_ids",
+    "failures"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "status": {
+      "type": "string",
+      "enum": ["COMPLETED", "DEGRADED"]
+    },
+    "reconciled_position_event_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "suppressed_stale_position_event_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "COMPLETED"}
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "failures": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "DEGRADED"}
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "failures": {"minItems": 1}
+        }
+      }
+    }
+  ]
+}

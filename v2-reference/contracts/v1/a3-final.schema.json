@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "decision",
+    "score",
+    "underlying",
+    "option_side",
+    "expiration",
+    "strike",
+    "quantity",
+    "max_entry_debit",
+    "stop_loss_pct",
+    "take_profit_pct",
+    "plain_language",
+    "supporting_evidence",
+    "conflicts_resolved",
+    "invalidation",
+    "data_status"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "role": {"type": "string", "enum": ["A3"]},
+    "decision": {
+      "type": "string",
+      "enum": ["NO_TRADE", "OBSERVE", "MANUAL_BUY", "MANUAL_ADJUST", "MANUAL_EXIT"]
+    },
+    "score": {"type": "integer", "minimum": 0, "maximum": 10},
+    "underlying": {"type": "string", "enum": ["SPY", "QQQ", "NONE"]},
+    "option_side": {"type": "string", "enum": ["call", "put", "none"]},
+    "expiration": {"type": "string"},
+    "strike": {"type": "number", "minimum": 0},
+    "quantity": {"type": "integer", "minimum": 0},
+    "max_entry_debit": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total US-dollar budget across the full proposed quantity."
+    },
+    "stop_loss_pct": {"type": "number", "minimum": -100, "maximum": 0},
+    "take_profit_pct": {"type": "number", "minimum": 0, "maximum": 500},
+    "plain_language": {"type": "string"},
+    "supporting_evidence": {"type": "array", "items": {"type": "string"}},
+    "conflicts_resolved": {"type": "array", "items": {"type": "string"}},
+    "invalidation": {"type": "array", "items": {"type": "string"}},
+    "data_status": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "DEGRADED_NO_TRADE", "BLOCKED"]
+    },
+    "earnings_day_coverage": {
+      "$ref": "#/$defs/earnings_day_coverage"
+    }
+  },
+  "$defs": {
+    "earnings_day_coverage": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "symbol", "treatment", "summary"],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "symbol": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9.-]{0,14}$"
+          },
+          "treatment": {
+            "type": "string",
+            "const": "SCHEDULE_RISK_ONLY"
+          },
+          "summary": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

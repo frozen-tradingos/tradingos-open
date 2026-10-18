@@ -1,0 +1,20 @@
+{
+  "name": "tradingos-open-candidate",
+  "version": "0.1.0-preview.1",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.16.0",
+  "engines": { "node": ">=24.0.0 <25" },
+  "scripts": {
+    "deps": "pnpm --dir web install --frozen-lockfile",
+    "setup": "node --experimental-strip-types tools/public-entry.mjs setup",
+    "doctor": "node --experimental-strip-types tools/public-entry.mjs doctor",
+    "start": "node --experimental-strip-types tools/public-entry.mjs start",
+    "build": "pnpm --dir web build",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:web": "pnpm --dir web test",
+    "check:package": "node tools/release-package.mjs check",
+    "package": "node tools/release-package.mjs pack"
+  }
+}

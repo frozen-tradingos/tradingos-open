@@ -1,0 +1,386 @@
+{
+  "snapshot_format": "TRADING_OS_WEB_V2_SNAPSHOT",
+  "snapshot_version": 1,
+  "snapshot_id": "public-synthetic-import-v1",
+  "snapshot_kind": "SANITIZED_TEST_FIXTURE",
+  "captured_at": "2026-07-29T06:31:00-07:00",
+  "v2_reference_commit": "f1b99765d5dd26e70b42969070b34ca68a5d8bb0",
+  "contracts": {
+    "TS_OUTPUT": [
+      {
+        "contract_version": "v2",
+        "role": "TS",
+        "report_type": "OPENING_FORECAST",
+        "evidence_snapshot": {
+          "run_id": "20260729T133018Z-aaaaaaaaaa",
+          "packet_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "analysis_freshness_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "release_commit": "f1b99765d5dd26e70b42969070b34ca68a5d8bb0",
+          "market_time": {
+            "timezone": "America/Los_Angeles",
+            "observed_at": "2026-07-29T06:30:18-07:00",
+            "market_date": "2026-07-29",
+            "state": "OPEN"
+          }
+        },
+        "forecast_window": {
+          "horizon": "OPEN_TO_60_MINUTES",
+          "start_at": "2026-07-29T06:30:18-07:00",
+          "end_at": "2026-07-29T07:30:18-07:00",
+          "end_condition": "AT_TIMESTAMP"
+        },
+        "forecast_update": {
+          "mode": "NEW",
+          "prior_run_id": null,
+          "prior_forecast_hash": null,
+          "prior_status": "NOT_APPLICABLE",
+          "change_summary": "Sanitized test fixture; no prior forecast."
+        },
+        "current_pattern": {
+          "regime": "UNKNOWN",
+          "summary": "Sanitized fixture only; no observed market pattern is asserted."
+        },
+        "one_line_forecast": "Sanitized fixture: range path used only to test the importer.",
+        "path_bias": "RANGE",
+        "symbol_outlooks": {
+          "SPY": {
+            "direction": "RANGE",
+            "relative_strength": "IN_LINE",
+            "summary": "Synthetic fixture value; not a market observation."
+          },
+          "QQQ": {
+            "direction": "RANGE",
+            "relative_strength": "IN_LINE",
+            "summary": "Synthetic fixture value; not a market observation."
+          }
+        },
+        "evidence_assessment": {
+          "core_status": "READY",
+          "core_sources": [
+            "SPY_QUOTE",
+            "QQQ_QUOTE",
+            "MARKET_CLOCK",
+            "A2_STRUCTURE"
+          ],
+          "core_gaps": [],
+          "enhanced_available": [],
+          "enhanced_missing": [
+            "MARKET_MOVING_NEWS",
+            "MACRO_SCHEDULE",
+            "OIL_CONTEXT",
+            "RATES_CONTEXT",
+            "SECTOR_BREADTH",
+            "OPTIONS_POSITIONING",
+            "A2_HISTORICAL_SIMILARITY",
+            "OVERNIGHT_FUTURES"
+          ],
+          "enhancement_gap_effect": "LOWERS_MATURITY_NOT_FORECAST_AVAILABILITY"
+        },
+        "evidence_maturity": {
+          "level": "LOW",
+          "reason": "Sanitized test fixture contains no runtime evidence."
+        },
+        "tradeability": {
+          "status": "WAIT",
+          "reason": "Fixture data is never actionable."
+        },
+        "scenarios": {
+          "main": {
+            "bias": "RANGE",
+            "probability_pct": 50,
+            "summary": "Synthetic main scenario.",
+            "activation": {
+              "logic": "ALL",
+              "conditions": [
+                {
+                  "symbol": "SPY",
+                  "metric": "LAST_PRICE",
+                  "operator": "BETWEEN",
+                  "value": 100,
+                  "upper_value": 101,
+                  "confirmation": "LIVE_QUOTE"
+                }
+              ]
+            },
+            "sequence": [
+              {
+                "order": 1,
+                "label": "Synthetic stage one",
+                "conditions": [
+                  {
+                    "symbol": "SPY",
+                    "metric": "VWAP",
+                    "operator": "AT_OR_ABOVE",
+                    "value": 100,
+                    "upper_value": null,
+                    "confirmation": "ONE_5M_CLOSE"
+                  }
+                ]
+              },
+              {
+                "order": 2,
+                "label": "Synthetic stage two",
+                "conditions": [
+                  {
+                    "symbol": "QQQ",
+                    "metric": "VWAP",
+                    "operator": "AT_OR_BELOW",
+                    "value": 201,
+                    "upper_value": null,
+                    "confirmation": "ONE_15M_CLOSE"
+                  }
+                ]
+              }
+            ],
+            "invalidation": {
+              "logic": "ANY",
+              "conditions": [
+                {
+                  "symbol": "SPY",
+                  "metric": "LAST_PRICE",
+                  "operator": "ABOVE",
+                  "value": 102,
+                  "upper_value": null,
+                  "confirmation": "ONE_15M_CLOSE"
+                }
+              ]
+            }
+          },
+          "reverse": {
+            "bias": "BULLISH",
+            "probability_pct": 30,
+            "summary": "Synthetic reverse scenario.",
+            "activation": {
+              "logic": "ALL",
+              "conditions": [
+                {
+                  "symbol": "QQQ",
+                  "metric": "LAST_PRICE",
+                  "operator": "ABOVE",
+                  "value": 202,
+                  "upper_value": null,
+                  "confirmation": "ONE_5M_CLOSE"
+                }
+              ]
+            },
+            "sequence": [
+              {
+                "order": 1,
+                "label": "Synthetic stage one",
+                "conditions": [
+                  {
+                    "symbol": "QQQ",
+                    "metric": "SESSION_HIGH",
+                    "operator": "AT_OR_ABOVE",
+                    "value": 202,
+                    "upper_value": null,
+                    "confirmation": "ONE_5M_CLOSE"
+                  }
+                ]
+              },
+              {
+                "order": 2,
+                "label": "Synthetic stage two",
+                "conditions": [
+                  {
+                    "symbol": "SPY",
+                    "metric": "SESSION_HIGH",
+                    "operator": "AT_OR_ABOVE",
+                    "value": 101,
+                    "upper_value": null,
+                    "confirmation": "ONE_15M_CLOSE"
+                  }
+                ]
+              }
+            ],
+            "invalidation": {
+              "logic": "ANY",
+              "conditions": [
+                {
+                  "symbol": "QQQ",
+                  "metric": "LAST_PRICE",
+                  "operator": "BELOW",
+                  "value": 199,
+                  "upper_value": null,
+                  "confirmation": "ONE_15M_CLOSE"
+                }
+              ]
+            }
+          },
+          "extreme": {
+            "bias": "BEARISH",
+            "probability_pct": 20,
+            "summary": "Synthetic extreme scenario.",
+            "activation": {
+              "logic": "ALL",
+              "conditions": [
+                {
+                  "symbol": "SPY",
+                  "metric": "LAST_PRICE",
+                  "operator": "BELOW",
+                  "value": 98,
+                  "upper_value": null,
+                  "confirmation": "ONE_15M_CLOSE"
+                }
+              ]
+            },
+            "sequence": [
+              {
+                "order": 1,
+                "label": "Synthetic stage one",
+                "conditions": [
+                  {
+                    "symbol": "SPY",
+                    "metric": "SESSION_LOW",
+                    "operator": "AT_OR_BELOW",
+                    "value": 98,
+                    "upper_value": null,
+                    "confirmation": "ONE_15M_CLOSE"
+                  }
+                ]
+              },
+              {
+                "order": 2,
+                "label": "Synthetic stage two",
+                "conditions": [
+                  {
+                    "symbol": "QQQ",
+                    "metric": "SESSION_LOW",
+                    "operator": "AT_OR_BELOW",
+                    "value": 198,
+                    "upper_value": null,
+                    "confirmation": "ONE_30M_CLOSE"
+                  }
+                ]
+              }
+            ],
+            "invalidation": {
+              "logic": "ANY",
+              "conditions": [
+                {
+                  "symbol": "SPY",
+                  "metric": "LAST_PRICE",
+                  "operator": "ABOVE",
+                  "value": 101,
+                  "upper_value": null,
+                  "confirmation": "ONE_15M_CLOSE"
+                }
+              ]
+            }
+          }
+        },
+        "causal_chains": [],
+        "key_levels": [
+          {
+            "symbol": "SPY",
+            "label": "synthetic_fixture_level",
+            "value": 100,
+            "basis": "SANITIZED_TEST_FIXTURE"
+          },
+          {
+            "symbol": "QQQ",
+            "label": "synthetic_fixture_level",
+            "value": 200,
+            "basis": "SANITIZED_TEST_FIXTURE"
+          }
+        ],
+        "next_validation": {
+          "at": "2026-07-29T06:45:00-07:00",
+          "checkpoint": "OPEN_15M",
+          "purpose": "Exercise the imported-snapshot timeline only."
+        },
+        "most_likely_mistake": "Mistaking a sanitized fixture for runtime evidence.",
+        "historical_similarity_context": {
+          "used": false,
+          "sample_quality": "UNAVAILABLE",
+          "summary": "No historical sample is included."
+        },
+        "hypotheses": [
+          {
+            "id": 1,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 2,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 3,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 4,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 5,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 6,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 7,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 8,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 9,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 10,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 11,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          },
+          {
+            "id": 12,
+            "assessment": "insufficient_data",
+            "reason": "Sanitized fixture."
+          }
+        ],
+        "data_gaps": [
+          "SANITIZED_TEST_FIXTURE",
+          "RUNTIME_EVIDENCE_NOT_INCLUDED"
+        ]
+      }
+    ],
+    "A2_HALF_HOUR_FORECAST": {
+      "contract_version": "v1",
+      "component": "A2_HALF_HOUR_FORECAST",
+      "mode": "SHADOW",
+      "actionable": false,
+      "status": "INACTIVE",
+      "issue_status": "LEGACY_SHADOW_DISABLED",
+      "issued_forecast_id": "",
+      "issued_forecast_hash": "",
+      "session_date": "2026-07-29",
+      "session_issued_forecast_ids": [],
+      "session_inventory_hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "resolved_forecast_ids": [],
+      "pending_overdue_forecast_ids": []
+    },
+    "COMMITTEE_OUTPUT": null,
+    "D_OUTPUT": null,
+    "DELIVERY_RECONCILIATION": null,
+    "ACCEPTANCE": null
+  }
+}

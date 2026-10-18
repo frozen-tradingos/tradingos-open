@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "events"],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "events": {
+      "type": "object",
+      "propertyNames": {
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "additionalProperties": {"$ref": "#/$defs/event_receipt"}
+    }
+  },
+  "$defs": {
+    "agent_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "evidence_hash"],
+      "properties": {
+        "contract_version": {"type": "string", "const": "v1"},
+        "evidence_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "event_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {"const": "AGENT_CYCLE"}
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "agent_proof": {
+                "required": ["TS", "COMMITTEE", "D", "A3_REVIEW", "A3"],
+                "minProperties": 5
+              },
+              "discord_message_ids": {
+                "required": ["a2", "ts", "committee", "d", "a3", "owner"],
+                "minProperties": 6,
+                "maxProperties": 6
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {"const": "FAULT_ONLY"}
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "agent_proof": {
+                "maxProperties": 0
+              },
+              "discord_message_ids": {
+                "required": ["a1", "owner"],
+                "minProperties": 2,
+                "maxProperties": 2
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "event_id",
+        "kind",
+        "run_id",
+        "packet_hash",
+        "receipt_hash",
+        "completed_at",
+        "agent_proof",
+        "discord_message_ids",
+        "all_messages_delivered"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["AGENT_CYCLE", "FAULT_ONLY"]
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "packet_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "completed_at": {
+          "type": "string",
+          "minLength": 1,
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "agent_proof": {
+          "type": "object",
+          "properties": {
+            "TS": {"$ref": "#/$defs/agent_receipt"},
+            "COMMITTEE": {"$ref": "#/$defs/agent_receipt"},
+            "D": {"$ref": "#/$defs/agent_receipt"},
+            "A3_REVIEW": {"$ref": "#/$defs/agent_receipt"},
+            "A3": {"$ref": "#/$defs/agent_receipt"}
+          },
+          "patternProperties": {
+            "^TARGETED_(TS|COMMITTEE|D)$": {
+              "$ref": "#/$defs/agent_receipt"
+            }
+          },
+          "additionalProperties": false
+        },
+        "discord_message_ids": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "a1": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "a2": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "ts": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "committee": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "d": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "a3": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "owner": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        },
+        "all_messages_delivered": {"type": "boolean", "const": true}
+      }
+    }
+  }
+}

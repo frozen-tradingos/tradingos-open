@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "status",
+    "manifest_hash",
+    "symbols"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "status": {"type": "string", "const": "COMPLETED"},
+    "manifest_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "symbols": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["SPY", "QQQ"],
+      "properties": {
+        "SPY": {"$ref": "#/$defs/symbol"},
+        "QQQ": {"$ref": "#/$defs/symbol"}
+      }
+    }
+  },
+  "$defs": {
+    "symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_count",
+        "bar_count",
+        "latest_session_date",
+        "latest_session_bar_count",
+        "dataset_hash",
+        "validation_hash",
+        "sample_count",
+        "eligible"
+      ],
+      "properties": {
+        "session_count": {"type": "integer", "minimum": 1},
+        "bar_count": {"type": "integer", "minimum": 78},
+        "latest_session_date": {"type": "string", "format": "date"},
+        "latest_session_bar_count": {"type": "integer", "const": 78},
+        "dataset_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "validation_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sample_count": {"type": "integer", "minimum": 0},
+        "eligible": {"type": "boolean"}
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "role",
+    "action",
+    "score",
+    "underlying",
+    "option_side",
+    "expiration",
+    "strike",
+    "quantity",
+    "max_entry_debit",
+    "stop_loss_pct",
+    "take_profit_pct",
+    "summary",
+    "entry_conditions",
+    "invalidation",
+    "data_gaps"
+  ],
+  "properties": {
+    "contract_version": {"type": "string", "const": "v1"},
+    "role": {"type": "string", "enum": ["D"]},
+    "action": {
+      "type": "string",
+      "enum": ["MANUAL_BUY", "OBSERVE", "NO_TRADE", "MANUAL_REDUCE", "MANUAL_EXIT"]
+    },
+    "score": {"type": "integer", "minimum": 0, "maximum": 10},
+    "underlying": {"type": "string", "enum": ["SPY", "QQQ", "NONE"]},
+    "option_side": {"type": "string", "enum": ["call", "put", "none"]},
+    "expiration": {"type": "string"},
+    "strike": {"type": "number", "minimum": 0},
+    "quantity": {"type": "integer", "minimum": 0},
+    "max_entry_debit": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total US-dollar budget across the full proposed quantity."
+    },
+    "stop_loss_pct": {"type": "number", "minimum": -100, "maximum": 0},
+    "take_profit_pct": {"type": "number", "minimum": 0, "maximum": 500},
+    "summary": {"type": "string"},
+    "entry_conditions": {"type": "array", "items": {"type": "string"}},
+    "invalidation": {"type": "array", "items": {"type": "string"}},
+    "data_gaps": {"type": "array", "items": {"type": "string"}}
+  }
+}

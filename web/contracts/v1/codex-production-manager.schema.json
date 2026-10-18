@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "manager_run_id", "status", "manager_conclusion", "executive_summary", "findings", "recheck_requests", "requested_actions", "evidence_limits", "next_manager_focus"],
+  "properties": {
+    "contract_version": { "type": "string", "const": "CODEX_PRODUCTION_MANAGER_ACTIVE_V1" },
+    "manager_run_id": { "type": "string", "minLength": 8, "maxLength": 160 },
+    "status": { "type": "string", "enum": ["HEALTHY", "DEGRADED", "BLOCKED"] },
+    "manager_conclusion": { "type": "string", "minLength": 1, "maxLength": 1200 },
+    "executive_summary": { "type": "array", "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 600 } },
+    "findings": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "classification", "priority", "title", "evidence_refs", "evidence", "impact", "recommendation", "codex_can_complete", "shadow_or_forward_required", "owner_required"],
+        "properties": {
+          "code": { "type": "string", "pattern": "^[A-Z0-9_:-]{3,100}$" },
+          "classification": { "type": "string", "enum": ["CONFIRMED_BUG", "DESIGN_GAP", "DATA_INSUFFICIENT", "RESEARCH_HYPOTHESIS", "UNRESOLVED"] },
+          "priority": { "type": "string", "enum": ["P0", "P1", "P2", "RESEARCH"] },
+          "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "evidence_refs": { "type": "array", "maxItems": 12, "items": { "type": "string", "minLength": 1, "maxLength": 400 } },
+          "evidence": { "type": "string", "minLength": 1, "maxLength": 1600 },
+          "impact": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "recommendation": { "type": "string", "minLength": 1, "maxLength": 1200 },
+          "codex_can_complete": { "type": "boolean" },
+          "shadow_or_forward_required": { "type": "boolean" },
+          "owner_required": { "type": "boolean" }
+        }
+      }
+    },
+    "recheck_requests": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["department", "reason"],
+        "properties": {
+          "department": { "type": "string", "enum": ["A1", "A2", "D", "TS", "COMMITTEE", "A3", "PLATFORM"] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 600 }
+        }
+      }
+    },
+    "requested_actions": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "target", "reason", "evidence_refs"],
+            "properties": {
+              "action": { "type": "string", "enum": ["OPEN_INCIDENT", "UPDATE_INCIDENT", "CLOSE_INCIDENT"] },
+              "target": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9:._-]{5,119}$", "description": "MANAGER-layer incident ID or fingerprint only. Never target a deterministic incident; request a PLATFORM recheck for it. New findings need a distinct fingerprint." },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 600 },
+              "evidence_refs": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 400 } }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "target", "reason", "evidence_refs"],
+            "properties": {
+              "action": { "type": "string", "const": "REQUEST_DEPARTMENT_RECHECK" },
+              "target": { "type": "string", "enum": ["A1", "A2", "D", "TS", "COMMITTEE", "A3", "PLATFORM"] },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 600 },
+              "evidence_refs": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 400 } }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "target", "reason", "evidence_refs"],
+            "properties": {
+              "action": { "type": "string", "const": "RUN_READONLY_DATA_PROBE" },
+              "target": { "type": "string", "enum": ["FINNHUB", "ROBINHOOD"] },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 600 },
+              "evidence_refs": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 400 } }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "target", "reason", "evidence_refs"],
+            "properties": {
+              "action": { "type": "string", "const": "REQUEST_FULL_AUDIT" },
+              "target": { "type": "string", "const": "FULL_AUDIT", "description": "Allowed only from DAILY_DELTA; FULL_AUDIT cannot recursively request itself." },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 600 },
+              "evidence_refs": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 400 } }
+            }
+          }
+        ]
+      }
+    },
+    "evidence_limits": { "type": "array", "maxItems": 12, "items": { "type": "string", "minLength": 1, "maxLength": 600 } },
+    "next_manager_focus": { "type": "string", "minLength": 1, "maxLength": 800 }
+  }
+}
