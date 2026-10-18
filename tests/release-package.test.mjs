@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { collect, inspect, inspectText, packageRoot } from '../tools/release-package.mjs';
 
 test('release detects secrets without returning matching values', () => {
@@ -24,6 +24,7 @@ test('release manifest is a source-only allowlist with hashes', async () => {
   assert.ok(manifest.files.some(({ path }) => path === '.agents/skills/tradingos-research/SKILL.md'));
   assert.ok(manifest.files.some(({ path }) => path === 'web/.openai/hosting.json'));
   assert.ok(manifest.files.some(({ path }) => path === 'LICENSE'));
+  assert.ok(manifest.files.some(({ path }) => path === '.gitattributes'));
   assert.ok(manifest.files.some(({ path }) => path === 'tools/run-contained-app.ps1'));
 });
 
@@ -35,5 +36,31 @@ test('generated test directories never enter a release', async () => {
     await writeFile(join(fixture, 'nested', 'worker.ps1'), '# synthetic test output');
     const paths = await collect();
     assert.ok(!paths.some((path) => path.startsWith('web/tests/release-fixture-')));
+  } finally { await rm(fixture, { recursive: true, force: true }); }
+});
+
+test('release excludes case-alias data directories and rejects authentication files', async () => {
+  const work = join(packageRoot, '_工作文件');
+  await mkdir(work, { recursive: true });
+  const fixture = await mkdtemp(join(work, 'release-privacy-'));
+  assert.ok(resolve(fixture).startsWith(resolve(work) + sep));
+  try {
+    for (const root of ['.agents/skills', 'tools', 'tests', 'web/app', 'web/build', 'web/contracts', 'web/server', 'web/tests', 'v2-reference/trading_os_v2', 'v2-reference/contracts', 'v2-reference/tests', 'web/public/samples']) await mkdir(join(fixture, root), { recursive: true });
+    for (const path of await collect(fixture)) {
+      await mkdir(dirname(join(fixture, path)), { recursive: true });
+      await writeFile(join(fixture, path), 'SYNTHETIC RELEASE FIXTURE\n');
+    }
+    for (const directory of ['Data', 'RUNTIME', '.CoDeX']) {
+      await mkdir(join(fixture, 'tools', directory));
+      await writeFile(join(fixture, 'tools', directory, 'synthetic.json'), '{"synthetic":true}');
+    }
+    assert.ok(!(await collect(fixture)).some((path) => /^tools\/(?:data|runtime|\.codex)\//i.test(path)));
+    await inspect(fixture);
+    for (const name of ['.credentials.json', '.AUTH.json']) {
+      const path = join(fixture, 'tools', name);
+      await writeFile(path, '{"synthetic":true}');
+      await assert.rejects(inspect(fixture), (error) => error.message === `Forbidden path: tools/${name}`);
+      await rm(path);
+    }
   } finally { await rm(fixture, { recursive: true, force: true }); }
 });

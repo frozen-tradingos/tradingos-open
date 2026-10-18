@@ -14,7 +14,7 @@ import type { CausalChain, DataSourceState, MarketEvent, MarketIntelligenceState
 import { exchangeDateKey, formatPtTime, isNyseRegularSession, latestCompletedNyseSession, MARKET_5M_MAX_AGE_SECONDS, nyseClosePtMinutes, ptDateKey, robinhoodSessionAt, utcIso } from "../app/market-time.ts";
 import { settleOptionAdvice, type OptionAdviceSettlementInput } from "../app/option-lifecycle.ts";
 import { eligibleForFaultStatistics, eligibleForSuccessStatistics, OPERATIONAL_ANNOTATION_KINDS, schedulerState, timelineOccurrencesForPtDate, utcForPt, type OperationalAnnotation, type OperationalAnnotationKind, type ScheduleCheckpoint, type TsCoreTerminalOutcome } from "../app/timeline-schedule.ts";
-import { checkpointExclusions, emptyTsSettlementOverview, evaluateTsProduct, forecastArchiveClassification, forecastDue, forecastPhase, settleTsForecast, TS_FORECAST_IDENTITY_CONTRACT, TS_FORECAST_PRODUCT_CONTRACT, TS_SCENARIO_WEIGHT_STATUS, TS_SETTLEMENT_CAUSAL_CONTRACT, type AccuracyMetric, type ForecastEligibility, type TsForecastIdentity, type TsSettlementBar, type TsSettlementOverview, type TsSettlementResult } from "../app/ts-settlement.ts";
+import { checkpointExclusions, emptyTsSettlementOverview, evaluateTsProduct, forecastArchiveClassification, forecastDue, forecastPhase, settleTsForecast, TS_BUNDLED_FORECAST_IDENTITY_CONTRACT, TS_FORECAST_IDENTITY_CONTRACT, TS_FORECAST_PRODUCT_CONTRACT, TS_SCENARIO_WEIGHT_STATUS, TS_SETTLEMENT_CAUSAL_CONTRACT, type AccuracyMetric, type ForecastEligibility, type TsForecastIdentity, type TsSettlementBar, type TsSettlementOverview, type TsSettlementResult } from "../app/ts-settlement.ts";
 import { buildTsForecastState, forecastTradingDate } from "../app/ts-forecast-state.ts";
 import { evaluateOwnerTrigger, type OwnerTriggerEvent, type OwnerTriggerOverview, type TriggerChart } from "../app/ts-owner-trigger.ts";
 import { buildCurrentTruth, projectIncidentLifecycle } from "../app/current-truth.ts";
@@ -32,6 +32,7 @@ import { assessPositionRisks, type PositionRiskCheck } from "../server/position-
 import { projectStartupRecovery } from "../server/startup-recovery.ts";
 import { backupSqliteDatabase, checkSqliteDatabase, runSqliteMaintenance } from "../server/sqlite-maintenance.ts";
 import { canonicalJson } from "../server/robinhood-mcp.ts";
+import { verifyBundledSourceIdentity } from "../../tools/source-identity.mjs";
 import { projectStockConditionalPlans, projectStockManualPlans, STOCK_PATTERN_REGIMES, type StockManualPlanOutput } from "../app/stock-manual-plan.ts";
 
 function reviewProofHash(value: unknown) {
@@ -138,6 +139,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   const paperPlans = openPaperPlanStore(database, { readOnly: Boolean(options.readOnly) });
   const investmentProfile = options.investmentProfile ?? "BLANK";
   const runtimeIdentity = options.runtimeIdentity ?? { deployedCommit: process.env.TRADING_OS_DEPLOYED_COMMIT ?? "", runtimeSha256: process.env.TRADING_OS_RUNTIME_SHA256 ?? "" };
+  const bundledSourceClaim = process.env.TRADING_OS_BUNDLED_SOURCE_IDENTITY ?? "";
   const settlementSchemaExisted = Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'ts_settlement_state'").get());
   const optionLifecycleSchemaExisted = Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'option_lifecycle_state'").get());
   if (!options.readOnly) database.exec(`
@@ -1573,7 +1575,11 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const { sourceMode, eligibility, exclusion, slot } = forecastArchiveClassification(envelope.record_id, envelope.output_type, envelope.channel, output);
     const payload = JSON.stringify(output), hash = createHash("sha256").update(payload).digest("hex"), runId = output.evidence_snapshot.run_id;
     const observedAt = utcIso(output.evidence_snapshot.market_time.observed_at), publishedAt = utcIso(receivedAt), delay = Date.parse(publishedAt) - Date.parse(observedAt);
-    const identity: TsForecastIdentity | null = /^[0-9a-f]{40}$/i.test(runtimeIdentity.deployedCommit) && /^[0-9a-f]{64}$/i.test(runtimeIdentity.runtimeSha256) && output.evidence_snapshot.release_commit === V2_REFERENCE_COMMIT && delay >= 0
+    const bundle = delay >= 0 && bundledSourceClaim ? verifyBundledSourceIdentity(bundledSourceClaim, output.evidence_snapshot.release_commit) : null;
+    const identity: TsForecastIdentity | null = bundle
+      ? { contract_id: TS_BUNDLED_FORECAST_IDENTITY_CONTRACT, status: "VERIFIED_RUNTIME", forecast_contract_version: output.contract_version, model_release_commit: null, generator_commit: null, runtime_release_sha256: bundle.runtime_sha256, source_identity: bundle as NonNullable<TsForecastIdentity["source_identity"]>, observed_at: observedAt, received_at: publishedAt, gateway_delay_ms: delay }
+      // Only an explicitly trusted embedding may use the legacy identity; public contexts never fall back to it.
+      : !bundledSourceClaim && process.env.TRADING_OS_PUBLIC_AUTOMATION !== "1" && options.runtimeIdentity && /^[0-9a-f]{40}$/i.test(runtimeIdentity.deployedCommit) && /^[0-9a-f]{64}$/i.test(runtimeIdentity.runtimeSha256) && output.evidence_snapshot.release_commit === V2_REFERENCE_COMMIT && delay >= 0
       ? { contract_id: TS_FORECAST_IDENTITY_CONTRACT, status: "VERIFIED_RUNTIME", forecast_contract_version: output.contract_version, model_release_commit: output.evidence_snapshot.release_commit, generator_commit: runtimeIdentity.deployedCommit.toLowerCase(), runtime_release_sha256: runtimeIdentity.runtimeSha256.toLowerCase(), observed_at: observedAt, received_at: publishedAt, gateway_delay_ms: delay }
       : null;
     const identityPayload = identity ? JSON.stringify(identity) : null, identityHash = identityPayload ? createHash("sha256").update(identityPayload).digest("hex") : null;
@@ -2107,7 +2113,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const trusted: TsSettlementOverview["trusted"] = {
       status: trustedSettled.length >= 30 ? "READY" : "INSUFFICIENT_EVIDENCE",
       message: trustedSettled.length >= 30 ? "UNVALIDATED：已达到初步统计门槛，但尚未同时通过60日、简单基线、MCC、Brier和Risk-Coverage验收" : "UNVALIDATED：当前版本样本不足，尚未证明预测优势",
-      forecast_contract: TS_FORECAST_IDENTITY_CONTRACT, settlement_contract: TS_SETTLEMENT_CAUSAL_CONTRACT, eligibility: "OFFICIAL_LIVE_ONLY",
+      forecast_contract: trustedRows.some((row) => row.identity?.contract_id === TS_BUNDLED_FORECAST_IDENTITY_CONTRACT) ? TS_BUNDLED_FORECAST_IDENTITY_CONTRACT : TS_FORECAST_IDENTITY_CONTRACT, settlement_contract: TS_SETTLEMENT_CAUSAL_CONTRACT, eligibility: "OFFICIAL_LIVE_ONLY",
       time_range: { start_at: trustedTimes[0] ?? null, end_at: trustedTimes.at(-1) ?? null }, forecast_versions: [...new Set(trustedRows.map((row) => row.identity!.forecast_contract_version))], forecast_count: trustedRows.length, settled_count: trustedSettled.length,
       direction: directionMetrics(trustedSettled),
       actions: { sample_count: trustedSettled.length, includes_wait: true, outcomes: [...trustedAction].map(([outcome, count]) => ({ outcome, count })), evidence: trustedSettled.length >= 30 ? "SUFFICIENT" : "INSUFFICIENT" },

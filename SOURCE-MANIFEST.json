@@ -9,6 +9,11 @@
       "sha256": "c965750f47b85f2e4e0fa0d1c9b3aad7e91db8bdf8f7e8fa506c56e83d7c8016"
     },
     {
+      "path": ".gitattributes",
+      "bytes": 81,
+      "sha256": "78eae95ab404f8b4b7685300d766933a77d364a77112c428c71878b7b5821ec9"
+    },
+    {
       "path": ".gitignore",
       "bytes": 503,
       "sha256": "60b9bf029d902da003e4d350212c49d0c67db3fd5a428b6912e4ef32ace062c7"
@@ -25,8 +30,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6974,
-      "sha256": "7e8f3e42a1e144115845ad118710920c6a816fdf43f74c8c53ee79b8fc61affc"
+      "bytes": 8295,
+      "sha256": "f3e8ead8f190bf84152e194ebb5c3c4faf46f93307b234eedfa32ce6ed426270"
     },
     {
       "path": "Start.cmd",
@@ -46,7 +51,7 @@
     {
       "path": "package.json",
       "bytes": 779,
-      "sha256": "ec56c6ce099e06c0b97b5af3ef6d4439a615663e4508fad9c17a1361c1e0d9b5"
+      "sha256": "c47e60a16a47f87a0437472111e8cef1384ee3a9ec705afe28798205a4a52df9"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -64,9 +69,14 @@
       "sha256": "2026961ac82b54b06f60317ba97ccb0fff536c043f4879f7e582382d485ab5f6"
     },
     {
+      "path": "tests/fixtures/secure-input-handoff.mjs",
+      "bytes": 1294,
+      "sha256": "7438ba9d900965796198cde98e17b5b987f5ea5691bff98cecdbf9579cc25314"
+    },
+    {
       "path": "tests/public-entry.test.mjs",
-      "bytes": 5219,
-      "sha256": "3292720adb4a628b5a0fc77f038e19171faf6cf0a4d3a6ca1e16419ca5db3069"
+      "bytes": 7128,
+      "sha256": "25f6c291548c5975752e7da8fee85d27d82bf5b902d4c5bc0ebab5951adcc675"
     },
     {
       "path": "tests/public-privacy.test.mjs",
@@ -75,8 +85,8 @@
     },
     {
       "path": "tests/release-package.test.mjs",
-      "bytes": 2154,
-      "sha256": "03ab45ea272e7e5294405ba79d5c2178286a95df4f00c89a6b3d8c8c02f55cdf"
+      "bytes": 3791,
+      "sha256": "145ec2a1f2af5fe64471195a9f8901d075450d3c72e2d0e4838b12046b89275c"
     },
     {
       "path": "tests/research-profile.test.mjs",
@@ -95,13 +105,13 @@
     },
     {
       "path": "tools/public-entry.mjs",
-      "bytes": 15026,
-      "sha256": "b5a999790712f2cf7d7d8b0934defd6a4fdaa980bee2fa04d704694adcfe2ede"
+      "bytes": 15697,
+      "sha256": "994e8b7bb9740b872d25cf0f6ec8ea7be144c84cc3e48988d5be1cabccdeae95"
     },
     {
       "path": "tools/release-package.mjs",
-      "bytes": 6176,
-      "sha256": "01a19633a12111e310d8b637468a3aad05efd9d6f54f94e9046665c988b0ee61"
+      "bytes": 6242,
+      "sha256": "255eac1bf95e689856b79bb7f808514d7df785c1c93ab08026c1c2b3dd606496"
     },
     {
       "path": "tools/research-profile.mjs",
@@ -117,6 +127,11 @@
       "path": "tools/set-local-password.ps1",
       "bytes": 920,
       "sha256": "9b5c00214c27a2871399f471fbaba88bb1ffc739e17285c7e837897406e0744c"
+    },
+    {
+      "path": "tools/source-identity.mjs",
+      "bytes": 8004,
+      "sha256": "93cc9596a4f5a5cca3e0627737511be687fbceaa189c877b850f94c3ed60beeb"
     },
     {
       "path": "v2-reference/config/system.json",
@@ -296,7 +311,7 @@
     {
       "path": "v2-reference/pyproject.toml",
       "bytes": 260,
-      "sha256": "75bab3314a360a28f2f5ce56df2b063fba344dc893c35381fd480cc4e0bce1ce"
+      "sha256": "de30b57f4481e8d9090e7abceeda1467a24a5f00ad98135003589e3399ec7e39"
     },
     {
       "path": "v2-reference/tests/__init__.py",
@@ -1185,8 +1200,8 @@
     },
     {
       "path": "web/app/page.tsx",
-      "bytes": 171900,
-      "sha256": "fecdd3a84e8a2a2c609cb67dea0edd3229b8a3e8ae3756e6939c432f159cfb4a"
+      "bytes": 172357,
+      "sha256": "d2f39e69ce546b17b5b8146ab7f6d29e6d8252dc6c3d3c4d1a49dfb2cd54a32e"
     },
     {
       "path": "web/app/paper-plan.ts",
@@ -1260,8 +1275,8 @@
     },
     {
       "path": "web/app/ts-settlement.ts",
-      "bytes": 45371,
-      "sha256": "463da7143a78478c0e7c1151812faab43cc2867d03171cfe37a532bcda5bf4fa"
+      "bytes": 45933,
+      "sha256": "593efda60b6a8eaa6d53db854caa3730043c74c849af7873d39251d10599e2d9"
     },
     {
       "path": "web/app/ts-signal-candidate.ts",
@@ -1280,8 +1295,8 @@
     },
     {
       "path": "web/build/local-data-core.ts",
-      "bytes": 302479,
-      "sha256": "31fd153b4e12004eb49491b90bb460bfb66686425cb8c132e03af329dc38ba8d"
+      "bytes": 303596,
+      "sha256": "bafb8879d8e7804fc164280ac85f37fda382451b67d7c957e28603f66c4ac669"
     },
     {
       "path": "web/build/sites-vite-plugin.ts",
@@ -1331,7 +1346,7 @@
     {
       "path": "web/package.json",
       "bytes": 1624,
-      "sha256": "73f5b0ee27a8d6ec576b97d2488ed248df4f83fa77cab920dfa4be62edae0596"
+      "sha256": "c923415375fd1cc9528dccc0f52ce9ed82d97c5a38e43af059ad53416943453f"
     },
     {
       "path": "web/pnpm-lock.yaml",
@@ -1722,6 +1737,11 @@
       "path": "web/tests/robinhood-timing.test.mjs",
       "bytes": 6892,
       "sha256": "04afa7972de98a82b3f492ab631856905e08b8cae93d76805deb43df0a5bbfa2"
+    },
+    {
+      "path": "web/tests/source-identity.test.mjs",
+      "bytes": 13763,
+      "sha256": "45ea4126cbc760a62aa21b3d1a8f1ab9f8d6cbd88d7064b205de532b8969d0d0"
     },
     {
       "path": "web/tests/spx-observation-collector.test.mjs",

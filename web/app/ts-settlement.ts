@@ -7,16 +7,25 @@ export type ForecastPhase = "INITIAL" | "EARLY_REVISION" | "INTRADAY_REVISION" |
 export type ForecastEligibility = "OFFICIAL_LIVE" | "EXCLUDED_REPLAY" | "EXCLUDED_NON_LIVE";
 export type SettlementStatus = "RESOLVED" | "PARTIAL";
 export const TS_FORECAST_IDENTITY_CONTRACT = "TS_FORECAST_IDENTITY@1.0.0" as const;
+export const TS_BUNDLED_FORECAST_IDENTITY_CONTRACT = "TS_FORECAST_IDENTITY@2.0.0" as const;
 export const TS_SETTLEMENT_CAUSAL_CONTRACT = "TS_FORECAST_SETTLEMENT@2.0.0" as const;
 export const TS_FORECAST_PRODUCT_CONTRACT = "TS_FORECAST_PRODUCT@1.0.0" as const;
 export const TS_SCENARIO_WEIGHT_STATUS = "UNCALIBRATED_SCENARIO_WEIGHTS" as const;
 export type TsForecastIdentity = {
-  contract_id: typeof TS_FORECAST_IDENTITY_CONTRACT;
+  contract_id: typeof TS_FORECAST_IDENTITY_CONTRACT | typeof TS_BUNDLED_FORECAST_IDENTITY_CONTRACT;
   status: "VERIFIED_RUNTIME" | "LEGACY_PROJECTION";
   forecast_contract_version: string;
-  model_release_commit: string;
+  model_release_commit: string | null;
   generator_commit: string | null;
   runtime_release_sha256: string | null;
+  source_identity?: {
+    kind: "BUNDLED_SOURCE_SHA256";
+    core_sha256: string;
+    source_sha256: string;
+    runtime_sha256: string;
+    source_origin: { kind: "SOURCE_ARCHIVE" | "GIT_CHECKOUT" | "GIT_METADATA_UNAVAILABLE"; head_commit: string | null; dirty: boolean | null };
+    manifest_status: "ABSENT_LOCAL_CONTENT_ONLY" | "VALIDATED_LOCAL_CONTENT_ONLY";
+  };
   observed_at: string;
   received_at: string;
   gateway_delay_ms: number;
@@ -106,7 +115,7 @@ export type TsProductEvaluation = {
 export type TrustedSettlementCohort = {
   status: "READY" | "INSUFFICIENT_EVIDENCE";
   message: string;
-  forecast_contract: typeof TS_FORECAST_IDENTITY_CONTRACT;
+  forecast_contract: typeof TS_FORECAST_IDENTITY_CONTRACT | typeof TS_BUNDLED_FORECAST_IDENTITY_CONTRACT;
   settlement_contract: typeof TS_SETTLEMENT_CAUSAL_CONTRACT;
   eligibility: "OFFICIAL_LIVE_ONLY";
   time_range: { start_at: string | null; end_at: string | null };

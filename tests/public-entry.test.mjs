@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import childProcess from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import { resolve } from "node:path";
 import test from "node:test";
-import { cleanEnvironment, offlineDoctor, root, safePaths } from "../tools/public-entry.mjs";
+import { cleanEnvironment, offlineDoctor, pythonVenvCommand, root, safePaths } from "../tools/public-entry.mjs";
 import { assertPublicAutomation, publicModelEnvironment, publicProfile } from "../web/server/public-runtime.ts";
 import { withRobinhoodMcp } from "../web/server/robinhood-mcp.ts";
 
@@ -74,4 +76,31 @@ test("auth entry and all model/broker subprocesses explicitly use local file cre
     assert.ok(source.includes('cli_auth_credentials_store="file"'), path);
     assert.ok(source.includes('mcp_oauth_credentials_store="file"'), path);
   }
+});
+
+test("Python discovery verifies 3.13 in priority order before the no-download uv fallback", async (context) => {
+  const success = (version, stream = "stdout") => ({ status: 0, stdout: "", stderr: "", [stream]: version });
+  const absent = { status: null, error: new Error("synthetic missing executable") };
+  const cases = [
+    { replies: [success("Python 3.13.7\r\n")], command: "py.exe", prefix: ["-3.13"] },
+    { replies: [absent, success("Python 3.13.2\n")], command: "python.exe", prefix: [] },
+    { replies: [success("Python 3.12.10"), success("Python 3.14.0"), success("Python 3.13.1", "stderr")], command: "python3", prefix: [] },
+    { replies: [{ status: 1, stdout: "Python 3.13.7" }, success("Python 3.130.0"), absent], command: "uv" },
+  ];
+  for (const scenario of cases) await context.test(scenario.command, (check) => {
+    const calls = [];
+    const mock = check.mock.method(childProcess, "spawnSync", (command, args, options) => {
+      calls.push([command, args]);
+      assert.equal(options.env.TRADING_OS_PUBLIC_AUTOMATION, "0");
+      assert.equal(options.env.OPENAI_API_KEY, undefined);
+      return scenario.replies[calls.length - 1] ?? assert.fail("unexpected executable probe");
+    });
+    syncBuiltinESMExports();
+    try {
+      const [command, args] = pythonVenvCommand();
+      assert.equal(command, scenario.command);
+      assert.deepEqual(calls, [["py.exe", ["-3.13", "--version"]], ["python.exe", ["--version"]], ["python3", ["--version"]]].slice(0, scenario.replies.length));
+      assert.deepEqual(args, command === "uv" ? ["venv", "--no-python-downloads", "--seed", "--python", "3.13", resolve(root, ".venv")] : [...scenario.prefix, "-m", "venv", resolve(root, ".venv")]);
+    } finally { mock.mock.restore(); syncBuiltinESMExports(); }
+  });
 });

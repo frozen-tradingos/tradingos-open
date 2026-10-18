@@ -6,11 +6,11 @@ import { spawnSync } from 'node:child_process';
 
 export const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const roots = ['.agents/skills', 'tools', 'tests', 'web/app', 'web/build', 'web/contracts', 'web/server', 'web/tests', 'v2-reference/trading_os_v2', 'v2-reference/contracts', 'v2-reference/tests', 'web/public/samples'];
-const singles = ['AGENTS.md', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', '.gitignore', 'package.json', 'pnpm-lock.yaml', 'requirements.txt', 'Start.cmd', 'Start.ps1', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'web/eslint.config.mjs', 'web/next-env.d.ts', 'web/next.config.ts', 'web/postcss.config.mjs', 'web/tsconfig.json', 'web/vite.config.ts', 'web/PROJECT_BOUNDARY.json', 'web/.openai/hosting.json', 'web/worker/index.ts', 'v2-reference/pyproject.toml', 'v2-reference/config/system.json'];
+const singles = ['AGENTS.md', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', '.gitignore', '.gitattributes', 'package.json', 'pnpm-lock.yaml', 'requirements.txt', 'Start.cmd', 'Start.ps1', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'web/eslint.config.mjs', 'web/next-env.d.ts', 'web/next.config.ts', 'web/postcss.config.mjs', 'web/tsconfig.json', 'web/vite.config.ts', 'web/PROJECT_BOUNDARY.json', 'web/.openai/hosting.json', 'web/worker/index.ts', 'v2-reference/pyproject.toml', 'v2-reference/config/system.json'];
 const scripts = ['web/scripts/live-shadow-v2.py', 'web/scripts/invoke-live-shadow-step.ps1', 'web/scripts/setup-finnhub.ps1', 'web/scripts/reselect-paper-plans.ts'];
 const textExtensions = new Set(['.md', '.json', '.mjs', '.ts', '.tsx', '.css', '.py', '.toml', '.yaml', '.ps1', '.cmd']);
 const excludedDirectories = new Set(['data', 'runtime', 'node_modules', '.venv', '__pycache__', '.pytest_cache', '.git', '.codex', '.wrangler', '.next', 'dist', '_工作文件', 'release']);
-const blockedNames = /(?:^\.env(?:\.|$)|^auth\.json$|^credentials\.json$|\.(?:sqlite\w*|db|pem|pfx|p12|key|log|pyc)$|production-canary)/i;
+const blockedNames = /(?:^\.env(?:\.|$)|^\.?(?:auth|credentials)\.json$|\.(?:sqlite\w*|db|pem|pfx|p12|key|log|pyc)$|production-canary)/i;
 const rules = [
   ['personal email or private machine path', /\b[A-Za-z0-9._%+-]+@(?:gmail|outlook|hotmail|yahoo)\.com\b|[CD]:[\\/]Codex[\\/]|C:[\\/]Users[\\/](?!Public\b|example\b)/i],
   ['embedded provider credential', /\b(?:sk-proj-|sb_secret_|re_)[A-Za-z0-9_-]{24,}\b/],
@@ -26,7 +26,7 @@ export async function collect(base = packageRoot) {
     for (const entry of await readdir(join(base, rel), { withFileTypes: true })) {
       const next = `${rel}/${entry.name}`;
       if (entry.isSymbolicLink()) throw new Error(`Symlink forbidden: ${next}`);
-      if (entry.isDirectory()) { if (!excludedDirectories.has(entry.name) && rel !== 'web/tests') await walk(next); continue; }
+      if (entry.isDirectory()) { if (!excludedDirectories.has(entry.name.toLowerCase()) && rel !== 'web/tests') await walk(next); continue; }
       if (rel === 'web/tests' && !/\.test\.(mjs|py)$/.test(entry.name) && entry.name !== 'synthetic-investment.mjs') continue;
       if (rel.startsWith('v2-reference/tests') && extname(entry.name) !== '.py') continue;
       if (entry.isFile() && textExtensions.has(extname(entry.name))) paths.push(next);
@@ -40,7 +40,7 @@ export async function inspect(base = packageRoot) {
   const files = await collect(base), entries = [], errors = [];
   for (const rel of files) {
     const target = resolve(base, rel);
-    if (!target.startsWith(resolve(base) + sep) || rel.split('/').some((part) => excludedDirectories.has(part)) || blockedNames.test(rel.split('/').at(-1))) throw new Error(`Forbidden path: ${rel}`);
+    if (!target.startsWith(resolve(base) + sep) || rel.includes(':') || rel.split('/').some((part) => excludedDirectories.has(part.toLowerCase())) || blockedNames.test(rel.split('/').at(-1))) throw new Error(`Forbidden path: ${rel}`);
     for (let part = target; part !== resolve(base); part = dirname(part)) if ((await lstat(part)).isSymbolicLink()) throw new Error(`Linked path forbidden: ${rel}`);
     const data = await readFile(target);
     for (const rule of inspectText(data.toString('utf8'))) errors.push({ file: rel, rule });

@@ -47,10 +47,14 @@ function protect(path) {
   run("icacls.exe", [path, "/inheritance:r", "/grant:r", `${identity.stdout.trim()}:(OI)(CI)(F)`], { stdio: "ignore", windowsHide: true });
 }
 
-async function question(message) {
+export async function question(message) {
   if (!process.stdin.isTTY) throw new Error("This step requires an interactive terminal. Run Start.cmd yourself; never send credentials to chat.");
   const terminal = createInterface({ input: process.stdin, output: process.stdout });
-  try { return (await terminal.question(message)).trim(); } finally { terminal.close(); }
+  try { return (await terminal.question(message)).trim(); } finally {
+    terminal.close();
+    // Let readline release the Windows TTY before a synchronous child reads it.
+    await new Promise(setImmediate);
+  }
 }
 
 async function confirm(message, expected = "YES") {
@@ -80,15 +84,23 @@ export function offlineDoctor() {
   return { checks, offlineReady: checks.slice(0, 6).every(([, pass]) => pass), authorizationStepsComplete: saved.model_login_completed === true && saved.broker_login_completed === true, mode: "BLANK_BY_DEFAULT", origin: "http://127.0.0.1:4160", external_requests: 0, authorization: "Provider validity and data coverage remain unverified until an explicit live run." };
 }
 
+export function pythonVenvCommand() {
+  for (const [command, prefix] of [["py.exe", ["-3.13"]], ["python.exe", []], ["python3", []]]) {
+    const result = spawnSync(command, [...prefix, "--version"], { encoding: "utf8", windowsHide: true, env: cleanEnvironment() });
+    const version = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
+    if (result.status === 0 && /^Python 3\.13\.\d+[a-z0-9.+-]*$/i.test(version)) return [command, [...prefix, "-m", "venv", join(root, ".venv")]];
+  }
+  return ["uv", ["venv", "--no-python-downloads", "--seed", "--python", "3.13", join(root, ".venv")]];
+}
+
 async function install() {
   await confirm("This downloads locked open-source dependencies and builds locally. No paid service is opened. Node.js 24.x, pnpm 11.16.0 and Python 3.13 (or uv with Python 3.13 already available) must already be installed.");
   const pnpm = spawnSync("cmd.exe", ["/d", "/c", "pnpm --version"], { encoding: "utf8", env: cleanEnvironment(), windowsHide: true });
   if (pnpm.status !== 0 || pnpm.stdout.trim() !== "11.16.0") throw new Error("Install pnpm 11.16.0 from https://pnpm.io/installation; automatic global installs are disabled.");
   run("cmd.exe", ["/d", "/c", "pnpm install --frozen-lockfile --store-dir ..\\_工作文件\\pnpm-store"]);
   if (!existsSync(python)) {
-    const py = spawnSync("py.exe", ["-3.13", "--version"], { stdio: "ignore", windowsHide: true, env: cleanEnvironment() });
-    if (py.status === 0) run("py.exe", ["-3.13", "-m", "venv", join(root, ".venv")]);
-    else run("uv", ["venv", "--no-python-downloads", "--seed", "--python", "3.13", join(root, ".venv")]);
+    const [command, args] = pythonVenvCommand();
+    run(command, args);
   }
   run(python, ["-m", "pip", "install", "--require-hashes", "-r", join(root, "requirements.txt")]);
   run("cmd.exe", ["/d", "/c", "pnpm build"]);
@@ -164,7 +176,8 @@ async function launch(live) {
 }
 
 export async function runContainedApp(live = false) {
-  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "tools", "run-contained-app.ps1"), "-NodePath", process.execPath], { cwd: web, env: { ...cleanEnvironment(), TRADING_OS_PUBLIC_AUTOMATION: live ? "1" : "0" }, stdio: ["pipe", "inherit", "inherit"], windowsHide: true });
+  const sourceIdentity = live ? { TRADING_OS_BUNDLED_SOURCE_IDENTITY: JSON.stringify((await import("./source-identity.mjs")).readBundledSourceIdentity(root)) } : {};
+  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "tools", "run-contained-app.ps1"), "-NodePath", process.execPath], { cwd: web, env: { ...cleanEnvironment(), ...sourceIdentity, TRADING_OS_PUBLIC_AUTOMATION: live ? "1" : "0" }, stdio: ["pipe", "inherit", "inherit"], windowsHide: true });
   let stopping = false, forcedStop;
   const stop = () => {
     if (stopping) return;
