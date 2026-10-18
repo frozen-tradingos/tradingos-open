@@ -1,23 +1,23 @@
 # Trading OS Open
 
-在本地研究美股，查看预测依据，记录自己的交易计划并复盘。使用你自己的模型账号和 Robinhood 数据权限。
+在本地研究美股，查看预测依据，记录自己的交易计划并复盘。使用你自己的模型、券商和数据权限，按现有适配接入。
 
-Local-first trading research: TS forecasts, conditional setups, trading plans and reviews. Bring your own model and Robinhood access.
+Local-first trading research: TS forecasts, conditional setups, trading plans and reviews. Bring your own model, broker and data permissions; provider support follows the adapters below.
 
 **Windows x64 · 只读研究 · MIT · v0.1.0-preview.2**
 
-[下载预览版源码包](https://github.com/w1113009511-svg/tradingos-open/releases/tag/v0.1.0-preview.2) · [安装步骤](#首次安装) · [反馈问题](https://github.com/w1113009511-svg/tradingos-open/issues)
+[下载预览版源码包](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.2) · [安装步骤](#首次安装) · [券商与数据源](#券商与数据源) · [反馈问题](https://github.com/frozen-tradingos/tradingos-open/issues)
 
 ## 可以用它做什么
 
 - **预测与条件研究**：查看 TS 市场判断、目标交易日、触发条件和失效条件，保留判断依据。
 - **交易计划与复盘**：记录交易理由和风险限制，回看原始判断与后续市场记录。
-- **行情和持仓工作区**：提供 SPY / QQQ 图表、Robinhood 只读适配和可选 Finnhub 新闻入口。
+- **行情和持仓工作区**：查看 SPY / QQQ 图表及有权读取的持仓，按适配器连接数据；新闻与财报可选，不要求购买指定套餐。
 - **自己的本地研究环境**：独立保存数据和授权；附带 Codex Skill，可用自然语言检查准备状态、研究市场或整理复盘。
 
 **当前是实验预览版。** 已通过 Windows 独立副本的安装、构建和离线测试；真实新用户券商授权、行情读取到首个自然预测的完整流程仍待验收。首次需准备运行环境，模型和数据可能收费。不提供自动下单，不保证预测准确或盈利。
 
-Windows x64 preview; Robinhood is the only implemented broker adapter. Live authorization, market data and a first natural forecast remain unverified end to end. Research only; no automated orders or performance guarantee.
+Windows x64 preview. See the provider table for connected paths and components awaiting integration. Live authorization, market data and a first natural forecast remain unverified end to end. Research only; no automated orders or performance guarantee.
 
 ## 支持范围
 
@@ -25,7 +25,7 @@ Windows x64 preview; Robinhood is the only implemented broker adapter. Live auth
 | --- | --- |
 | 总览、市场、持仓、研究与复盘界面 | 随配套程序提供，空白启动不展示个人历史 |
 | TS 预测管线 | 保留原有 A1/A2/TS/复核/风控合同；需要用户自己的模型和行情授权 |
-| 券商 | 当前适配 Robinhood 官方 MCP，严格只读；不是所有券商通用 |
+| 券商 | 按适配器接入；当前自动流程使用 Robinhood 官方 MCP 只读接口，详见接入状态 |
 | 行情 | 使用该券商实际允许读取的数据；权限、交易时段及新鲜度不足会阻断 |
 | 新闻 | 可选 Finnhub，用户自备密钥并遵守其授权范围 |
 | 模型 | 用户自己的 Codex 登录；额度及费用由其模型服务决定 |
@@ -36,13 +36,60 @@ Windows x64 preview; Robinhood is the only implemented broker adapter. Live auth
 
 “只要授权就能使用”是要达到的体验，不代表可以省略首次环境准备，也不代表数据或模型免费。不要购买未经确认的套餐。
 
+## 券商与数据源
+
+券商账户、行情与期权数据、新闻与财报是不同能力。你可以选择自己有权使用的服务；本项目不附带账户，也不要求购买指定服务商的套餐。**选择其他服务商仍需有可用适配器，当前没有任意填写 API 地址即可切换的通用入口。**
+
+| 接入 | 用途 | 当前公开包的状态 |
+| --- | --- | --- |
+| Robinhood 官方 MCP | 只读账户、持仓、报价、K线及期权 | 已接入默认自动流程；新用户真实授权仍待验收 |
+| Tradier | 报价、历史/分时及期权数据 | 保留行情采集组件，尚未接入公开启动流程；不能填Key后直接替换默认源 |
+| Finnhub，可跳过 | 综合/公司新闻、财报日历及返回结果 | 已有菜单5配置入口；具体端点权限需本人验证，不代替行情Quote/K线 |
+| BLS、BEA、Fed等官方来源 | 宏观日程与官方公布信息 | 保留相应采集逻辑；不等于所有新闻或行情均免费可用 |
+| 其他券商或数据源 | 按用户需要选择 | 需要官方接口、适配与验证；可通过Issues提出需求，不提供已接通承诺 |
+
+更换自动行情源需要适配字段、时区、行情新鲜度及现有研究合同，并重新验证预测与归档。保留过某个平台的组件，不等于该平台已能在当前启动器里使用。暂不接券商也可先用菜单7查看空白工作区。
+
+<details>
+<summary>可选：配置Finnhub新闻与财报</summary>
+
+Finnhub是API服务，不需要另装客户端、插件或SDK。
+
+1. 在 [Finnhub官网](https://finnhub.io/) 自行注册，查看自己账号可用的接口与 [当前套餐](https://finnhub.io/pricing)。先确认是否有满足需求的免费权限；不要为了安装本项目直接升级或绑卡。
+2. 取得自己的API Key后，打开本副本的 `Start.cmd`，选择 **5 Optional Finnhub news key**，在本机隐藏输入框粘贴密钥并回车。不要发到聊天、Issues或截图里。
+3. 启动器把凭据保存到本副本 `web/data/finnhub-credentials.json`，使用Windows机器级DPAPI加密并限制文件访问权限。菜单6只确认本地配置存在，**不证明服务商权限、额度或数据已经验证通过**。
+4. 不想使用Finnhub就跳过菜单5，不要填假Key。应用会把缺失的新闻/财报显示为未配置或降级；依赖这些证据的研究可能保持未就绪，不能把空白当作“没有风险事件”。
+
+当前适配调用 `/news`、`/company-news`、`/calendar/earnings`，没有Finnhub报价/K线替代接口。401/403需检查密钥和端点授权，429需检查额度；不要据此自动购买套餐。菜单8会启用整套研究与模型分析，不是免费的密钥测试按钮。
+
+若不满意，可选择暂不使用，或提出其他官方新闻源的适配需求；当前不能只换一个Key就接入任意新闻平台。配置步骤可供参考，但本人真实服务验证仍待完成。
+
+服务商的数据许可与软件MIT许可不同。Finnhub条款限制个人套餐的商业使用及数据/派生结果的共享；将数据发送给模型服务商或向其他用户展示前，也需核对授权范围。不要多人共用一把Key，不把开源软件理解为取得了行情再分发权。以 [Finnhub官方条款](https://finnhub.io/terms-of-service) 为准。
+
+</details>
+
+## 软件与第三方费用
+
+本项目当前提供免费MIT开源源码，没有订阅、收费解锁或收款入口。用户的模型额度、券商数据权限和可选Finnhub费用由相应服务商收取，需用户自己确认；本项目不代开付费套餐，也不包含这些费用。
+
+未来可另行提供安装协助、技术维护等可选服务。价格、支持范围、取消/退款规则和响应时间尚未确认，**目前未开放购买**；不会把收益保证或自动跟单作为服务承诺。
+
+## 接下来优先补齐
+
+- 图形化首启向导，整合已有环境检查、授权步骤和故障提示。
+- 把其他券商/数据源接入完整流程，验证数据合同与来源切换，而不是只增加一个平台名称。
+- 完成真实授权、有效行情到首个自然预测的验收；合成测试不计入准确率。
+- 补齐授权过期、备份升级、私密安全反馈及未来服务的支持/退款规则。
+
+这些是待完成事项，不属于本预览的已交付承诺。欢迎通过Issues提交复现步骤或适配需求；不要上传账户、密钥或未授权的数据。
+
 ## 首次安装
 
 1. 解压到一个自己的普通文件夹，例如 `D:\02_项目\TradingOS-Open`。不要解压到旧 Trading OS 目录，也不要把数据目录做成指向其他项目的链接。
 2. 准备 Node.js 24 LTS、pnpm 11.16.0、Python 3.13。只从官方渠道安装；首次准备不需要购买服务。
 3. 双击 `Start.cmd`，在菜单中先准备依赖和界面，再设置本地访问密码。
 4. 可先打开空白工作区。地址固定为 `http://127.0.0.1:4160`；端口被占用会停止，不会接管已有进程。
-5. 要使用真实研究，再完成自己的模型登录和 Robinhood 官方只读授权。不要在聊天、截图或问题反馈里发送密钥、验证码、授权链接。
+5. 要使用当前自动研究流程，再完成自己的模型登录与相应适配器授权；当前启动器的券商入口是Robinhood。其他来源见上方接入状态，不要在聊天、截图或问题反馈里发送密钥、验证码、授权链接。
 6. 根据需要配置自己的新闻源，在菜单 9 填写并确认自己的研究资金和风险限额，再从菜单 8 明确启用本次会话的实时只读分析。没有完成的项目继续显示未就绪；没有推荐金额，不替你批准交易。
 
 设置菜单顺序是 **1 → 2 → 3 → 4 → 9 → 6 → 8**；只想先看界面则用菜单 7，不会自动开始行情或预测。模型和券商登录要在各自官方页面由本人确认；不需要邮箱注册本地账号，也不要沿用别人的授权目录。授权页若要求新开户、扩大权限、充值或购买套餐，先停止，核对服务条款与费用。
@@ -104,7 +151,7 @@ pnpm package
 
 ## 安全、反馈与许可
 
-问题、建议和使用反馈通过 [GitHub Issues](https://github.com/w1113009511-svg/tradingos-open/issues) 提交。只附版本、脱敏后的操作步骤和错误文字；先遮住账号、订单、资金、授权链接与密钥。不提供交易带单或专属客服承诺。安全问题不要公开附上凭证、账户数据或可用于攻击他人的细节；先请求维护者提供私密沟通渠道。
+问题、建议和使用反馈通过 [GitHub Issues](https://github.com/frozen-tradingos/tradingos-open/issues) 提交。只附版本、脱敏后的操作步骤和错误文字；先遮住账号、订单、资金、授权链接与密钥。不提供交易带单或专属客服承诺。安全问题不要公开附上凭证、账户数据或可用于攻击他人的细节；先请求维护者提供私密沟通渠道。
 
 只读也涉及敏感信息与第三方服务条款。使用者需要有权读取其账户和行情；开源代码不授予行情转售、公开再分发、交易建议或品牌使用权。
 
