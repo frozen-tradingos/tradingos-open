@@ -39,6 +39,12 @@ test('generated test directories never enter a release', async () => {
   } finally { await rm(fixture, { recursive: true, force: true }); }
 });
 
+test('release includes maintenance guidance and feedback templates', async () => {
+  const paths = await collect();
+  for (const path of ['SECURITY.md', 'CONTRIBUTING.md', 'docs/MAINTENANCE.md', '.github/ISSUE_TEMPLATE/bug_report.md', '.github/ISSUE_TEMPLATE/adapter_request.md', '.github/ISSUE_TEMPLATE/config.yml', '.github/pull_request_template.md']) assert.ok(paths.includes(path), path);
+  assert.ok(!paths.some((path) => path.startsWith('.github/workflows/')));
+});
+
 test('release excludes case-alias data directories and rejects authentication files', async () => {
   const work = join(packageRoot, '_工作文件');
   await mkdir(work, { recursive: true });

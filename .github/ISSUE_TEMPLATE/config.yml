@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "安全漏洞私密报告"
+    url: "https://github.com/frozen-tradingos/tradingos-open/security/advisories/new"
+    about: "漏洞请走私密入口；不要在公开Issue中发送凭据或利用细节。"

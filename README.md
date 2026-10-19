@@ -2,9 +2,9 @@
 
 Trading OS Open 是在自己电脑运行的开源交易研究工具，附带研究助手 Skill。你使用自己的模型账号、券商账号和数据权限，检查预测依据，记录交易计划并复盘。
 
-**Windows 10/11 x64 · 只读研究 · MIT · v0.1.0-preview.4**
+**Windows 10/11 x64 · 只读研究 · MIT · v0.1.0-preview.5**
 
-[下载预览版](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.4) · [首次安装](#首次安装) · [数据源与授权](docs/PROVIDERS.md) · [反馈问题](https://github.com/frozen-tradingos/tradingos-open/issues)
+[下载预览版](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.5) · [首次安装](#首次安装) · [数据源与授权](docs/PROVIDERS.md) · [升级与备份](docs/MAINTENANCE.md) · [反馈问题](https://github.com/frozen-tradingos/tradingos-open/issues/new/choose)
 
 ## 项目定位
 
@@ -25,7 +25,7 @@ Open-source, local-first market research, TS forecasts, trading plans and review
 
 ## 首次安装
 
-1. 从[发行页](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.4)下载 `TradingOS-Open-v0.1.0-preview.4.zip`，完整解压到自己的普通文件夹，例如 `D:\02_项目\TradingOS-Open`。与已有 Trading OS 副本分开放置，不链接旧数据目录。
+1. 从[发行页](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.5)下载 `TradingOS-Open-v0.1.0-preview.5.zip`，完整解压到自己的普通文件夹，例如 `D:\02_项目\TradingOS-Open`。与已有 Trading OS 副本分开放置，不链接旧数据目录。
 2. 双击 `Start.cmd`。首次运行会请求下载许可；输入 `DOWNLOAD` 后，启动器下载并校验固定版本的运行工具，安装锁定依赖，再构建界面。工具保存在本包 `.tools/`，不要求你先安装全局开发工具。
 3. 进入菜单后，选择 **2 设置本地登录密码**，再选 **7 打开工作区**。在 `http://127.0.0.1:4160` 使用 `owner` 和自己的本地密码登录。这里不需要项目的云账号或邮件登录；菜单7不请求行情或模型分析。
 4. 准备连接服务时，按下表完成自己的授权、连接检查和风险资料。授权页要求开户、充值、扩大权限或购买套餐时，先停止并核对费用。
@@ -119,6 +119,8 @@ Open-source, local-first market research, TS forecasts, trading plans and review
 
 新预测记录会绑定本机源码和构建指纹，旧记录不回填升级。这个检查只核对本机内容与记录一致性，不认证发布者、安全性、实际模型调用或预测优势。
 
+升级前先阅读[维护、备份与回退指南](docs/MAINTENANCE.md)，停机后备份本副本的整个 `web/data/`。新版本解压到新目录；跨版本数据迁移尚未全面验收，不要覆盖旧副本或让两个版本共用数据。
+
 ## 随包 Skill
 
 `.agents/skills/tradingos-research/` 提供研究助手指引。在 Codex 中打开本项目后，可以说“检查准备状态”或“按原始证据复盘这次计划”。助手需要先检查来源和权限；它不能代替环境安装或第三方授权，也不能把示例写成真实结果。
@@ -140,6 +142,8 @@ pnpm package
 
 ## 反馈与许可
 
-通过 [GitHub Issues](https://github.com/frozen-tradingos/tradingos-open/issues) 提交问题、适配需求或使用反馈。附上版本、脱敏后的复现步骤和错误文字；遮住账号、订单、资金与授权信息。安全问题先请求维护者提供私密反馈渠道，不公开凭据或攻击细节。
+通过 [GitHub Issues 模板](https://github.com/frozen-tradingos/tradingos-open/issues/new/choose) 提交问题或适配需求。附上版本、脱敏后的复现步骤和错误文字；不要上传全量日志、数据库、备份或未脱敏截图。代码贡献请先读[贡献指南](CONTRIBUTING.md)，按 PR 模板记录实际检查和未验证部分。
+
+安全漏洞请通过[私密报告入口](https://github.com/frozen-tradingos/tradingos-open/security/advisories/new)提交，先读[安全说明](SECURITY.md)。不要在公开 Issue 或 PR 披露凭据或攻击细节。开启私密报告不代表完成安全审计。
 
 项目源码采用 [MIT](LICENSE)，第三方组件保留各自许可，详见[第三方说明](THIRD-PARTY-NOTICES.md)。你需要遵守服务商条款，并核验研究结果。软件按原样提供，可能存在错误；交易决定及损失由使用者承担。
