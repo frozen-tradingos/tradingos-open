@@ -143,37 +143,8 @@ class PositionMonitorScheduleTests(unittest.TestCase):
             details["monitor_hash"],
         )
 
-    def test_installer_registers_one_minute_two_minute_limit_task(self) -> None:
-        script = (ROOT / "scripts" / "install_tasks.ps1").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('"TradingOSV2-Position-Monitor"', script)
-        self.assertIn(
-            '"-m trading_os_v2.cli position-monitor --scheduled"',
-            script,
-        )
-        self.assertIn(
-            "$positionMonitorTrigger = New-ScheduledTaskTrigger",
-            script,
-        )
-        self.assertIn('-At "06:30:30"', script)
-        self.assertIn(
-            "-RepetitionInterval (New-TimeSpan -Minutes 1)",
-            script,
-        )
-        self.assertIn(
-            "$positionMonitorSettings = New-ScheduledTaskSettingsSet",
-            script,
-        )
-        self.assertIn(
-            "-ExecutionTimeLimit (New-TimeSpan -Minutes 2)",
-            script,
-        )
-        self.assertIn(
-            "-ExecutionTimeLimit (New-TimeSpan -Minutes 30)",
-            script,
-        )
-        self.assertIn("-MultipleInstances IgnoreNew", script)
+    def test_owner_position_monitor_task_installer_is_not_distributed(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "install_tasks.ps1").exists())
 
     def test_task_manifest_contains_position_monitor(self) -> None:
         with (

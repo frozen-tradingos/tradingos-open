@@ -54,7 +54,7 @@ export type TsSettlementResult = {
   forecast_run_id: string;
   settled_at: string;
   status: SettlementStatus;
-  source: "ROBINHOOD";
+  source: "ROBINHOOD" | "TRADIER";
   source_snapshot_hashes: string[];
   observation_window: { start_at: string; end_at: string; target_market_dates: string[]; observed_at?: string; received_at?: string; gateway_delay_ms?: number; first_scorable_bar_at?: string; bar_count?: number };
   actual_scenario: "MAIN" | "REVERSE" | "EXTREME" | "UNRESOLVED";
@@ -67,7 +67,7 @@ export type TsSettlementResult = {
   pattern_result: { status: "PERSISTED" | "TRANSITIONED" | "NOT_SCORABLE"; published_regime?: string; realized_regime?: string; reason: string };
   amplitude_result?: { status: "OBSERVED"; symbols: Record<"SPY" | "QQQ", { net_move_pct: number; range_pct: number }> };
   tradeability_result?: { published_status: TsOutput["tradeability"]["status"]; outcome: "WAIT_DISCIPLINE_PRESERVED" | "WAIT_REVIEW_REQUIRED" | "CONDITION_TRIGGERED" | "CONDITION_NOT_TRIGGERED" | "READY_CONFIRMED" | "READY_NOT_CONFIRMED"; reason: string };
-  swing_observation?: { basis: "ROBINHOOD_REGULAR_SESSION"; holding_style: "MANUAL_SINGLE_LEG_0_TO_15_DTE"; execution_scope: "READ_ONLY_NO_ORDER_ACTION"; symbols: Record<"SPY" | "QQQ", TsSwingObservation> };
+  swing_observation?: { basis: "ROBINHOOD_REGULAR_SESSION" | "TRADIER_REGULAR_SESSION"; holding_style: "MANUAL_SINGLE_LEG_0_TO_15_DTE"; execution_scope: "READ_ONLY_NO_ORDER_ACTION"; symbols: Record<"SPY" | "QQQ", TsSwingObservation> };
   symbols: Record<"SPY" | "QQQ", {
     forecast_direction: "BULLISH" | "BEARISH" | "RANGE";
     actual_direction: "BULLISH" | "BEARISH" | "RANGE";
@@ -457,7 +457,7 @@ function realizedRegime(bars: Record<"SPY" | "QQQ", MetricBar[]>, issuedAt: numb
 }
 function levelKind(label: string) { return /support|支撑/i.test(label) ? "support" : /resistance|阻力/i.test(label) ? "resistance" : null; }
 
-export function settleTsForecast(output: TsOutput, history: Record<"SPY" | "QQQ", TsSettlementBar[]>, settledAt: string, identity?: TsForecastIdentity): TsSettlementResult | null {
+export function settleTsForecast(output: TsOutput, history: Record<"SPY" | "QQQ", TsSettlementBar[]>, settledAt: string, identity?: TsForecastIdentity, marketSource: "ROBINHOOD" | "TRADIER" = "ROBINHOOD"): TsSettlementResult | null {
   const causal = Boolean(identity), issuedAt = Date.parse(identity?.received_at ?? output.evidence_snapshot.market_time.observed_at), startAt = Math.max(Date.parse(output.forecast_window.start_at), issuedAt);
   const end = output.forecast_window.end_at ? Date.parse(output.forecast_window.end_at) : null;
   if (causal && end !== null && Date.parse(settledAt) < end) return null;
@@ -523,7 +523,7 @@ export function settleTsForecast(output: TsOutput, history: Record<"SPY" | "QQQ"
   const firstScorable = observed.selected.SPY[0].begins_at;
   return {
     contract_version: causal ? "v2" : "v1", component: "TS_FORECAST_SETTLEMENT", ...(causal ? { settlement_contract_id: TS_SETTLEMENT_CAUSAL_CONTRACT, forecast_identity: identity } : {}), forecast_run_id: output.evidence_snapshot.run_id, settled_at: new Date(settledAt).toISOString(),
-    status: actualScenario === "UNRESOLVED" ? "PARTIAL" : "RESOLVED", source: "ROBINHOOD", source_snapshot_hashes: sourceHashes,
+    status: actualScenario === "UNRESOLVED" ? "PARTIAL" : "RESOLVED", source: marketSource, source_snapshot_hashes: sourceHashes,
     observation_window: { start_at: new Date(issuedAt).toISOString(), end_at: new Date(Math.max(...ends)).toISOString(), target_market_dates: observed.dates, ...(causal ? { observed_at: identity!.observed_at, received_at: identity!.received_at, gateway_delay_ms: identity!.gateway_delay_ms, first_scorable_bar_at: firstScorable, bar_count: observed.selected.SPY.length } : {}) },
     actual_scenario: actualScenario, scenario_probabilities: probabilities, scenario_results: scenarioResults, scenario_resolution: resolution, brier_score: brier,
     path_result: actualScenario === "MAIN" ? "MAIN_CORRECT" : actualScenario === "UNRESOLVED" ? "UNRESOLVED" : "ALTERNATE_PATH",
@@ -531,7 +531,7 @@ export function settleTsForecast(output: TsOutput, history: Record<"SPY" | "QQQ"
     pattern_result: patternResult,
     amplitude_result: { status: "OBSERVED", symbols: Object.fromEntries(symbols.map((symbol) => [symbol, { net_move_pct: symbolResults[symbol].return_pct, range_pct: Number(((symbolResults[symbol].actual_high - symbolResults[symbol].actual_low) / symbolResults[symbol].start_price * 100).toFixed(6)) }])) as Record<"SPY" | "QQQ", { net_move_pct: number; range_pct: number }> },
     tradeability_result: tradeabilityResult,
-    swing_observation: { basis: "ROBINHOOD_REGULAR_SESSION", holding_style: "MANUAL_SINGLE_LEG_0_TO_15_DTE", execution_scope: "READ_ONLY_NO_ORDER_ACTION", symbols: swingSymbols },
+    swing_observation: { basis: marketSource === "TRADIER" ? "TRADIER_REGULAR_SESSION" : "ROBINHOOD_REGULAR_SESSION", holding_style: "MANUAL_SINGLE_LEG_0_TO_15_DTE", execution_scope: "READ_ONLY_NO_ORDER_ACTION", symbols: swingSymbols },
     symbols: symbolResults,
     notes: actualScenario === "UNRESOLVED" ? ["方向可以独立结算；三条路径没有形成唯一且完整的可校准结果"] : [],
   };

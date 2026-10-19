@@ -129,19 +129,20 @@ test("production Finnhub cache reads existing approved candidates, never waits o
   const block = source.slice(start, source.indexOf("\n  const sessionFor", start));
   assert.match(block, /approvedCapabilities/);
   assert.doesNotMatch(block, /withRobinhoodMcp|runOnce|runTsCore|executeStep/);
-  const createCheck = new Function("snapshots", "collectFinnhubOfficial", "options", "resolve", "dataRoot", "publicAutomationEnabled", `let finnhubCache = null;\n${block}\nreturn finnhubNews;`);
+  const createCheck = new Function("snapshots", "collectFinnhubOfficial", "options", "resolve", "dataRoot", "publicAutomationEnabled", "activeSourceSelection", "projectRoot", `let finnhubCache = null;\n${block}\nreturn finnhubNews;`);
   const received = [];
   const collect = async (options) => { received.push(options); return { source: { status: "LIVE", error: null }, events: [article(1)] }; };
   let reads = 0;
   const getActiveAsync = async () => { throw Error("full snapshot read is forbidden for news coverage"); };
-  const check = createCheck({ getActiveAsync, getMarketRadar: () => { reads++; return { snapshot: approvedCapabilities }; } }, collect, { finnhubCredentialPath: "unused" }, () => "unused", "unused", () => true);
+  const selected = () => ({ selected: { news: { provider: "FINNHUB" } } });
+  const check = createCheck({ getActiveAsync, getMarketRadar: () => { reads++; return { snapshot: approvedCapabilities }; } }, collect, { finnhubCredentialPath: "unused" }, () => "unused", "unused", () => true, selected, "unused");
   const first = check();
   assert.equal(check(), first, "existing cache coalesces the new coverage too");
   assert.equal((await first).source.status, "LIVE");
   assert.equal(received.length, 1);
   assert.equal(reads, 1, "one exact archived-candidate read, no snapshot worker");
   assert.equal(received[0].approvedCapabilities, approvedCapabilities);
-  const failed = createCheck({ getActiveAsync, getMarketRadar: () => { throw Error("fixture read failure"); } }, collect, { finnhubCredentialPath: "unused" }, () => "unused", "unused", () => true);
+  const failed = createCheck({ getActiveAsync, getMarketRadar: () => { throw Error("fixture read failure"); } }, collect, { finnhubCredentialPath: "unused" }, () => "unused", "unused", () => true, selected, "unused");
   const result = await failed();
   assert.equal(received[1].approvedCapabilities, undefined);
   assert.equal(result.source.status, "DEGRADED");
@@ -152,6 +153,10 @@ test("production Finnhub cache reads existing approved candidates, never waits o
     return { source: { status: "NOT_CONFIGURED" }, events: [] };
   }, {}, () => "unused", "unused", () => false);
   assert.equal((await blocked()).source.status, "NOT_CONFIGURED", "the offline branch never supplies stored credentials");
+  const unselected = createCheck({ getMarketRadar: () => assert.fail("unselected provider must not read candidates") }, async (options) => {
+    assert.equal(options.token, ""); return { source: { status: "NOT_CONFIGURED" }, events: [] };
+  }, {}, () => "unused", "unused", () => true, () => ({ selected: { news: { provider: "NONE" } } }), "unused");
+  assert.equal((await unselected()).source.status, "NOT_CONFIGURED");
 });
 
 // Isolated synthetic articles only: these URLs are shape fixtures, never fetched.

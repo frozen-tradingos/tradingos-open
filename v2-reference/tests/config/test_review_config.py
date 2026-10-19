@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
-from trading_os_v2.common.config import load_config
+from trading_os_v2.common.config import PACKAGE_ROOT, load_config, package_data_path
 
 
 class ReviewConfigurationTests(unittest.TestCase):
-    def test_daily_review_is_dedicated_and_stored_on_d_drive(self) -> None:
+    def test_daily_review_is_local_and_discord_delivery_is_disabled(self) -> None:
         config = load_config()
-        self.assertEqual(
-            config["discord"]["channels"]["daily_review"],
-            "1532218958223249638",
-        )
+        self.assertFalse(config["discord"]["enabled"])
+        self.assertEqual(config["discord"]["channels"], {})
         self.assertEqual(config["schedule"]["daily_review"], "18:20")
         self.assertEqual(
-            config["review"]["storage_root"],
-            "D:/TradingOSV2/reviews",
+            package_data_path(Path(config["review"]["storage_root"])),
+            PACKAGE_ROOT / "web" / "data" / "reviews",
         )
         self.assertFalse(config["review"]["contains_secrets"])
 
@@ -29,16 +28,11 @@ class ReviewConfigurationTests(unittest.TestCase):
         self.assertIn("开盘15分钟验证", required)
         self.assertIn("开盘30分钟验证", required)
 
-    def test_a1_information_channels_are_dedicated(self) -> None:
-        channels = load_config()["discord"]["channels"]
-        self.assertEqual(
-            channels["earnings_calendar"],
-            "1532442961705701438",
-        )
-        self.assertEqual(
-            channels["major_news"],
-            "1532442963018383531",
-        )
+    def test_no_private_discord_identity_or_information_channel_is_bundled(self) -> None:
+        discord = load_config()["discord"]
+        self.assertEqual(discord["guild_id"], "")
+        self.assertEqual(discord["owner_user_id"], "")
+        self.assertEqual(discord["channels"], {})
 
     def test_owner_approved_spread_rule_is_exact(self) -> None:
         spread = load_config()["trading_rules"]["spread_rule"]

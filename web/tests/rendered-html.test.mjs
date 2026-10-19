@@ -485,7 +485,7 @@ test("renders distinct owner pages and the isolated approved forecast shell", as
 
   const forecast = pages["/forecast"];
   for (const marker of ["基础行情与 TS 图层", "下一交易日初步观察", "TS专业看盘", "返回 Trading OS 主站", "Owner Trigger Layer", "当前预测", "本时段尚无正式预测", "预测增强研究", "原概率", "不自动下单", "基础K线", "TS图层", "历史70 / 预测30", "历史60 / 预测40", "历史50 / 预测50", "预测专注", "现在 · TS发布", "决策栏", "专注看盘", "Shadow · 严格只读"]) assert.match(forecast, new RegExp(marker));
-  for (const marker of ["SPY → SPXW Proxy Mode", "分析基准：", "SPY代理结构", "SPX现货数据：", "不可用", "Robinhood 官方只读报价", "观测变化（不是真实收益）", "手动查询不会改选 Strike", "source_mode=OWNER_OBSERVED", "Shadow · 不执行交易"]) assert.match(forecast, new RegExp(marker));
+  for (const marker of ["SPY → SPXW Proxy Mode", "分析基准：", "SPY代理结构", "SPX现货数据：", "不可用", "券商只读报价", "观测变化（不是真实收益）", "手动查询不会改选 Strike", "source_mode=OWNER_OBSERVED", "Shadow · 不执行交易"]) assert.match(forecast, new RegExp(marker));
   for (const marker of ["SPX期权凸性机会账本", "Owner本金适配", "Ask/Bid可执行证据", "观察变化不进入账户P/L"]) assert.match(forecast, new RegExp(marker));
   for (const forbidden of ["SPX实时价格", "SPX 5分钟K线", "SPX成交量", "SPX VWAP", "SPX自动跌破"]) assert.doesNotMatch(forecast, new RegExp(forbidden));
   assert.match(forecast, /approved-cockpit prototype-shell/);
@@ -943,6 +943,33 @@ test("health presentation separates stale evidence from incidents and uses only 
   const researchDebt = present(truth, { ...current, overall: "DEGRADED", status: "需要关注" }, "");
   assert.equal(researchDebt.systemSurfaceStatus, "HEALTHY", "isolated research or provider limits without active incidents do not become a global failure");
   assert.equal(researchDebt.systemResult, "正常");
+});
+
+test("a new user's successful blank snapshot is unconnected, not endless loading or a claimed broker feed", async () => {
+  const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const declarations = ["hasRuntimeData", "marketSourceConfigured", "quoteBarResult"].map((name) => {
+    const declaration = page.match(new RegExp(`  const ${name} = [\\s\\S]*?;`))?.[0];
+    assert.ok(declaration, `${name} is tested from the actual page`); return declaration;
+  }).join("\n");
+  const present = new Function("snapshotUpdatedAt", "importState", "marketSources", "currentTruth", "marketIsClosed", `${declarations} return { hasRuntimeData, quoteBarResult };`);
+  const blank = { outputCount: 0, runLedger: { eventCount: 0 }, dataSources: [{ source: "ROBINHOOD", configured: false }, { source: "TRADIER", configured: false }, { source: "FINNHUB", configured: true }] };
+  const truth = { market_data_health: { quote_health: "NOT_VERIFIED", bar_health: "NOT_VERIFIED" } };
+  assert.equal(present(null, blank, null, truth, false).hasRuntimeData, false, "the initial request may still be loading");
+  assert.deepEqual(present(1, blank, null, truth, false), { hasRuntimeData: true, quoteBarResult: "Quote / Bar 未连接" });
+  const configured = { ...blank, dataSources: [{ source: "TRADIER", configured: true }] };
+  assert.equal(present(1, configured, null, truth, false).quoteBarResult, "Quote / Bar 未验证");
+  assert.equal(present(1, configured, {}, { market_data_health: { quote_health: "LIVE", bar_health: "LIVE" } }, false).quoteBarResult, "Quote / Bar 正常");
+  assert.match(page, /setSnapshotUpdatedAt\(restored.snapshotGeneratedAt \? Date.parse\(restored.snapshotGeneratedAt\) : Date.now\(\)\)/);
+  const chart = await readFile(new URL("../app/ApprovedBrokerChartPrototype.tsx", import.meta.url), "utf8");
+  const label = chart.match(/ {2}const marketSourceLabel = .*;/)?.[0]; assert.ok(label);
+  const sourceLabel = new Function("activeData", `${label} return marketSourceLabel;`);
+  assert.equal(sourceLabel(null), "未连接"); assert.equal(sourceLabel({ source: "NOT_CONFIGURED" }), "未连接");
+  assert.equal(sourceLabel({ source: "TRADIER" }), "TRADIER"); assert.equal(sourceLabel({ source: "ROBINHOOD" }), "ROBINHOOD");
+  assert.match(chart, /source: "ROBINHOOD" \| "TRADIER" \| "NOT_CONFIGURED"/);
+  assert.match(chart, /chart-brand[^>]*>\{symbol\} · \{marketSourceLabel\}/);
+  const research = page.match(/<section className="panel priority-section" id="event-observation">[\s\S]*?<\/section>/)?.[0];
+  assert.ok(research); assert.match(research, /事件资料核验/); assert.match(research, /未接通，不计入当前预测/); assert.match(research, /查看资料状态/);
+  assert.doesNotMatch(research, /本期4个事件|5条修订|2026-09-27|2026年9月27日/);
 });
 
 test("uses one health meaning for normal close, history and real failures", () => {

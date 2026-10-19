@@ -5,8 +5,8 @@
   "files": [
     {
       "path": ".agents/skills/tradingos-research/SKILL.md",
-      "bytes": 4550,
-      "sha256": "c965750f47b85f2e4e0fa0d1c9b3aad7e91db8bdf8f7e8fa506c56e83d7c8016"
+      "bytes": 5451,
+      "sha256": "53b7add11aeba40492ae4a65d162a69553f60d959803642f6797745b26eda65e"
     },
     {
       "path": ".gitattributes",
@@ -30,28 +30,33 @@
     },
     {
       "path": "README.md",
-      "bytes": 13954,
-      "sha256": "95ad845e34794a7c2a77398bab4fcced491942645cf3a0d3a64901d8ca852343"
+      "bytes": 8768,
+      "sha256": "1d61bd34954888828bb7e72dec601e13eeefcb26e148abb3615179e5a8bb8636"
     },
     {
       "path": "Start.cmd",
-      "bytes": 89,
-      "sha256": "4ac485c47831a1a4a1a57085d3c0a17af7a912fa38be23ea2cfd163e268dcc93"
+      "bytes": 341,
+      "sha256": "3b83ee15a8d2a23b69d08395c1b4e128816c3aa0087b0e2730503b91de7ff2fa"
     },
     {
       "path": "Start.ps1",
-      "bytes": 330,
-      "sha256": "2023bb031b15419210e9e6a24ce7628a9cf885d2168307188e0245a08e5c7689"
+      "bytes": 1441,
+      "sha256": "93798c5b1556a2dc1b2e871d3c05a50a440a33f1d0107f42ea0184d1080f544c"
     },
     {
       "path": "THIRD-PARTY-NOTICES.md",
-      "bytes": 1910,
-      "sha256": "5fa11cffe8c5e1976653d7bd6de36d15f2a2775743acb763999056f23789c9e5"
+      "bytes": 2170,
+      "sha256": "6a99c9bd20d83a6c1f524f8ca28b39b3cc8fb41bc765796da8d0397dd101b9e1"
+    },
+    {
+      "path": "docs/PROVIDERS.md",
+      "bytes": 7723,
+      "sha256": "e784ebe218691fba544ed1c066641ebfbb6e5914855aef4dbfbfc34d512817a0"
     },
     {
       "path": "package.json",
       "bytes": 779,
-      "sha256": "c47e60a16a47f87a0437472111e8cef1384ee3a9ec705afe28798205a4a52df9"
+      "sha256": "79b2d6cadf4716d7cb689150901d51775efc4ec766c850a7ee7fec0f5eac9772"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -64,9 +69,14 @@
       "sha256": "8cd141182cffd9c462e19092556f85da43cf4d41fdfac4ca093a86d6e973308f"
     },
     {
+      "path": "tests/bootstrap-runtime.test.mjs",
+      "bytes": 12060,
+      "sha256": "7166e2355f99450216b4b647890720e2481c72e4c056704e1c2f221ac702cead"
+    },
+    {
       "path": "tests/contained-app.test.mjs",
-      "bytes": 4069,
-      "sha256": "2026961ac82b54b06f60317ba97ccb0fff536c043f4879f7e582382d485ab5f6"
+      "bytes": 4167,
+      "sha256": "b59c868967d3b2d22e93b923515c6bb2081f1fe56aded81bb33655dda38a345e"
     },
     {
       "path": "tests/fixtures/secure-input-handoff.mjs",
@@ -75,8 +85,8 @@
     },
     {
       "path": "tests/public-entry.test.mjs",
-      "bytes": 7128,
-      "sha256": "25f6c291548c5975752e7da8fee85d27d82bf5b902d4c5bc0ebab5951adcc675"
+      "bytes": 7310,
+      "sha256": "4b81c1766e17c8f12cf75c3724a980ce929021b5c88d3161d36488526f0a03c0"
     },
     {
       "path": "tests/public-privacy.test.mjs",
@@ -94,24 +104,39 @@
       "sha256": "ecbbdfd64d3405bff26ff644095cb8c4363e3f9c2fe4f545bd0ee0bda7453fb4"
     },
     {
+      "path": "tests/selected-sources.test.mjs",
+      "bytes": 5870,
+      "sha256": "a47bab87fead091fb5d033187d9b2322960e0d0b2afd19b21256d9ad400b7de6"
+    },
+    {
+      "path": "tests/source-settings.test.mjs",
+      "bytes": 5649,
+      "sha256": "2e00004b76e9f25f28a1d53ca6756290495068d7faf185d676241f1468912cde"
+    },
+    {
+      "path": "tools/bootstrap-runtime.ps1",
+      "bytes": 11062,
+      "sha256": "09e2235ea404e0671679c8db073970fc5ddb322937b0585be947f1a91dba9977"
+    },
+    {
       "path": "tools/check-local.mjs",
       "bytes": 1913,
       "sha256": "161db9076d82f1504b4f0e9608b7853c40510cb9974660d0c6ec953e3273e7b5"
     },
     {
       "path": "tools/clean-install.mjs",
-      "bytes": 5240,
-      "sha256": "fb8ef7ed7cf89215b9c25cd00a13d6a23dbce11c5b0d64cc8307f02bb1d07a5c"
+      "bytes": 13992,
+      "sha256": "5d38f92ea56a6477051df0ed2ee0a339d0cbec95190a19804cf18db8169a3246"
     },
     {
       "path": "tools/public-entry.mjs",
-      "bytes": 15697,
-      "sha256": "994e8b7bb9740b872d25cf0f6ec8ea7be144c84cc3e48988d5be1cabccdeae95"
+      "bytes": 21306,
+      "sha256": "e4f7dc35ad1c88345ff3b6d9d704a7e9b158cb6f86c6064b9c6f93324d0da688"
     },
     {
       "path": "tools/release-package.mjs",
-      "bytes": 6242,
-      "sha256": "255eac1bf95e689856b79bb7f808514d7df785c1c93ab08026c1c2b3dd606496"
+      "bytes": 6273,
+      "sha256": "c575ba70b40c9f4c32810a064aee7f3702448869c63346c24a6b9a0b8e285589"
     },
     {
       "path": "tools/research-profile.mjs",
@@ -129,9 +154,19 @@
       "sha256": "9b5c00214c27a2871399f471fbaba88bb1ffc739e17285c7e837897406e0744c"
     },
     {
+      "path": "tools/set-market-key.ps1",
+      "bytes": 2818,
+      "sha256": "f6154f8767f1063c186f247386be2c44caa32a8796f58cb226103eea232dbdb2"
+    },
+    {
       "path": "tools/source-identity.mjs",
-      "bytes": 8004,
-      "sha256": "93cc9596a4f5a5cca3e0627737511be687fbceaa189c877b850f94c3ed60beeb"
+      "bytes": 8014,
+      "sha256": "6254ecb30cb54d54dadd52b43e60b09986bda1c340aec8bd57f6eca395e4b0f6"
+    },
+    {
+      "path": "tools/source-settings.mjs",
+      "bytes": 7013,
+      "sha256": "4b286ac59d9ee89f15cddffc41a4b4e3876fe97880c8be4364c85b4261dd4e5d"
     },
     {
       "path": "v2-reference/config/system.json",
@@ -336,7 +371,7 @@
     {
       "path": "v2-reference/tests/a1/test_position_monitor.py",
       "bytes": 31597,
-      "sha256": "792b99fd12bed1ce1202e6f23582faea310e0e26a5b3527907eabeac319484e8"
+      "sha256": "c7e89ea8fbb58a8b9d635a2b60191f4519e4a34120c1b6e3be312ee924dd5578"
     },
     {
       "path": "v2-reference/tests/a1/test_position_state.py",
@@ -455,8 +490,8 @@
     },
     {
       "path": "v2-reference/tests/common/test_scope_guard.py",
-      "bytes": 1252,
-      "sha256": "de3f90805d0be470dbafa66717f5d6ee00459abe5cdb6a0e59fb3ae145ab10b9"
+      "bytes": 1076,
+      "sha256": "e7723567cea8150d8d008c520c44c2b8b24629c145800ae5baba9c13265a4aff"
     },
     {
       "path": "v2-reference/tests/config/__init__.py",
@@ -465,8 +500,8 @@
     },
     {
       "path": "v2-reference/tests/config/test_data_config.py",
-      "bytes": 1491,
-      "sha256": "0115db9b6e4f0da46d3bf084395beb419af6cc8c5a0c57c9f2c215592837a280"
+      "bytes": 1598,
+      "sha256": "edcae0655e824bb1a814c914e529e402949efb52830516f1c27e43bad24f05fa"
     },
     {
       "path": "v2-reference/tests/config/test_guard_schedule_config.py",
@@ -475,8 +510,8 @@
     },
     {
       "path": "v2-reference/tests/config/test_review_config.py",
-      "bytes": 2842,
-      "sha256": "dfcda83ec16c0b36c5f28a1214051f64f7b24e35d4e05950c337865b145d1fb8"
+      "bytes": 2879,
+      "sha256": "7180c19035e5668b213d6f49843fac328c0cbb264381188cf9b5e2902bf13526"
     },
     {
       "path": "v2-reference/tests/contracts/__init__.py",
@@ -595,8 +630,8 @@
     },
     {
       "path": "v2-reference/tests/discord/test_gateway.py",
-      "bytes": 4325,
-      "sha256": "363392c0c5c2cbd9f63df7b344e12edc47580c8572f634dcc943e97314ce4023"
+      "bytes": 2842,
+      "sha256": "c6278c596d9f3df92eb7b728b40f4bd042903d17d6af012af5940f90769d3005"
     },
     {
       "path": "v2-reference/tests/discord/test_templates.py",
@@ -640,18 +675,18 @@
     },
     {
       "path": "v2-reference/tests/scheduler/test_guard_windows.py",
-      "bytes": 10651,
-      "sha256": "ed255df0344451bad55faa6353d9a3f19209386d7916ce8713633136d67a172e"
+      "bytes": 5950,
+      "sha256": "7a656f7a340cbce8aad1e7d420da92814c06515011c44da639c78c42fb5092b5"
     },
     {
       "path": "v2-reference/tests/scheduler/test_history_archive.py",
-      "bytes": 15167,
-      "sha256": "3810a52b612973ccc4bbbd88ff5ed718b64881c671f5e08b06e2df4b0af6fa8e"
+      "bytes": 14918,
+      "sha256": "cbf4edc3302c4957f2325a5e0521b9930e3f15de5d278a7731da6b28110d71aa"
     },
     {
       "path": "v2-reference/tests/scheduler/test_position_monitor.py",
-      "bytes": 7046,
-      "sha256": "c3ee4d084bf8bcd28858662b4d6ee6cae0d0cae18c0dcee228c6df6558df11df"
+      "bytes": 6138,
+      "sha256": "2562b912f6c22795fcafe5073f688ff303350327e0927ebf56ae2b1b98cd33e5"
     },
     {
       "path": "v2-reference/tests/scheduler/test_scheduled_analysis.py",
@@ -660,13 +695,13 @@
     },
     {
       "path": "v2-reference/tests/scheduler/test_ts_intraday.py",
-      "bytes": 3628,
-      "sha256": "517e548b2d2dd1bbcb8d48dd4d870ce1a1a0bc626be17f2f5c3e83933cdf73a1"
+      "bytes": 1907,
+      "sha256": "2c63da23a3215e048cb4ce38549991bd84bf2f6dcd15200d73e8ae6650e6d275"
     },
     {
       "path": "v2-reference/tests/scheduler/test_ts_settlement.py",
-      "bytes": 5755,
-      "sha256": "424f4ecd170e60d564934e41c12d20d176e2af1de1f7591e01fe332a4a5413ef"
+      "bytes": 5499,
+      "sha256": "bef70d7a1c72e785fb8ccffd47e3c0fcaeb561c06c532a52237db296dd6cc15f"
     },
     {
       "path": "v2-reference/tests/supervisor/__init__.py",
@@ -975,8 +1010,8 @@
     },
     {
       "path": "web/app/ApprovedBrokerChartPrototype.tsx",
-      "bytes": 97545,
-      "sha256": "c3c05a907b9926f532f6cb790a9ab0e972aab2491d46c7868b6700c631ee3adb"
+      "bytes": 97851,
+      "sha256": "9b30b96f71d2a818003ff7e41fc04ed166d2d8be99dc83623aa220888d7e914c"
     },
     {
       "path": "web/app/CompanyEvidence.tsx",
@@ -995,8 +1030,8 @@
     },
     {
       "path": "web/app/LiveMarketChart.tsx",
-      "bytes": 54951,
-      "sha256": "ff64b3f070a20fdf666d5f666c681ef5ff8589a04df1ef8ae586759c801bac02"
+      "bytes": 55118,
+      "sha256": "77a8324b9856dd38c395057776c8bf9a7340fdaa57956c6d7e846ad5d252a093"
     },
     {
       "path": "web/app/MacroEventNotice.tsx",
@@ -1200,8 +1235,8 @@
     },
     {
       "path": "web/app/page.tsx",
-      "bytes": 172357,
-      "sha256": "d2f39e69ce546b17b5b8146ab7f6d29e6d8252dc6c3d3c4d1a49dfb2cd54a32e"
+      "bytes": 172424,
+      "sha256": "5b12d6c27852c484dc6a12babc18e1eb4e41e88dcfd603bba577d0a75abf404a"
     },
     {
       "path": "web/app/paper-plan.ts",
@@ -1275,8 +1310,8 @@
     },
     {
       "path": "web/app/ts-settlement.ts",
-      "bytes": 45933,
-      "sha256": "593efda60b6a8eaa6d53db854caa3730043c74c849af7873d39251d10599e2d9"
+      "bytes": 46084,
+      "sha256": "3531850e9d470f008d6396dfdfba65a4fd6c82a3ff2c0a0ffd42785b6258e3cf"
     },
     {
       "path": "web/app/ts-signal-candidate.ts",
@@ -1295,8 +1330,8 @@
     },
     {
       "path": "web/build/local-data-core.ts",
-      "bytes": 303596,
-      "sha256": "bafb8879d8e7804fc164280ac85f37fda382451b67d7c957e28603f66c4ac669"
+      "bytes": 320257,
+      "sha256": "2efdfb8c7db7cfa38e1a28a8375498c39bc9c03a0c6de75d5ffcd57308c41b59"
     },
     {
       "path": "web/build/sites-vite-plugin.ts",
@@ -1346,7 +1381,7 @@
     {
       "path": "web/package.json",
       "bytes": 1624,
-      "sha256": "c923415375fd1cc9528dccc0f52ce9ed82d97c5a38e43af059ad53416943453f"
+      "sha256": "c2ad2abe5b70eb7cc29fbf6878b172c856e11c339465604ad435edf361afaf53"
     },
     {
       "path": "web/pnpm-lock.yaml",
@@ -1375,8 +1410,8 @@
     },
     {
       "path": "web/scripts/live-shadow-v2.py",
-      "bytes": 84186,
-      "sha256": "cbe0deb807215a03a0f4c81b888af47f82f325819c3a6bfd37851ede2ef346b3"
+      "bytes": 88039,
+      "sha256": "75f7858f363acb10b9d9b4d2a0ca7ed24797d3c266dfadbb8bfe38e8ee53396a"
     },
     {
       "path": "web/scripts/reselect-paper-plans.ts",
@@ -1405,8 +1440,8 @@
     },
     {
       "path": "web/server/finnhub.ts",
-      "bytes": 17543,
-      "sha256": "7d89155cc324e89e4a17883b0c3e05a229fa70b0ba2f4e352368f634c4f6a6b5"
+      "bytes": 17577,
+      "sha256": "900a7caed9d7aa64f01e0bf3022a18052fbd66006513d7bbddc61aa5ad0f5cb0"
     },
     {
       "path": "web/server/incident-guard.ts",
@@ -1415,13 +1450,18 @@
     },
     {
       "path": "web/server/live-shadow-runtime.ts",
-      "bytes": 50920,
-      "sha256": "5426a613da7c36bfaa7dea0bf1eb93ff26fef4a5ee4098726a6df10cba72354f"
+      "bytes": 51777,
+      "sha256": "ea173ab6d3d87427efaa684831ee85ead2b47b01fc546fda5548a905b043c950"
     },
     {
       "path": "web/server/local-owner-server.ts",
-      "bytes": 93258,
-      "sha256": "f3b806922278ef5e65bd05b168d93412b3f44e98cce84a86115658e48f4d9165"
+      "bytes": 93693,
+      "sha256": "7121f9bb3a084590c03fad48cd99067a6a303aa9e4fa7534d88384cc93ab879a"
+    },
+    {
+      "path": "web/server/market-providers.ts",
+      "bytes": 17719,
+      "sha256": "e1076f786a490549c3d4085802fdf8ba76293fadd7e0d51c37fcd845ef063a96"
     },
     {
       "path": "web/server/option-horizon.ts",
@@ -1440,8 +1480,8 @@
     },
     {
       "path": "web/server/owner-snapshot-worker.ts",
-      "bytes": 1660,
-      "sha256": "82423dcd06ff83eee754bbef9a164f48284d68d2ae920105c988421dc45e4587"
+      "bytes": 1822,
+      "sha256": "df4e0999c6dffa7670e8018f454c02cf73532775c147b1f7af0da8a96f2f724a"
     },
     {
       "path": "web/server/paper-codex-selection.ts",
@@ -1475,8 +1515,13 @@
     },
     {
       "path": "web/server/robinhood-mcp.ts",
-      "bytes": 112149,
-      "sha256": "9739d6e56d6f0c93d2746ef932d6439da037846c7c243ae846d34f641d2090a3"
+      "bytes": 113982,
+      "sha256": "5294f1cb7581bf58d87a4f3628c34bafa1aeca2562abedc203ea6cf4b11c9706"
+    },
+    {
+      "path": "web/server/selected-sources.ts",
+      "bytes": 9180,
+      "sha256": "70500f5ce9fa74c93114675c1e4e3b020b0182d6db27ea29c6a8413a82d513b4"
     },
     {
       "path": "web/server/spx-paper-runtime.ts",
@@ -1485,13 +1530,13 @@
     },
     {
       "path": "web/server/sqlite-maintenance-worker.ts",
-      "bytes": 1629,
-      "sha256": "3c9b65a6c0e0dd17f9f9f9d7ff0e436c892964f140bc304b69b29e65dc7f26c2"
+      "bytes": 1668,
+      "sha256": "1de6f829ce9122c687cfeed23e5b5c653830829244106496338b65c983265528"
     },
     {
       "path": "web/server/sqlite-maintenance.ts",
-      "bytes": 6530,
-      "sha256": "62864d0dc7c7119484e94ca5eb5ad4145383420ec691e1901a64eb3ac3b794b0"
+      "bytes": 6677,
+      "sha256": "7a8a5ddc9a20302d4d0de33c1829309411eed46f40c606aa126d48e16c44b4a7"
     },
     {
       "path": "web/server/startup-recovery.ts",
@@ -1540,8 +1585,8 @@
     },
     {
       "path": "web/tests/codex-production-manager.test.mjs",
-      "bytes": 78498,
-      "sha256": "4a3032a8d10f7eb26c539212ea39cfc03549696ffd7adba5749b79e8d53edd00"
+      "bytes": 78624,
+      "sha256": "5eddb8b245db653e49239b072a1023d185eb056cb3c43084a2e7c3fc456d6524"
     },
     {
       "path": "web/tests/company-evidence.test.mjs",
@@ -1565,8 +1610,8 @@
     },
     {
       "path": "web/tests/finnhub-company-news.test.mjs",
-      "bytes": 28494,
-      "sha256": "f8a8cc82bda55e3756d37cff6ecc5db532697e61f8bef21fa4af5b756211d326"
+      "bytes": 29071,
+      "sha256": "c6cc3a5fc82d2de9ac8300974f7a123d6c89fe2688038e06919ea5dca31424ac"
     },
     {
       "path": "web/tests/fixed70-breadth-label.test.mjs",
@@ -1610,8 +1655,8 @@
     },
     {
       "path": "web/tests/local-owner-server.test.mjs",
-      "bytes": 44809,
-      "sha256": "df3ee662837c9c10e20d5fba5b0e45706b1ede663d2a4730026abbe94dafcd5c"
+      "bytes": 44818,
+      "sha256": "f676791f1993e28e4e7dcebaff972afeb37ac9aed4596d1b7514ea980eb9a213"
     },
     {
       "path": "web/tests/maintenance-timing.test.mjs",
@@ -1622,6 +1667,11 @@
       "path": "web/tests/manager-authoritative-state.test.mjs",
       "bytes": 16551,
       "sha256": "4fed312ded151130d08004446f5ad5fb72f8c423bd0524557861d33ff03c7107"
+    },
+    {
+      "path": "web/tests/market-providers.test.mjs",
+      "bytes": 16050,
+      "sha256": "2c039d4add5aa1efcb7fcc44858a95f57675c609da887949959237f75f290705"
     },
     {
       "path": "web/tests/market-time-news.test.mjs",
@@ -1700,8 +1750,8 @@
     },
     {
       "path": "web/tests/rendered-html.test.mjs",
-      "bytes": 108953,
-      "sha256": "86219f2564445d91b31a4db86e5af54332c59f53087b504b0450e0570331e1b5"
+      "bytes": 111762,
+      "sha256": "c1b23fa936f377c6ca6052c554c0e6d41d3d07187de2c49455037ed50e7e232d"
     },
     {
       "path": "web/tests/review-causal-baseline.test.mjs",
@@ -1735,13 +1785,23 @@
     },
     {
       "path": "web/tests/robinhood-timing.test.mjs",
-      "bytes": 6892,
-      "sha256": "04afa7972de98a82b3f492ab631856905e08b8cae93d76805deb43df0a5bbfa2"
+      "bytes": 7812,
+      "sha256": "d112c64b4fd1a1012f1f52eed6df64df4d9246a6a8c8f25c2c19c0924467a4f6"
     },
     {
       "path": "web/tests/source-identity.test.mjs",
       "bytes": 13763,
       "sha256": "45ea4126cbc760a62aa21b3d1a8f1ab9f8d6cbd88d7064b205de532b8969d0d0"
+    },
+    {
+      "path": "web/tests/source-isolation.test.mjs",
+      "bytes": 17894,
+      "sha256": "2bc38ba41107c8a0db75226365b63b82f47a3a51d37e4f87eab04c18a05fbede"
+    },
+    {
+      "path": "web/tests/source-python-bridge.test.mjs",
+      "bytes": 4428,
+      "sha256": "f2884b0a95f8188fa25e9450b82b3285ce637a6493e30b61c8289aea6a243073"
     },
     {
       "path": "web/tests/spx-observation-collector.test.mjs",

@@ -77,7 +77,7 @@ test("Owner snapshot client preserves generation time and rejects stale successf
   }
   status = 503; await assert.rejects(fetchActiveSnapshot("home"), /not ready/);
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /setSnapshotUpdatedAt\(restored\.snapshotGeneratedAt \? Date\.parse\(restored\.snapshotGeneratedAt\) : null\)/);
+  assert.match(page, /setSnapshotUpdatedAt\(restored\.snapshotGeneratedAt \? Date\.parse\(restored\.snapshotGeneratedAt\) : Date\.now\(\)\)/);
   assert.match(page, /finally\(\(\) => \{ refreshing = false; \}\)/);
 });
 

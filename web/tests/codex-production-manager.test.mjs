@@ -525,7 +525,8 @@ test("daily manager can request one separate full audit without recursive contex
   const store = openSnapshotDatabase(join(directory, "manager.sqlite")); let calls = 0;
   const manager = createCodexProductionManager({ store, dataRoot: directory, projectRoot: process.cwd(), siteVersion: "test", runtimeIdentity: { deployedCommit: "a".repeat(40), runtimeSha256: "b".repeat(64) }, invoke: async ({ managerRunId, prompt }) => { calls += 1; const full = JSON.parse(prompt).snapshot_level === "FULL_AUDIT"; return { threadId: `thread-${calls}`, agentVersion: "codex-cli test", stderr: "", usage: { input_tokens: 100, cached_input_tokens: 0, output_tokens: 20, reasoning_output_tokens: 0 }, decision: { contract_version: CODEX_PRODUCTION_MANAGER_CONTRACT, manager_run_id: managerRunId, status: "HEALTHY", manager_conclusion: full ? "完整审计已完成。" : "需要一次完整审计。", executive_summary: [full ? "证据完整" : "请求详细证据"], findings: [], recheck_requests: [], requested_actions: full ? [] : [{ action: "REQUEST_FULL_AUDIT", target: "FULL_AUDIT", reason: "关键事实需要详细证据", evidence_refs: ["read_evidence_on_demand"] }], evidence_limits: [], next_manager_focus: "自然运行" } }; } });
   await manager.run("OWNER_MANUAL");
-  for (let index = 0; index < 50 && calls < 2; index += 1) await new Promise((resolve) => setTimeout(resolve, 10));
+  for (let index = 0; index < 500 && calls < 2; index += 1) await new Promise((resolve) => setTimeout(resolve, 10));
+  await manager.stop(); // The second invocation can precede its durable completion; assert after the real lifecycle drains.
   assert.equal(calls, 2); assert.equal(manager.state.latest_run.snapshot_level, "FULL_AUDIT");
   store.close();
 });

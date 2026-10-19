@@ -386,16 +386,8 @@ class HistoryArchiveScheduleTests(unittest.TestCase):
         for call in archive_type.return_value.load_dataset.call_args_list:
             self.assertIs(call.kwargs["manifest_snapshot"], snapshot)
 
-    def test_installer_registers_daily_archive_task(self) -> None:
-        script = (ROOT / "scripts" / "install_tasks.ps1").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('"TradingOSV2-History-Archive"', script)
-        self.assertIn(
-            '"-m trading_os_v2.cli history-archive --scheduled"',
-            script,
-        )
-        self.assertIn('-Daily -At "13:15"', script)
+    def test_owner_history_archive_task_installer_is_not_distributed(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "install_tasks.ps1").exists())
 
 
 if __name__ == "__main__":

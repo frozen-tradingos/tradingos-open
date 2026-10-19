@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from trading_os_v2.common.config import load_config
+from trading_os_v2.common.config import DATA_ROOT, package_data_path, load_config
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,7 +13,8 @@ class DataConfigTests(unittest.TestCase):
         data = config["data"]
 
         self.assertEqual(data["contract_version"], "v1")
-        self.assertEqual(data["storage_root"], "D:/TradingOSV2/data")
+        self.assertEqual(Path(data["storage_root"]), DATA_ROOT)
+        self.assertEqual(package_data_path(Path(data["storage_root"])), DATA_ROOT)
         self.assertFalse(data["contains_secrets"])
         self.assertEqual(data["history"]["provider"], "tradier")
         self.assertEqual(data["history"]["symbols"], ["SPY", "QQQ"])

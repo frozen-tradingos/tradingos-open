@@ -7,7 +7,7 @@ if (!parentPort || !task || !["check", "backup", "evidence", "snapshot", "runtim
 let result;
 if (task.kind === "snapshot" || task.kind === "runtime-context" || task.kind === "schedule-supervision") {
   const { openSnapshotDatabase } = await import("../build/local-data-core.ts");
-  const store = openSnapshotDatabase(task.file, { readOnly: true, investmentProfile: task.investmentProfile, runtimeIdentity: task.runtimeIdentity });
+  const store = openSnapshotDatabase(task.file, { readOnly: true, investmentProfile: task.investmentProfile, runtimeIdentity: task.runtimeIdentity, sourceSelection: task.sourceSelection });
   try { result = task.kind === "snapshot" ? store.getActive(task.view) : task.kind === "runtime-context" ? store.getRuntimeContext() : store.getScheduleLedgerSupervision(task.checkedAt); }
   finally { store.close(); }
 } else {

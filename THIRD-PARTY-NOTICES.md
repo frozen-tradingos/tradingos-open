@@ -6,7 +6,8 @@ The lockfiles identify the exact dependencies. Package licenses must be included
 - TradingView Lightweight Charts — Apache-2.0. Keep the existing TradingView attribution link/logo and required notices. This project does not redistribute TradingView market data.
 - OpenAI Codex CLI — Apache-2.0. Model access is a separate service and requires the user's own authorization.
 - TypeScript — Apache-2.0; Vite and vinext — MIT; Cloudflare Wrangler — MIT OR Apache-2.0.
-- Python and tzdata — retain the upstream license notices from the installed distributions. The locked requirements specify tzdata; the Python runtime itself is a separate prerequisite.
+- Python and tzdata — retain the upstream license notices from the installed distributions. The locked requirements specify tzdata. The launcher downloads a pinned Astral python-build-standalone distribution into this copy; it does not replace Python's license or install a system runtime.
+- Node.js and pnpm — the launcher downloads fixed upstream distributions into `.tools/`, preserving their packaged license notices. Those binaries are not included in this source archive.
 
 The source archive contains source and dependency locks, not node_modules, dependency binaries or a Python runtime. MIT applies only to the original project code; do not remove upstream notices or apply MIT over third-party code.
 
@@ -14,4 +15,4 @@ Installed transitive metadata also identifies `@img/sharp-win32-x64` as Apache-2
 
 This metadata inventory is not legal clearance for data, trademarks, or a changed distribution format.
 
-Robinhood, Finnhub, OpenAI and TradingView names identify integration targets or upstream components, not affiliation or endorsement. The package does not convey their subscriptions, data licenses or trademarks.
+Provider and upstream component names identify integration targets, not affiliation or endorsement. The package does not convey their subscriptions, data licenses or trademarks.

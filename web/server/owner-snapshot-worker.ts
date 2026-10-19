@@ -1,6 +1,7 @@
 import { parentPort, workerData } from "node:worker_threads";
 import { openSnapshotDatabase } from "../build/local-data-core.ts";
 import { ownerSnapshotView } from "./local-owner-server.ts";
+import type { SourceSelection } from "./selected-sources.ts";
 
 type OwnerSnapshotView = "home" | "forecast" | "options" | "company" | "health" | "settlements" | "issues";
 
@@ -8,7 +9,7 @@ const port = parentPort;
 if (!port) throw new Error("owner snapshot worker requires a parent port");
 const databasePath = (workerData as { databasePath?: unknown }).databasePath;
 if (typeof databasePath !== "string" || !databasePath) throw new Error("owner snapshot worker database path is invalid");
-const store = openSnapshotDatabase(databasePath);
+const store = openSnapshotDatabase(databasePath, { sourceSelection: (workerData as { sourceSelection?: SourceSelection }).sourceSelection ?? null });
 const views: OwnerSnapshotView[] = ["home", "forecast", "options", "company", "health", "settlements", "issues"];
 let running = false;
 

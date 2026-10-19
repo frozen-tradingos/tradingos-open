@@ -208,7 +208,7 @@ export async function collectFinnhubOfficial(options: FinnhubOptions, observedAt
   catch (error) {
     return { source: { source: "FINNHUB", status: "NOT_VERIFIED", configured: true, authorization: "NOT_VERIFIED", last_success_at: null, as_of: null, freshness_seconds: null, error: safeError(error), checked_at: fetchedAt, capabilities: { news: false, earnings_calendar: false, earnings_results: false } }, events: [] };
   }
-  if (!token) return { source: { source: "FINNHUB", status: "NOT_CONFIGURED", configured: false, authorization: "NOT_CONFIGURED", last_success_at: null, as_of: null, freshness_seconds: null, error: "尚未在 4070 本机设置 Finnhub 凭证", checked_at: fetchedAt, capabilities: { news: false, earnings_calendar: false, earnings_results: false } }, events: [] };
+  if (!token) return { source: { source: "FINNHUB", status: "NOT_CONFIGURED", configured: false, authorization: "NOT_CONFIGURED", last_success_at: null, as_of: null, freshness_seconds: null, error: "尚未在此独立副本配置所选新闻源；请使用 Start.cmd 菜单11", checked_at: fetchedAt, capabilities: { news: false, earnings_calendar: false, earnings_results: false } }, events: [] };
 
   const request = options.request ?? fetch;
   const timeoutMs = options.timeoutMs ?? 12_000;

@@ -49,11 +49,14 @@ function emitTiming(observer: RobinhoodTimingObserver | undefined, event: Omit<R
 export type RobinhoodChartInterval = "1m" | "5m" | "15m";
 export type RobinhoodChartRange = "1d" | "24h" | "rth" | "gth" | "5d";
 export type RobinhoodChartData = {
-  source: "ROBINHOOD";
+  source: "ROBINHOOD" | "TRADIER";
+  source_selection_id?: string;
+  source_revision?: number;
+  environment?: "LIVE" | "SANDBOX";
   symbol: "SPY" | "QQQ";
   interval: RobinhoodChartInterval;
   range: RobinhoodChartRange;
-  session_bounds: "OFFICIAL_24_5" | "REGULAR_ONLY_EOD_FALLBACK" | "NOT_OBSERVED";
+  session_bounds: "OFFICIAL_24_5" | "REGULAR_ONLY_EOD_FALLBACK" | "REGULAR_ONLY" | "NOT_OBSERVED";
   data_grade: "OFFICIAL_OHLCV" | "RECENT_OFFICIAL_EOD" | "READ_FAILED";
   session_dates: string[];
   status: "LIVE" | "MARKET_CLOSED" | "STALE" | "DATA_BLOCKED";
@@ -856,7 +859,8 @@ async function collectMarketOptions(session: McpSession, observedAt: string, pri
   });
 }
 
-export async function collectRobinhoodReadonly(session: McpSession, observedAt = new Date().toISOString(), marketIntelligence?: Pick<MarketIntelligenceState, "events" | "causalChains">, previousApprovedCapabilities?: ApprovedCapabilitySnapshot | null, freezeDeadlineAt?: string, onTiming?: RobinhoodTimingObserver): Promise<ReadonlyMarketSources> {
+export async function collectRobinhoodReadonly(session: McpSession, observedAt = new Date().toISOString(), marketIntelligence?: Pick<MarketIntelligenceState, "events" | "causalChains">, previousApprovedCapabilities?: ApprovedCapabilitySnapshot | null, freezeDeadlineAt?: string, onTiming?: RobinhoodTimingObserver, scope: "FULL" | "MARKET_ONLY" = "FULL"): Promise<ReadonlyMarketSources> {
+  if (scope !== "FULL" && scope !== "MARKET_ONLY") throw new RobinhoodMcpError("COLLECTION_SCOPE_INVALID");
   const symbols = ["SPY", "QQQ"] as const;
   const environmentSymbols = [...MARKET_ENVIRONMENT_SYMBOLS.rates, ...MARKET_ENVIRONMENT_SYMBOLS.oil, ...MARKET_ENVIRONMENT_SYMBOLS.sectors];
   const start = new Date(Date.parse(observedAt) - 7 * 24 * 60 * 60 * 1_000).toISOString();
@@ -906,41 +910,49 @@ export async function collectRobinhoodReadonly(session: McpSession, observedAt =
   });
 
   emitTiming(onTiming, { event: "core_end", duration_ms: performance.now() - coreStarted });
-  // ponytail: share one existing 60s RPC timeout across all enhancements, not one per
-  // sequential call. Leave 5s for snapshot hashing, transport closure and A1 persistence;
-  // the hard slot deadline is unchanged. Split collection if natural coverage remains insufficient.
-  const budgetMs = freezeDeadlineAt === undefined ? 60_000 : Math.max(0, Math.min(60_000, Date.parse(freezeDeadlineAt) - Date.now() - 5_000) || 0);
-  const deadlineAt = Date.now() + budgetMs;
-  const enhancementStarted = performance.now();
-  let expired = budgetMs === 0;
-  let timer: NodeJS.Timeout;
-  const deadlineError = new RobinhoodMcpError("ENHANCEMENT_DEADLINE: optional evidence missed its freeze budget");
-  const deadline = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => { expired = true; emitTiming(onTiming, { event: "enhancement_budget_actual_expired", deadline_at: new Date(deadlineAt).toISOString(), duration_ms: performance.now() - enhancementStarted }); reject(deadlineError); }, budgetMs);
-  });
-  emitTiming(onTiming, { event: "enhancement_budget_begin", deadline_at: new Date(deadlineAt).toISOString(), budget_ms: budgetMs });
-  const enhancementSession: McpSession = {
-    listTools: () => session.listTools(),
-    call: (tool, args) => Promise.race([expired || Date.now() >= deadlineAt ? Promise.reject(deadlineError) : session.call(tool, args), deadline]),
-  };
-  const environmentRead = Promise.all(batches(environmentSymbols, 10).map((batch) => enhancementSession.call("get_equity_quotes", { symbols: batch }).then(robinhoodResponseBody).catch((error) => { enhancementFailed("market_environment", error); return {}; }))).then((bodies) => bodies.flatMap((body) => dataRows(body, "results")));
-  const optionsRead = collectMarketOptions(enhancementSession, observedAt, Object.fromEntries(quotes.map((quote) => [quote.symbol, quote.last]))).catch((error) => {
-      enhancementFailed("options", error);
-      return symbols.map((symbol) => ({ source: "ROBINHOOD" as const, symbol, status: "DATA_BLOCKED" as const, as_of: null, freshness_seconds: null, expiration_count: 0, expirations: [], nearest_expiration: null, contract_count: 0, bbo_count: 0, iv_count: 0, greeks_count: 0, contracts: [] }));
+  let options: ReadonlyMarketSources["options"] = [];
+  let account: ReadonlyMarketSources["account"] = { source: "ROBINHOOD", status: "NOT_AUTHORIZED", as_of: null, freshness_seconds: null, account_count: null, positions: null, orders: null, portfolio_value: null, option_value: null, realized_pnl: null };
+  let capabilityBundle: Awaited<ReturnType<typeof collectApprovedCapabilities>> | null = null;
+  let environment: MarketEnvironment | undefined;
+  // The connection probe consents only to the three core reads, not optional account or watch-pool collection.
+  if (scope === "FULL") {
+    // ponytail: share one existing 60s RPC timeout across all enhancements, not one per
+    // sequential call. Leave 5s for snapshot hashing, transport closure and A1 persistence;
+    // the hard slot deadline is unchanged. Split collection if natural coverage remains insufficient.
+    const budgetMs = freezeDeadlineAt === undefined ? 60_000 : Math.max(0, Math.min(60_000, Date.parse(freezeDeadlineAt) - Date.now() - 5_000) || 0);
+    const deadlineAt = Date.now() + budgetMs;
+    const enhancementStarted = performance.now();
+    let expired = budgetMs === 0;
+    let timer: NodeJS.Timeout;
+    const deadlineError = new RobinhoodMcpError("ENHANCEMENT_DEADLINE: optional evidence missed its freeze budget");
+    const deadline = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => { expired = true; emitTiming(onTiming, { event: "enhancement_budget_actual_expired", deadline_at: new Date(deadlineAt).toISOString(), duration_ms: performance.now() - enhancementStarted }); reject(deadlineError); }, budgetMs);
     });
-  const accountRead = collectRobinhoodAccount(enhancementSession, observedAt).catch((error) => {
-      enhancementFailed("account", error);
-      return { source: "ROBINHOOD" as const, status: "DATA_BLOCKED" as const, as_of: null, freshness_seconds: null, account_count: null, positions: null, orders: null, portfolio_value: null, option_value: null, realized_pnl: null };
-    });
-  const primaryReady = Promise.all([environmentRead, optionsRead, accountRead]);
-  const [environmentRows, capabilityBundle, options, account] = await Promise.all([
-    environmentRead,
-    collectApprovedCapabilities(enhancementSession, observedAt, marketIntelligence, primaryReady).catch((error) => enhancementFailed("watch_pool", error)),
-    optionsRead,
-    accountRead,
-  ]).finally(() => { clearTimeout(timer); emitTiming(onTiming, { event: "enhancement_budget_completed", deadline_at: new Date(deadlineAt).toISOString(), duration_ms: performance.now() - enhancementStarted }); });
-  enhancementErrors.push(...capabilityBundle?.errors ?? []);
-  const environment = capabilityBundle ? marketEnvironment([...quoteRows, ...environmentRows], observedAt, marketSession, capabilityBundle.extended) : undefined;
+    emitTiming(onTiming, { event: "enhancement_budget_begin", deadline_at: new Date(deadlineAt).toISOString(), budget_ms: budgetMs });
+    const enhancementSession: McpSession = {
+      listTools: () => session.listTools(),
+      call: (tool, args) => Promise.race([expired || Date.now() >= deadlineAt ? Promise.reject(deadlineError) : session.call(tool, args), deadline]),
+    };
+    const environmentRead = Promise.all(batches(environmentSymbols, 10).map((batch) => enhancementSession.call("get_equity_quotes", { symbols: batch }).then(robinhoodResponseBody).catch((error) => { enhancementFailed("market_environment", error); return {}; }))).then((bodies) => bodies.flatMap((body) => dataRows(body, "results")));
+    const optionsRead = collectMarketOptions(enhancementSession, observedAt, Object.fromEntries(quotes.map((quote) => [quote.symbol, quote.last]))).catch((error) => {
+        enhancementFailed("options", error);
+        return symbols.map((symbol) => ({ source: "ROBINHOOD" as const, symbol, status: "DATA_BLOCKED" as const, as_of: null, freshness_seconds: null, expiration_count: 0, expirations: [], nearest_expiration: null, contract_count: 0, bbo_count: 0, iv_count: 0, greeks_count: 0, contracts: [] }));
+      });
+    const accountRead = collectRobinhoodAccount(enhancementSession, observedAt).catch((error) => {
+        enhancementFailed("account", error);
+        return { source: "ROBINHOOD" as const, status: "DATA_BLOCKED" as const, as_of: null, freshness_seconds: null, account_count: null, positions: null, orders: null, portfolio_value: null, option_value: null, realized_pnl: null };
+      });
+    const primaryReady = Promise.all([environmentRead, optionsRead, accountRead]);
+    const [environmentRows, collectedCapabilities, collectedOptions, collectedAccount] = await Promise.all([
+      environmentRead,
+      collectApprovedCapabilities(enhancementSession, observedAt, marketIntelligence, primaryReady).catch((error) => enhancementFailed("watch_pool", error)),
+      optionsRead,
+      accountRead,
+    ]).finally(() => { clearTimeout(timer); emitTiming(onTiming, { event: "enhancement_budget_completed", deadline_at: new Date(deadlineAt).toISOString(), duration_ms: performance.now() - enhancementStarted }); });
+    capabilityBundle = collectedCapabilities; options = collectedOptions; account = collectedAccount;
+    enhancementErrors.push(...capabilityBundle?.errors ?? []);
+    environment = capabilityBundle ? marketEnvironment([...quoteRows, ...environmentRows], observedAt, marketSession, capabilityBundle.extended) : undefined;
+  }
 
   const providerAsOf = oldest([...quotes.map((item) => item.as_of), ...bars.map((item) => item.as_of)]);
   const providerAge = freshness(providerAsOf, observedAt);
@@ -993,12 +1005,13 @@ export function refreshCoreFreshness(snapshot: ReadonlyMarketSources, checkedAt:
   const complete = snapshot.capabilities.quotes && snapshot.capabilities.intraday_bars && snapshot.capabilities.daily_bars;
   const sourceTimes = [...snapshot.quotes, ...snapshot.bars].map((row) => Date.parse(row.as_of ?? ""));
   const validTimes = Number.isFinite(Date.parse(checkedAt)) && sourceTimes.every((time) => Number.isFinite(time) && time <= Date.parse(checkedAt));
-  const status = !complete || !validTimes ? "DATA_BLOCKED" : snapshot.market_session.state === "CLOSED" ? currentEod(snapshot.as_of, checkedAt) ? "MARKET_CLOSED" : "STALE" : age === null || age > MARKET_5M_MAX_AGE_SECONDS ? "STALE" : "LIVE";
+  // Refresh may age valid evidence, never erase an upstream permission/schema/future-time block.
+  const status = snapshot.status === "DATA_BLOCKED" || !complete || !validTimes ? "DATA_BLOCKED" : snapshot.market_session.state === "CLOSED" ? currentEod(snapshot.as_of, checkedAt) ? "MARKET_CLOSED" : "STALE" : age === null || age > MARKET_5M_MAX_AGE_SECONDS ? "STALE" : "LIVE";
   const updated: ReadonlyMarketSources = {
     ...snapshot, status, freshness_seconds: age,
     quotes: snapshot.quotes.map((row) => ({ ...row, status, freshness_seconds: freshness(row.as_of, checkedAt) })),
     bars: snapshot.bars.map((row) => ({ ...row, status, freshness_seconds: freshness(row.as_of, checkedAt) })),
-    providers: snapshot.providers.map((row) => row.source === "ROBINHOOD" ? { ...row, status, freshness_seconds: age, error: status === "LIVE" || status === "MARKET_CLOSED" ? null : "Core Quote/Bar unavailable or stale at freeze" } : row),
+    providers: snapshot.providers.map((row) => snapshot.quotes.some((quote) => quote.source === row.source) ? { ...row, status: row.status === "NOT_AUTHORIZED" ? "NOT_AUTHORIZED" : status, freshness_seconds: age, error: status === "LIVE" || status === "MARKET_CLOSED" ? null : row.error ?? "Core Quote/Bar unavailable or stale at freeze" } : row),
   };
   const snapshotHash = hash(Object.fromEntries(Object.entries(updated).filter(([key]) => key !== "snapshot_hash" && key !== "snapshot_id")));
   return { ...updated, snapshot_hash: snapshotHash, snapshot_id: `market-${snapshotHash.slice(0, 24)}` };
@@ -1092,6 +1105,9 @@ export async function withRobinhoodMcp<T>(options: { projectRoot?: string; codex
   if (options.codexHome && resolve(options.codexHome) !== codexHome) throw new RobinhoodMcpError("External broker profiles are forbidden");
   const allowlist = options.allowlist ?? ROBINHOOD_READONLY_TOOLS;
   for (const tool of allowlist) assertRobinhoodReadonlyTool(tool);
+  const selection = (await import("./selected-sources.ts")).activeSourceSelection(resolve(projectRoot, ".."));
+  if (!selection || selection.selected.market.provider !== "ROBINHOOD") throw new RobinhoodMcpError("SOURCE_NOT_SELECTED: no fallback to a different market provider");
+  if (selection.selected.broker.provider !== "ROBINHOOD" && allowlist.some((tool) => ["get_accounts", "get_option_positions", "get_option_orders", "get_portfolio", "get_realized_pnl"].includes(tool))) throw new RobinhoodMcpError("BROKER_NOT_SELECTED");
   const timeoutMs = options.timeoutMs ?? 60_000;
   const environment: NodeJS.ProcessEnv = { NODE_ENV: process.env.NODE_ENV ?? "production", ...Object.fromEntries(["SystemRoot", "PATH", "TEMP", "TMP", "USERPROFILE", "LOCALAPPDATA", "APPDATA"].flatMap((name) => process.env[name] ? [[name, process.env[name]!]] : [])) };
   const appServerArgs = ["app-server", "--stdio", "-c", 'cli_auth_credentials_store="file"', "-c", 'mcp_oauth_credentials_store="file"', "-c", `mcp_servers.${ROBINHOOD_MCP_SERVER}.enabled=true`];

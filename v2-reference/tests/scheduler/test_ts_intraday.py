@@ -33,57 +33,11 @@ class TSIntradaySchedulerTests(unittest.TestCase):
             started_at=started
         )
 
-    def test_full_installer_has_bounded_delayed_intraday_task(self) -> None:
-        script = (ROOT / "scripts" / "install_tasks.ps1").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('"TradingOSV2-TS-Intraday"', script)
-        self.assertIn(
-            '"-m trading_os_v2.cli ts-intraday --scheduled"', script
-        )
-        self.assertIn(
-            '$tsIntradayTrigger = New-ScheduledTaskTrigger -Daily', script
-        )
-        self.assertNotIn(
-            '$tsIntradayTrigger = New-ScheduledTaskTrigger `\n    -Once',
-            script,
-        )
-        self.assertIn('-At "07:31:15"', script)
-        self.assertIn('-At "06:31:15"', script)
-        self.assertIn('-At "06:46:15"', script)
-        self.assertIn('-At "07:01:15"', script)
-        self.assertIn('Interval = "PT30M"', script)
-        self.assertIn('Duration = "PT5H1M"', script)
+    def test_owner_full_task_installer_is_not_distributed(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "install_tasks.ps1").exists())
 
-    def test_partial_installer_only_registers_two_ts_tasks(self) -> None:
-        script = (
-            ROOT / "scripts" / "install_ts_v2_tasks.ps1"
-        ).read_text(encoding="utf-8")
-        self.assertEqual(script.count("Register-ScheduledTask"), 2)
-        self.assertIn('"TradingOSV2-TS-Intraday"', script)
-        self.assertIn('"TradingOSV2-TS-Settlement"', script)
-        self.assertIn(
-            '$intradayTrigger = New-ScheduledTaskTrigger -Daily', script
-        )
-        self.assertNotIn(
-            '$intradayTrigger = New-ScheduledTaskTrigger `\n    -Once',
-            script,
-        )
-        self.assertIn('Interval = "PT30M"', script)
-        self.assertIn('Duration = "PT5H1M"', script)
-        self.assertIn('-At "06:31:15"', script)
-        self.assertIn('-At "06:46:15"', script)
-        self.assertIn('-At "07:01:15"', script)
-        for unchanged in (
-            "A1-Heartbeat",
-            "Position-Monitor",
-            "Local-Guard",
-            "Codex-Guard",
-            "Evening-Analysis",
-            "Daily-Review",
-            "History-Archive",
-        ):
-            self.assertNotIn(unchanged, script)
+    def test_owner_partial_ts_task_installer_is_not_distributed(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "install_ts_v2_tasks.ps1").exists())
 
     @patch("trading_os_v2.cli.atomic_write_json")
     @patch("trading_os_v2.cli.iso_now", return_value="now")

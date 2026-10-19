@@ -225,7 +225,7 @@ function TradingOsLegacyApp({ page }: { page: OwnerPage }) {
         if (!active) return;
         setCurrentTime(Date.now());
         setSnapshotError(null);
-        setSnapshotUpdatedAt(restored.snapshotGeneratedAt ? Date.parse(restored.snapshotGeneratedAt) : null);
+        setSnapshotUpdatedAt(restored.snapshotGeneratedAt ? Date.parse(restored.snapshotGeneratedAt) : Date.now());
         setImportState((current) => ({ ...restored, notice: current.notice }));
       })
       .catch((error) => {
@@ -476,7 +476,7 @@ function TradingOsLegacyApp({ page }: { page: OwnerPage }) {
   if (marketEnvironment?.futures.status === "NOT_SUPPORTED") launchGaps.push({ owner: "SPY、QQQ和固定池股票的官方延长时段已单独接入；隔夜期货仍不支持，不用ETF或代理值冒充真实期货。", technical: "OVERNIGHT_FUTURES_NOT_SUPPORTED_BY_OFFICIAL_ROBINHOOD_MCP" });
   const capabilityAudit = capabilityRetentionAudit(importState);
   const meta = pageMeta[page];
-  const hasRuntimeData = Boolean(importState.outputCount || importState.runLedger.eventCount);
+  const hasRuntimeData = snapshotUpdatedAt !== null || Boolean(importState.outputCount || importState.runLedger.eventCount);
   const marketIsClosed = shadowRuntimeStatus === "MARKET_CLOSED";
   const ownerAttentionRequired = Boolean(currentTruth.issues.owner_action_required || currentTruth.owner_queue.pending_owner_approval || currentTruth.active_slot_id && currentTruth.natural_slot.status === "BLOCKED");
   const ownerSystemBlocked = currentTruth.health_status === "BLOCKED";
@@ -516,7 +516,9 @@ function TradingOsLegacyApp({ page }: { page: OwnerPage }) {
   const tradeResult = manualBuySymbols ? "有待你确认的买入计划" : qualified && !marketIsClosed ? "有机会，等待复核" : "暂不开新仓";
   const actionResult = manualBuySymbols ? `核对 ${manualBuySymbols} 的合约与触发条件` : marketIsClosed ? "等待下一次检查" : qualified ? `等待复核 ${qualifiedSymbols}` : "保持观望";
   const ownerResult = ownerAttentionRequired ? "系统需要你处理" : manualBuySymbols ? "是否执行，由你决定" : "无需你操作";
-  const quoteBarResult = currentTruth.market_data_health.quote_health === "LIVE" && currentTruth.market_data_health.bar_health === "LIVE"
+  const marketSourceConfigured = importState.dataSources.some((source) => (source.source === "ROBINHOOD" || source.source === "TRADIER") && source.configured);
+  const quoteBarResult = !marketSources ? marketSourceConfigured ? "Quote / Bar 未验证" : "Quote / Bar 未连接"
+    : currentTruth.market_data_health.quote_health === "LIVE" && currentTruth.market_data_health.bar_health === "LIVE"
     ? "Quote / Bar 正常"
     : marketIsClosed ? "Quote / Bar 收盘冻结" : "Quote / Bar 需关注";
   const holdingCount = latestPositionState?.holdings.length ?? marketSources?.account.positions?.length ?? null;
@@ -782,11 +784,10 @@ function TradingOsLegacyApp({ page }: { page: OwnerPage }) {
         {page === "settlements" && <div className="two-column chart-row settlements-stack">
           <div className="workspace-column">
           <section className="panel priority-section" id="event-observation">
-            <div className="section-heading"><h3>事件观察</h3><span className="muted-chip">人工核查 · 只读</span></div>
-            <p>公司事件、会议日程与实际披露分开记录，保留待核实项和历史修订。</p>
-            <p>本期4个事件、5条修订；资料截至 <time dateTime="2026-09-27T20:59:37Z">2026年9月27日 13:59 加州时间</time>。</p>
-            <p>联合卡片复用已归档行情，逐项标明时间和缺口；每日 Codex 选单可作只读参考，不改变预测、报价门禁或止损。官方资料仍需人工复核，原始静态报告保留。</p>
-            <a href="/research/event-disclosure">打开事件与披露报告 ↗</a>
+            <div className="section-heading"><h3>事件资料核验</h3><span className="muted-chip">独立资料页 · 只读</span></div>
+            <p>未提供核验材料时显示未接通，不计入当前预测。</p>
+            <p>公司事件、会议日程与实际披露需分别核实；资料入口不代表当前账号已完成研究，也不改变预测、报价门禁或止损。</p>
+            <a href="/research/event-disclosure">查看资料状态 ↗</a>
           </section>
           <section className="panel" id="research-paper">{researchPaper.error ? <p className="workspace-refresh-error" role="status">{researchPaper.error}</p> : null}<PaperPlans overview={researchPaper.overview} currentTime={currentTime} specialDays={specialDays} /></section>
           <section className="panel priority-section" id="decision-review"><div className="section-heading"><h3>最近预测，后来怎样了？</h3></div>{reviewDetails}</section>

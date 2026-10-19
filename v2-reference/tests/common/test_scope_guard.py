@@ -1,46 +1,25 @@
 from __future__ import annotations
 
-import importlib.util
+import os
 import unittest
-from pathlib import Path
+from unittest.mock import patch
 
 
-ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location(
-    "scope_guard",
-    ROOT / "tools" / "scope_guard.py",
-)
-assert SPEC and SPEC.loader
-SCOPE_GUARD = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(SCOPE_GUARD)
+from trading_os_v2.common.config import DATA_ROOT, PACKAGE_ROOT, ROOT, package_data_path, runtime_path
 
 
-class ScopeGuardTests(unittest.TestCase):
-    def test_change_in_b_cannot_hide_inside_a_scope(self) -> None:
-        changed = [
-            "trading_os_v2/a1/service.py",
-            "trading_os_v2/a2/service.py",
-        ]
-        self.assertEqual(
-            SCOPE_GUARD.out_of_scope(changed, ["trading_os_v2/a1/"]),
-            ["trading_os_v2/a2/service.py"],
-        )
+class PublicPackageScopeTests(unittest.TestCase):
+    def test_owner_repository_scope_tool_is_not_distributed(self) -> None:
+        self.assertFalse((ROOT / "tools" / "scope_guard.py").exists())
+        self.assertFalse((ROOT / ".githooks").exists())
 
-    def test_isolation_scope_cannot_modify_runtime_module(self) -> None:
-        changed = [
-            "tools/scope_guard.py",
-            "trading_os_v2/a1/service.py",
-        ]
-        self.assertEqual(
-            SCOPE_GUARD.out_of_scope(
-                changed,
-                [
-                    "tools/scope_guard.py",
-                    ".githooks/",
-                ],
-            ),
-            ["trading_os_v2/a1/service.py"],
-        )
+    def test_actual_package_storage_guard_rejects_external_paths(self) -> None:
+        self.assertEqual(package_data_path(DATA_ROOT / "SYNTHETIC.json"), DATA_ROOT / "SYNTHETIC.json")
+        with self.assertRaisesRegex(RuntimeError, "inside this package"):
+            package_data_path(PACKAGE_ROOT / "SYNTHETIC-outside-data")
+        with patch.dict(os.environ, {"TRADING_OS_V2_RUNTIME_ROOT": str(PACKAGE_ROOT / "SYNTHETIC-external-runtime")}):
+            with self.assertRaisesRegex(RuntimeError, "External V2 runtime"):
+                runtime_path("SYNTHETIC.json")
 
 
 if __name__ == "__main__":

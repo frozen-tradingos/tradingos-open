@@ -33,6 +33,7 @@ import { projectStartupRecovery } from "../server/startup-recovery.ts";
 import { backupSqliteDatabase, checkSqliteDatabase, runSqliteMaintenance } from "../server/sqlite-maintenance.ts";
 import { canonicalJson } from "../server/robinhood-mcp.ts";
 import { verifyBundledSourceIdentity } from "../../tools/source-identity.mjs";
+import { validateSourceSettings } from "../../tools/source-settings.mjs";
 import { projectStockConditionalPlans, projectStockManualPlans, STOCK_PATTERN_REGIMES, type StockManualPlanOutput } from "../app/stock-manual-plan.ts";
 
 function reviewProofHash(value: unknown) {
@@ -131,7 +132,7 @@ function normalizeUtcColumns(database: DatabaseSync) {
   }
 }
 
-export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../data/trading-os-web.sqlite"), options: { readOnly?: boolean; investmentProfile?: InvestmentProfileMode; runtimeIdentity?: { deployedCommit: string; runtimeSha256: string } } = {}) {
+export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../data/trading-os-web.sqlite"), options: { readOnly?: boolean; investmentProfile?: InvestmentProfileMode; runtimeIdentity?: { deployedCommit: string; runtimeSha256: string }; sourceSelection?: ReturnType<typeof validateSourceSettings> | null } = {}) {
   if (!options.readOnly) mkdirSync(dirname(file), { recursive: true });
   const database = new DatabaseSync(file, { readOnly: Boolean(options.readOnly) });
   try {
@@ -140,6 +141,11 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   const investmentProfile = options.investmentProfile ?? "BLANK";
   const runtimeIdentity = options.runtimeIdentity ?? { deployedCommit: process.env.TRADING_OS_DEPLOYED_COMMIT ?? "", runtimeSha256: process.env.TRADING_OS_RUNTIME_SHA256 ?? "" };
   const bundledSourceClaim = process.env.TRADING_OS_BUNDLED_SOURCE_IDENTITY ?? "";
+  const sourceSelection = options.sourceSelection ? validateSourceSettings(options.sourceSelection) : null;
+  type MarketBinding = { source: "ROBINHOOD" | "TRADIER"; selection_id: string; revision: number; verified: number };
+  const activeMarket: MarketBinding = { source: sourceSelection?.selected.market.provider ?? "ROBINHOOD", selection_id: sourceSelection?.selection_id ?? "", revision: sourceSelection?.revision ?? 0, verified: sourceSelection?.selected.market.environment === "SANDBOX" ? 0 : 1 };
+  const sourceFilter = (alias: string) => sourceSelection ? `AND EXISTS (SELECT 1 FROM ts_forecast_source_bindings binding WHERE binding.forecast_run_id=${alias}.forecast_run_id AND binding.source=? AND binding.selection_id=? AND binding.revision=? AND binding.verified=1 AND ?=1)` : `AND NOT EXISTS (SELECT 1 FROM ts_forecast_source_bindings binding WHERE binding.forecast_run_id=${alias}.forecast_run_id)`;
+  const sourceFilterParameters = sourceSelection ? [activeMarket.source, activeMarket.selection_id, activeMarket.revision, activeMarket.verified] : [];
   const settlementSchemaExisted = Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'ts_settlement_state'").get());
   const optionLifecycleSchemaExisted = Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'option_lifecycle_state'").get());
   if (!options.readOnly) database.exec(`
@@ -339,6 +345,28 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       settled_at TEXT NOT NULL,
       settlement_hash TEXT NOT NULL,
       payload_json TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS ts_source_market_bars (
+      source TEXT NOT NULL CHECK (source IN ('ROBINHOOD','TRADIER')),
+      selection_id TEXT NOT NULL, symbol TEXT NOT NULL CHECK (symbol IN ('SPY','QQQ')),
+      begins_at TEXT NOT NULL, session_date TEXT NOT NULL,
+      open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL, close REAL NOT NULL,
+      volume REAL, snapshot_hash TEXT NOT NULL, observed_at TEXT NOT NULL,
+      PRIMARY KEY (source,selection_id,symbol,begins_at)
+    );
+    CREATE TABLE IF NOT EXISTS ts_forecast_source_bindings (
+      forecast_run_id TEXT PRIMARY KEY REFERENCES ts_forecast_archive(forecast_run_id),
+      source TEXT NOT NULL CHECK (source IN ('ROBINHOOD','TRADIER')),
+      selection_id TEXT NOT NULL, revision INTEGER NOT NULL,
+      verified INTEGER NOT NULL CHECK (verified IN (0,1)), snapshot_hash TEXT
+    );
+    CREATE TABLE IF NOT EXISTS source_selection_status (
+      selection_id TEXT NOT NULL, source TEXT NOT NULL, payload_json TEXT NOT NULL,
+      PRIMARY KEY(selection_id,source)
+    );
+    CREATE TABLE IF NOT EXISTS source_selection_news_records (
+      selection_id TEXT NOT NULL, record_type TEXT NOT NULL CHECK(record_type IN ('EVENT','CHAIN')), record_id TEXT NOT NULL,
+      PRIMARY KEY(selection_id,record_type,record_id)
     );
     CREATE TABLE IF NOT EXISTS ts_core_slot_ownership (
       slot_id TEXT PRIMARY KEY,
@@ -828,6 +856,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     WHERE output_type = 'A1_SHADOW_RESULT'
       AND json_extract(payload_json, '$.source_mode') = 'LIVE'
       AND json_type(payload_json, '$.market_sources') = 'object'
+      AND (?='' OR json_extract(payload_json,'$.v2_result.source_selection.selection_id')=?)
     ORDER BY julianday(observed_at) DESC, sequence DESC LIMIT 1500
   `);
   const outputCount = database.prepare("SELECT COUNT(*) AS value FROM output_records");
@@ -921,6 +950,10 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       checked_at = excluded.checked_at, capabilities_json = excluded.capabilities_json
   `);
   const dataSourceRows = database.prepare("SELECT * FROM data_source_status ORDER BY CASE source WHEN 'ROBINHOOD' THEN 0 WHEN 'FINNHUB' THEN 1 ELSE 2 END");
+  const selectedSourceRows = database.prepare("SELECT payload_json FROM source_selection_status WHERE selection_id=?");
+  const upsertSelectedSource = database.prepare("INSERT INTO source_selection_status(selection_id,source,payload_json) VALUES(?,?,?) ON CONFLICT(selection_id,source) DO UPDATE SET payload_json=excluded.payload_json");
+  const insertSelectedNewsRecord = database.prepare("INSERT OR IGNORE INTO source_selection_news_records(selection_id,record_type,record_id) VALUES(?,?,?)");
+  const selectedNewsRecords = database.prepare("SELECT record_type,record_id FROM source_selection_news_records WHERE selection_id=?");
   const insertMarketEvent = database.prepare(`
     INSERT OR IGNORE INTO market_events (event_id, event_fingerprint, kind, title, source, source_url, published_at, scheduled_for, fetched_at, response_received_at,
       affected_symbols_json, industry, event_type, event_category, novelty, importance, event_evidence_state, expires_at, raw_json, raw_sha256)
@@ -935,9 +968,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   const marketEventCount = database.prepare("SELECT COUNT(*) AS value FROM market_events");
   const eventsByFingerprint = database.prepare(`
     SELECT title, source, source_url, published_at, affected_symbols_json, event_category, expires_at
-    FROM market_events WHERE event_fingerprint = ? ORDER BY published_at, sequence
+    FROM market_events WHERE event_fingerprint = ? AND (?='' OR event_id IN (SELECT record_id FROM source_selection_news_records WHERE selection_id=? AND record_type='EVENT')) ORDER BY published_at, sequence
   `);
-  const setEventEvidence = database.prepare("UPDATE market_events SET event_evidence_state = ? WHERE event_fingerprint = ?");
+  const setEventEvidence = database.prepare("UPDATE market_events SET event_evidence_state = ? WHERE event_fingerprint = ? AND (?='' OR event_id IN (SELECT record_id FROM source_selection_news_records WHERE selection_id=? AND record_type='EVENT'))");
   const upsertCausalChain = database.prepare(`
     INSERT INTO causal_chains (chain_id, event_fingerprint, event_category, what_happened, affected_json, mechanism, expected_direction,
       expected_duration, supporting_evidence_json, opposing_evidence_json, market_confirmation, confidence, invalidation_condition,
@@ -955,6 +988,11 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   `);
   const existingForecast = database.prepare("SELECT forecast_hash FROM ts_forecast_archive WHERE forecast_run_id = ?");
   const forecastByRunId = database.prepare("SELECT payload_json FROM ts_forecast_archive WHERE forecast_run_id = ?");
+  const sourceBindingRow = database.prepare("SELECT source,selection_id,revision,verified FROM ts_forecast_source_bindings WHERE forecast_run_id=?");
+  const insertSourceBinding = database.prepare("INSERT INTO ts_forecast_source_bindings(forecast_run_id,source,selection_id,revision,verified,snapshot_hash) VALUES(?,?,?,?,?,?)");
+  const sourceEvidenceRow = database.prepare("SELECT payload_json,received_at FROM output_records WHERE record_id=? AND output_type=? AND channel='SHADOW'");
+  const insertSourceBar = database.prepare("INSERT OR IGNORE INTO ts_source_market_bars(source,selection_id,symbol,begins_at,session_date,open,high,low,close,volume,snapshot_hash,observed_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)");
+  const sourceMarketBarRows = database.prepare("SELECT symbol,begins_at,session_date,open,high,low,close,volume,snapshot_hash FROM ts_source_market_bars WHERE source=? AND selection_id=? ORDER BY begins_at");
   const insertMarketBar = database.prepare(`
     INSERT OR IGNORE INTO ts_market_bars (source, symbol, begins_at, session_date, open, high, low, close, volume, snapshot_hash, observed_at)
     VALUES ('ROBINHOOD', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -974,11 +1012,13 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     WHERE forecast.eligibility = 'OFFICIAL_LIVE'
       AND json_extract(forecast.forecast_identity_json, '$.status') = 'VERIFIED_RUNTIME'
       AND json_extract(settlement.payload_json, '$.contract_version') = 'v2'
+      ${sourceFilter("forecast")}
     ORDER BY market_date
   `);
   const latestIntradayForecast = database.prepare(`
-    SELECT forecast_run_id, official_slot, payload_json FROM ts_forecast_archive
+    SELECT forecast_run_id, official_slot, payload_json FROM ts_forecast_archive forecast
     WHERE eligibility = 'OFFICIAL_LIVE' AND market_date = ? AND report_type NOT IN ('NEXT_SESSION', 'WEEKEND_OUTLOOK')
+    ${sourceFilter("forecast")}
     ORDER BY published_at DESC LIMIT 1
   `);
   const latestOwnerTrigger = database.prepare("SELECT payload_json FROM ts_owner_trigger_events WHERE idea_id = ? ORDER BY sequence DESC LIMIT 1");
@@ -1152,9 +1192,10 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       SELECT COUNT(*) AS forecasts,
         SUM(phase IN ('INITIAL','EARLY_REVISION')) AS early,
         SUM(phase = 'INTRADAY_REVISION') AS intraday, SUM(phase = 'FINAL') AS late
-      FROM ts_forecast_archive
+      FROM ts_forecast_archive forecast
       WHERE eligibility = 'OFFICIAL_LIVE' AND json_extract(forecast_identity_json, '$.status') = 'VERIFIED_RUNTIME'
-    `).get() as Record<string, number | null>;
+      ${sourceFilter("forecast")}
+    `).get(...sourceFilterParameters) as Record<string, number | null>;
     const settlements = database.prepare(`
       SELECT COUNT(*) AS value,
         SUM(json_type(settlement.payload_json, '$.symbols.SPY') IS NOT NULL) AS spy,
@@ -1164,8 +1205,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       WHERE forecast.eligibility = 'OFFICIAL_LIVE'
         AND json_extract(forecast.forecast_identity_json, '$.status') = 'VERIFIED_RUNTIME'
         AND json_extract(settlement.payload_json, '$.contract_version') = 'v2'
-    `).get() as { value: number; spy: number; qqq: number };
-    const observationDates = (trustedObservationDates.all() as Array<{ market_date: string }>).map((row) => row.market_date);
+        ${sourceFilter("forecast")}
+    `).get(...sourceFilterParameters) as { value: number; spy: number; qqq: number };
+    const observationDates = (trustedObservationDates.all(...sourceFilterParameters) as Array<{ market_date: string }>).map((row) => row.market_date);
     const regimes = database.prepare(`
       WITH trusted_dates AS (
         SELECT value AS market_date FROM json_each(?)
@@ -1176,8 +1218,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
         COUNT(DISTINCT CASE WHEN state IN ('OPENING_UNCERTAINTY','TREND_CANDIDATE','TREND_EXHAUSTED') THEN trading_date END) AS transition_days
       FROM ts_intraday_regime_events JOIN trusted_dates ON market_date = trading_date
       WHERE source_mode = 'LIVE' AND evidence_eligibility = 'NATURAL_STRUCTURE_ONLY'
-    `).get(JSON.stringify(observationDates)) as Record<string, number>;
-    const option = database.prepare(`
+        AND COALESCE(json_extract(payload_json,'$.source_selection_id'),'')=?
+    `).get(JSON.stringify(observationDates), activeMarket.source === "ROBINHOOD" ? activeMarket.selection_id : "UNSUPPORTED_TRADIER_REGIME") as Record<string, number>;
+    const option = sourceSelection ? { days: 0, opportunities: 0, bbo_events: 0 } : database.prepare(`
       SELECT COUNT(DISTINCT trading_date) AS days, COUNT(*) AS opportunities,
         SUM((SELECT COUNT(*) FROM spx_convexity_opportunity_events event WHERE event.opportunity_id = opportunity.opportunity_id AND event.event_type = 'REGIME_QUOTE_SNAPSHOT')) AS bbo_events
       FROM spx_convexity_opportunities opportunity WHERE source_mode = 'LIVE' AND evidence_eligibility = 'NATURAL_LEDGER_ONLY'
@@ -1317,6 +1360,16 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     };
   }
 
+  function currentSourceOutput(row: { record_id: string; output_type: string; payload: Record<string, unknown> }) {
+    if (!sourceSelection || row.output_type === "SCHEDULE_CHECKPOINT") return true;
+    if (row.output_type === "TS_OUTPUT" || row.output_type === "TS_SHADOW_OUTPUT") return sameMarket(forecastMarket((row.payload.evidence_snapshot as TsOutput["evidence_snapshot"]).run_id));
+    if (row.output_type === "A1_SHADOW_RESULT" || row.output_type === "A2_SHADOW_RESULT") return canonicalJson((row.payload.v2_result as { source_selection?: unknown } | undefined)?.source_selection) === canonicalJson(sourceSelection);
+    const forecastId = row.payload.ts_run_id ?? row.payload.source_forecast_run_id ?? row.payload.official_forecast_run_id;
+    if (typeof forecastId === "string") return sameMarket(forecastMarket(forecastId));
+    const first = sourceEvidenceRow.get(`${row.record_id.replace(/:[^:]+$/, "")}:A1`, "A1_SHADOW_RESULT") as { payload_json: string } | undefined;
+    return Boolean(first && canonicalJson(JSON.parse(first.payload_json).v2_result?.source_selection) === canonicalJson(sourceSelection));
+  }
+
   function getOutputs(view?: "forecast") {
     const projection: OutputProjection = {
       TS_OUTPUT: [],
@@ -1348,7 +1401,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       return row ? [row] : [];
     });
     const projectionRows = [...((view ? forecastProjectionRows : projectionOutputRows).all() as Array<OutputRecordSummary & { payload_json: string }>), ...latestTypeRows, ...((view ? latestEveningCheckpoint.all() : latestManagerOutput.all()) as Array<OutputRecordSummary & { payload_json: string }>)].filter((row, index, values) => values.findIndex((candidate) => candidate.record_id === row.record_id) === index);
-    const parsed = projectionRows.map((row) => ({ ...row, payload: JSON.parse(row.payload_json) as Record<string, unknown> }));
+    const parsed = projectionRows.map((row) => ({ ...row, payload: JSON.parse(row.payload_json) as Record<string, unknown> })).filter(currentSourceOutput);
     const currentShadowSlot = (runRows.all() as Record<string, unknown>[]).find((row) => row.channel === "SHADOW" && String(row.slot_id).startsWith("live-shadow:"))?.slot_id as string | undefined;
     const currentShadowRows = currentShadowSlot ? parsed.filter((row) => row.record_id.startsWith(`${currentShadowSlot}:`)) : parsed;
     const tsRows = parsed.filter((row) => row.output_type === "TS_OUTPUT");
@@ -1479,7 +1532,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     };
   }
 
-  function hydrateDataSource(row: Record<string, unknown>): DataSourceState {
+  function hydrateDataSource(row: Record<string, unknown>, capabilities = JSON.parse(row.capabilities_json as string) as Record<string, boolean>): DataSourceState {
     return {
       source: row.source as DataSourceState["source"],
       status: row.status as DataSourceState["status"],
@@ -1490,7 +1543,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       freshness_seconds: row.as_of ? Math.max(0, Math.round((Date.now() - Date.parse(row.as_of as string)) / 1_000)) : row.freshness_seconds as number | null,
       error: row.error as string | null,
       checked_at: row.checked_at as string,
-      capabilities: JSON.parse(row.capabilities_json as string) as Record<string, boolean>,
+      capabilities,
     };
   }
 
@@ -1498,14 +1551,26 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const checkedAt = new Date(0).toISOString();
     const defaults: DataSourceState[] = [
       { source: "ROBINHOOD", status: "NOT_VERIFIED", configured: false, authorization: "NOT_VERIFIED", last_success_at: null, as_of: null, freshness_seconds: null, error: "尚未完成本次进程的官方 MCP smoke", checked_at: checkedAt, capabilities: {} },
-      { source: "FINNHUB", status: "NOT_CONFIGURED", configured: false, authorization: "NOT_CONFIGURED", last_success_at: null, as_of: null, freshness_seconds: null, error: "尚未在 4070 本机设置 Finnhub 凭证", checked_at: checkedAt, capabilities: { news: false, earnings_calendar: false, earnings_results: false } },
-      { source: "TRADIER", status: "DISABLED_BACKUP", configured: false, authorization: "NOT_APPLICABLE", last_success_at: null, as_of: null, freshness_seconds: null, error: "账户已停用；仅保留备用适配器", checked_at: checkedAt, capabilities: {} },
+      { source: "FINNHUB", status: "NOT_CONFIGURED", configured: false, authorization: "NOT_CONFIGURED", last_success_at: null, as_of: null, freshness_seconds: null, error: "尚未在本包配置可选 Finnhub 凭证", checked_at: checkedAt, capabilities: { news: false, earnings_calendar: false, earnings_results: false } },
+      { source: "TRADIER", status: "NOT_CONFIGURED", configured: false, authorization: "NOT_CONFIGURED", last_success_at: null, as_of: null, freshness_seconds: null, error: "尚未选择并验证 Tradier 只读行情", checked_at: checkedAt, capabilities: {} },
     ];
+    if (sourceSelection) {
+      const selected = new Set([activeMarket.source, sourceSelection.selected.news.provider, sourceSelection.selected.broker.provider]);
+      const observed = new Map((selectedSourceRows.all(activeMarket.selection_id) as Array<{ payload_json: string }>).map((row) => { const state = JSON.parse(row.payload_json) as DataSourceState; return [state.source, hydrateDataSource({ ...state }, state.capabilities)] as const; }));
+      return defaults.map((item): DataSourceState => {
+        if (!selected.has(item.source)) return { ...item, status: "NOT_CONFIGURED", authorization: "NOT_APPLICABLE", error: "未选为本次启动的数据来源" };
+        if (item.source === activeMarket.source && activeMarket.verified !== 1) return { ...item, status: "DATA_BLOCKED", authorization: "NOT_VERIFIED", error: "Sandbox仅供测试，不具备自然行情或预测资格" };
+        return observed.get(item.source) ?? { ...item, status: "NOT_VERIFIED", authorization: "NOT_VERIFIED", error: "本次数据源选择尚未通过实际只读读取，未沿用上一选择的验证状态" };
+      });
+    }
     const observed = new Map((dataSourceRows.all() as Record<string, unknown>[]).map((row) => [row.source as string, hydrateDataSource(row)]));
     return defaults.map((item) => observed.get(item.source) ?? item);
   }
 
   function getMarketIntelligence() {
+    if (sourceSelection && sourceSelection.selected.news.provider !== "FINNHUB") return { eventCount: 0, events: [], causalChains: [], earningsCalendar: null, currentEarnings: [], eventResponseReceivedAt: {} };
+    const bindings = sourceSelection ? selectedNewsRecords.all(activeMarket.selection_id) as Array<{ record_type: string; record_id: string }> : null;
+    const inSelection = (kind: string, id: unknown) => !bindings || bindings.some((row) => row.record_type === kind && row.record_id === id);
     let earningsCalendar: MarketIntelligenceState["earningsCalendar"] = null;
     try {
       const row = getSelfCheckState.get("paper_earnings_calendar_current") as { state_value: string } | undefined;
@@ -1514,8 +1579,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
         && typeof value.response_received_at === "string" && utcIso(value.response_received_at) === value.response_received_at && value.response_received_at >= value.checked_at
         && Array.isArray(value.event_ids) && value.event_ids.length <= 100 && value.event_ids.every((id: unknown) => typeof id === "string" && id.length > 0 && id.length <= 200)) earningsCalendar = value;
     } catch { /* Missing or malformed current membership never revives an old earnings schedule. */ }
-    const currentRows = currentEarningsRows.all(JSON.stringify(earningsCalendar?.event_ids ?? [])) as Record<string, unknown>[];
-    const recentRows = marketEventRows.all() as Record<string, unknown>[];
+    if (earningsCalendar && sourceSelection) earningsCalendar = { ...earningsCalendar, event_ids: earningsCalendar.event_ids.filter((id) => inSelection("EVENT", id)) };
+    const currentRows = (currentEarningsRows.all(JSON.stringify(earningsCalendar?.event_ids ?? [])) as Record<string, unknown>[]).filter((row) => inSelection("EVENT", row.event_id));
+    const recentRows = (marketEventRows.all() as Record<string, unknown>[]).filter((row) => inSelection("EVENT", row.event_id));
     const projectEvent = (row: Record<string, unknown>): MarketEvent => {
       let raw: Record<string, unknown> = {};
       try { raw = JSON.parse(row.raw_json as string) as Record<string, unknown>; } catch { /* malformed historical raw remains retained but unsupported */ }
@@ -1547,7 +1613,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     }; };
     const events = recentRows.map(projectEvent), currentEarnings = currentRows.map(projectEvent);
     const eventResponseReceivedAt = Object.fromEntries(recentRows.map((row) => [row.event_id as string, row.response_received_at as string | null]));
-    const causalChains = (causalRows.all() as Record<string, unknown>[]).map((row): CausalChain => ({
+    const causalChains = (causalRows.all() as Record<string, unknown>[]).filter((row) => inSelection("CHAIN", row.chain_id)).map((row): CausalChain => ({
       chain_id: row.chain_id as string,
       event_fingerprint: row.event_fingerprint as string,
       event_category: row.event_category as string,
@@ -1566,7 +1632,35 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       event_evidence_state: row.event_evidence_state as CausalChain["event_evidence_state"],
       updated_at: row.updated_at as string,
     }));
-    return { eventCount: Number((marketEventCount.get() as { value: number }).value), events, causalChains, earningsCalendar, currentEarnings, eventResponseReceivedAt };
+    return { eventCount: bindings ? bindings.filter((row) => row.record_type === "EVENT").length : Number((marketEventCount.get() as { value: number }).value), events, causalChains, earningsCalendar, currentEarnings, eventResponseReceivedAt };
+  }
+
+  function sameMarket(binding: MarketBinding) {
+    return binding.verified === 1 && activeMarket.verified === 1 && binding.source === activeMarket.source && binding.selection_id === activeMarket.selection_id && binding.revision === activeMarket.revision;
+  }
+
+  function forecastMarket(runId: string): MarketBinding {
+    return (sourceBindingRow.get(runId) as MarketBinding | undefined) ?? { source: "ROBINHOOD", selection_id: "", revision: 0, verified: 1 };
+  }
+
+  function selectedA1(payload: Record<string, unknown>) {
+    if (!sourceSelection || activeMarket.verified !== 1) return false;
+    const proof = payload.v2_result as { source_selection?: unknown } | undefined;
+    const market = payload.market_sources as ReadonlyMarketSources | undefined;
+    if (!market || payload.source_mode !== "LIVE" || canonicalJson(proof?.source_selection) !== canonicalJson(sourceSelection) || !["LIVE", "MARKET_CLOSED"].includes(market.status)) return false;
+    const provider = market.providers.find((row) => row.source === activeMarket.source);
+    return provider?.status === market.status && [...market.quotes, ...market.bars, ...market.options].every((row) => row.source === activeMarket.source);
+  }
+
+  function sourceForForecast(envelope: OutputEnvelope, output: TsOutput, receivedAt: string): { verified: number; snapshotHash: string | null } {
+    if (!sourceSelection || !envelope.record_id.startsWith("live-shadow:") || !envelope.record_id.endsWith(":TS")) return { verified: 0, snapshotHash: null };
+    const a1 = sourceEvidenceRow.get(envelope.record_id.replace(/:TS$/, ":A1"), "A1_SHADOW_RESULT") as { payload_json: string; received_at: string } | undefined;
+    const a2 = sourceEvidenceRow.get(envelope.record_id.replace(/:TS$/, ":A2"), "A2_SHADOW_RESULT") as typeof a1;
+    if (!a1 || !a2 || Date.parse(a1.received_at) > Date.parse(a2.received_at) || Date.parse(a2.received_at) > Date.parse(receivedAt)) return { verified: 0, snapshotHash: null };
+    const first = JSON.parse(a1.payload_json), second = JSON.parse(a2.payload_json), packet = second.v2_result?.packet;
+    const evidence = packet?.a1?.market_data, market = first.market_sources;
+    if (!selectedA1(first) || second.source_mode !== "LIVE" || canonicalJson(second.v2_result?.source_selection) !== canonicalJson(sourceSelection) || !packet || packet.run_id !== output.evidence_snapshot.run_id || evidence?.source !== activeMarket.source || evidence.snapshot_id !== market.snapshot_id || evidence.snapshot_hash !== market.snapshot_hash || packet.packet_hash !== output.evidence_snapshot.packet_hash) return { verified: 0, snapshotHash: null };
+    return { verified: 1, snapshotHash: market.snapshot_hash };
   }
 
   function archiveForecast(envelope: OutputEnvelope, receivedAt: string) {
@@ -1575,11 +1669,13 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const { sourceMode, eligibility, exclusion, slot } = forecastArchiveClassification(envelope.record_id, envelope.output_type, envelope.channel, output);
     const payload = JSON.stringify(output), hash = createHash("sha256").update(payload).digest("hex"), runId = output.evidence_snapshot.run_id;
     const observedAt = utcIso(output.evidence_snapshot.market_time.observed_at), publishedAt = utcIso(receivedAt), delay = Date.parse(publishedAt) - Date.parse(observedAt);
-    const bundle = delay >= 0 && bundledSourceClaim ? verifyBundledSourceIdentity(bundledSourceClaim, output.evidence_snapshot.release_commit) : null;
+    if (sourceSelection && activeMarket.verified !== 1 && sourceMode === "LIVE") throw new SnapshotImportError("NOT_SUPPORTED", "Sandbox禁止进入自然预测归档");
+    const sourceProof = sourceForForecast(envelope, output, publishedAt);
+    const bundle = delay >= 0 && bundledSourceClaim && (!sourceSelection || sourceProof.verified === 1) ? verifyBundledSourceIdentity(bundledSourceClaim, output.evidence_snapshot.release_commit) : null;
     const identity: TsForecastIdentity | null = bundle
       ? { contract_id: TS_BUNDLED_FORECAST_IDENTITY_CONTRACT, status: "VERIFIED_RUNTIME", forecast_contract_version: output.contract_version, model_release_commit: null, generator_commit: null, runtime_release_sha256: bundle.runtime_sha256, source_identity: bundle as NonNullable<TsForecastIdentity["source_identity"]>, observed_at: observedAt, received_at: publishedAt, gateway_delay_ms: delay }
       // Only an explicitly trusted embedding may use the legacy identity; public contexts never fall back to it.
-      : !bundledSourceClaim && process.env.TRADING_OS_PUBLIC_AUTOMATION !== "1" && options.runtimeIdentity && /^[0-9a-f]{40}$/i.test(runtimeIdentity.deployedCommit) && /^[0-9a-f]{64}$/i.test(runtimeIdentity.runtimeSha256) && output.evidence_snapshot.release_commit === V2_REFERENCE_COMMIT && delay >= 0
+      : !sourceSelection && !bundledSourceClaim && process.env.TRADING_OS_PUBLIC_AUTOMATION !== "1" && options.runtimeIdentity && /^[0-9a-f]{40}$/i.test(runtimeIdentity.deployedCommit) && /^[0-9a-f]{64}$/i.test(runtimeIdentity.runtimeSha256) && output.evidence_snapshot.release_commit === V2_REFERENCE_COMMIT && delay >= 0
       ? { contract_id: TS_FORECAST_IDENTITY_CONTRACT, status: "VERIFIED_RUNTIME", forecast_contract_version: output.contract_version, model_release_commit: output.evidence_snapshot.release_commit, generator_commit: runtimeIdentity.deployedCommit.toLowerCase(), runtime_release_sha256: runtimeIdentity.runtimeSha256.toLowerCase(), observed_at: observedAt, received_at: publishedAt, gateway_delay_ms: delay }
       : null;
     const identityPayload = identity ? JSON.stringify(identity) : null, identityHash = identityPayload ? createHash("sha256").update(identityPayload).digest("hex") : null;
@@ -1589,6 +1685,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       return;
     }
     insertForecast.run(runId, envelope.record_id, sourceMode, eligibility, exclusion, publishedAt, output.evidence_snapshot.market_time.market_date, slot, forecastPhase(output), output.report_type, hash, identityHash, identityPayload, payload);
+    if (sourceSelection) insertSourceBinding.run(runId, activeMarket.source, activeMarket.selection_id, activeMarket.revision, sourceProof.verified, sourceProof.snapshotHash);
   }
 
   if (!options.readOnly) for (const row of archivedForecastRows.all() as Array<{ source_record_id: string; payload_json: string }>) {
@@ -1601,9 +1698,10 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   function archiveMarketBars(envelope: OutputEnvelope) {
     if (envelope.output_type !== "A1_SHADOW_RESULT" || !envelope.record_id.startsWith("live-shadow:")) return;
     const sources = (envelope.payload as { market_sources?: Record<string, unknown> }).market_sources;
+    if (sourceSelection && !selectedA1(envelope.payload as unknown as Record<string, unknown>)) return;
     if (!sources || sources.status === "DATA_BLOCKED" || !Array.isArray(sources.bars) || typeof sources.snapshot_hash !== "string") return;
     for (const group of sources.bars as Array<Record<string, unknown>>) {
-      if (group.source !== "ROBINHOOD" || (group.symbol !== "SPY" && group.symbol !== "QQQ") || !Array.isArray(group.values)) continue;
+      if (group.source !== activeMarket.source || (group.symbol !== "SPY" && group.symbol !== "QQQ") || !Array.isArray(group.values)) continue;
       writeMarketBars(group.symbol as "SPY" | "QQQ", group.values as Array<Record<string, unknown>>, sources.snapshot_hash, envelope.observed_at);
     }
   }
@@ -1616,7 +1714,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function getMarketRadar() {
-    const row = latestApprovedCapability.get() as { snapshot_hash: string; market_snapshot_id: string; source_record_id: string; archived_at: string; payload_json: string } | undefined;
+    const row = (sourceSelection ? database.prepare("SELECT snapshot.* FROM approved_capability_snapshots snapshot JOIN output_records output ON output.record_id=snapshot.source_record_id WHERE json_extract(output.payload_json,'$.v2_result.source_selection.selection_id')=? AND json_extract(snapshot.payload_json,'$.fixed_pool.observed_count')>0 ORDER BY julianday(snapshot.generated_at) DESC,snapshot.rowid DESC LIMIT 1").get(activeMarket.selection_id) : latestApprovedCapability.get()) as { snapshot_hash: string; market_snapshot_id: string; source_record_id: string; archived_at: string; payload_json: string } | undefined;
     return row ? {
       snapshot: JSON.parse(row.payload_json) as ApprovedCapabilitySnapshot,
       source_record_id: row.source_record_id,
@@ -1627,21 +1725,25 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function writeMarketBars(symbol: "SPY" | "QQQ", bars: Array<Record<string, unknown>>, snapshotHash: string, observedAt: string) {
+    if (activeMarket.verified !== 1) return;
     for (const raw of bars) {
       const values = [raw.open, raw.high, raw.low, raw.close];
       if (typeof raw.begins_at !== "string" || values.some((value) => typeof value !== "number" || !Number.isFinite(value))) continue;
       const volume = typeof raw.volume === "number" && Number.isFinite(raw.volume) ? raw.volume : null;
-      insertMarketBar.run(symbol, utcIso(raw.begins_at), ptDateKey(raw.begins_at), Number(raw.open), Number(raw.high), Number(raw.low), Number(raw.close), volume, snapshotHash, utcIso(observedAt));
+      const barValues = [symbol, utcIso(raw.begins_at), ptDateKey(raw.begins_at), Number(raw.open), Number(raw.high), Number(raw.low), Number(raw.close), volume, snapshotHash, utcIso(observedAt)];
+      if (sourceSelection) insertSourceBar.run(activeMarket.source, activeMarket.selection_id, ...barValues);
+      else insertMarketBar.run(...barValues);
     }
   }
 
   function getOwnerTrigger(): OwnerTriggerOverview {
-    const recent = (ownerTriggerRows.all() as Array<{ payload_json: string }>).map((row) => JSON.parse(row.payload_json) as OwnerTriggerEvent);
+    const recent = (ownerTriggerRows.all() as Array<{ payload_json: string }>).map((row) => JSON.parse(row.payload_json) as OwnerTriggerEvent).filter((event) => sameMarket(forecastMarket(event.forecast_run_id)));
     return { current: { SPY: recent.find((event) => event.symbol === "SPY") ?? null, QQQ: recent.find((event) => event.symbol === "QQQ") ?? null }, recent };
   }
 
   function realSpxHoldings(): SpxOptionContract[] {
-    const row = latestReadonlyAccount.get() as { payload_json: string } | undefined;
+    if (sourceSelection?.selected.broker.provider === "NONE") return [];
+    const row = (sourceSelection ? database.prepare("SELECT payload_json FROM output_records WHERE output_type='A1_SHADOW_RESULT' AND json_extract(payload_json,'$.v2_result.source_selection.selection_id')=? AND json_extract(payload_json,'$.source_mode')='LIVE' ORDER BY julianday(observed_at) DESC,sequence DESC LIMIT 1").get(activeMarket.selection_id) : latestReadonlyAccount.get()) as { payload_json: string } | undefined;
     if (!row) return [];
     const payload = JSON.parse(row.payload_json) as { market_sources?: { account?: { positions?: Array<Record<string, unknown>> } } };
     return (payload.market_sources?.account?.positions ?? []).flatMap((position) => {
@@ -1832,13 +1934,22 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     return { contract_version: "SPX_CONVEXITY_LEDGER_V1", status: "ACTIVE", data_mode: "SPY_PROXY", spx_spot_status: "DATA_BLOCKED", capital_context: capital.context, current, history, statistics: { path_candidates: summaries.length, path_confirmations: summaries.filter((item) => item.confirmation_time !== null).length, qualified_candidate_sets: summaries.filter((item) => item.candidates.some((candidate) => candidate.initial_valid_ask !== null && !candidate.blockers.includes("NO_QUALIFIED_CONTRACT") && !candidate.blockers.includes("OWNER_CAPITAL_UNFIT"))).length, owner_capital_fit_sets: summaries.filter((item) => item.candidates.some((candidate) => ["NORMAL_FIT", "STRONG_OPPORTUNITY_ONLY"].includes(candidate.capital_assessment.fit))).length, open_participation_windows: summaries.filter((item) => ["WINDOW_OPEN", "WAIT_FOR_PULLBACK", "PATH_CONFIRMED"].includes(item.state)).length, owner_executions: 0, broker_profit_or_loss_events: 0, missed_by_late_confirmation: summaries.filter((item) => item.primary_miss_reason === "LATE_SYSTEM_CONFIRMATION" || item.secondary_miss_reasons.includes("LATE_SYSTEM_CONFIRMATION")).length, owner_did_not_execute: summaries.filter((item) => item.primary_miss_reason === "OWNER_DID_NOT_EXECUTE" || item.secondary_miss_reasons.includes("OWNER_DID_NOT_EXECUTE")).length, hindsight_research_cases: summaries.filter((item) => item.candidates.some((candidate) => candidate.hindsight_session_max_bid !== null)).length } };
   }
 
+  function selectedCharts(charts: TriggerChart[]) {
+    if (activeMarket.verified !== 1) return [];
+    return charts.filter((chart) => {
+      const marker = chart as TriggerChart & { source_selection_id?: string; source_revision?: number; environment?: string };
+      return chart.source === activeMarket.source && (!sourceSelection || marker.source_selection_id === activeMarket.selection_id && marker.source_revision === activeMarket.revision && marker.environment === "LIVE");
+    });
+  }
+
   function recordOwnerTriggerChanges(charts: TriggerChart[], observedAt: string) {
-    const usable = charts.filter((chart) => chart.source === "ROBINHOOD" && chart.interval === "5m" && chart.status !== "DATA_BLOCKED" && (chart.symbol === "SPY" || chart.symbol === "QQQ"));
+    const usable = selectedCharts(charts).filter((chart) => chart.interval === "5m" && chart.status !== "DATA_BLOCKED" && (chart.symbol === "SPY" || chart.symbol === "QQQ"));
     if (!usable.some((chart) => chart.symbol === "SPY") || !usable.some((chart) => chart.symbol === "QQQ")) return [] as OwnerTriggerEvent[];
     const marketDate = usable.flatMap((chart) => chart.session_dates ?? []).sort().at(-1) ?? usable.flatMap((chart) => chart.bars).map((bar) => typeof bar.trading_date === "string" ? bar.trading_date : ptDateKey(bar.begins_at)).sort().at(-1);
     if (!marketDate) return [] as OwnerTriggerEvent[];
-    const row = latestIntradayForecast.get(marketDate) as { forecast_run_id: string; official_slot: string; payload_json: string } | undefined;
+    const row = latestIntradayForecast.get(marketDate, ...sourceFilterParameters) as { forecast_run_id: string; official_slot: string; payload_json: string } | undefined;
     if (!row) return [] as OwnerTriggerEvent[];
+    if (!sameMarket(forecastMarket(row.forecast_run_id))) return [] as OwnerTriggerEvent[];
     const forecast = JSON.parse(row.payload_json) as TsOutput;
     const signalRow = liveOptionSignalForForecast.get(row.forecast_run_id) as { payload_json: string } | undefined;
     const signal = signalRow ? JSON.parse(signalRow.payload_json) as OptionStrategySignal : null;
@@ -1861,25 +1972,29 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function getIntradayRegime(): IntradayRegimeOverview {
-    const recent = (intradayRegimeRows.all() as Array<{ payload_json: string }>).map((row) => JSON.parse(row.payload_json) as IntradayRegimeEvent);
+    const recent = activeMarket.source !== "ROBINHOOD" ? [] : (intradayRegimeRows.all() as Array<{ payload_json: string }>).map((row) => JSON.parse(row.payload_json) as IntradayRegimeEvent & { source_selection_id?: string }).filter((row) => (row.source_selection_id ?? "") === activeMarket.selection_id);
     return { current: recent[0] ?? null, recent };
   }
 
   function recordIntradayRegime(charts: TriggerChart[], observedAt: string) {
-    const row = latestIntradayRegime.get() as { payload_json: string } | undefined, previous = row ? JSON.parse(row.payload_json) as IntradayRegimeEvent : null;
+    charts = selectedCharts(charts);
+    if (activeMarket.source !== "ROBINHOOD" || sourceSelection && !charts.length) return [] as IntradayRegimeEvent[];
+    const row = sourceSelection ? database.prepare("SELECT payload_json FROM ts_intraday_regime_events WHERE json_extract(payload_json,'$.source_selection_id')=? ORDER BY sequence DESC LIMIT 1").get(activeMarket.selection_id) as { payload_json: string } | undefined : latestIntradayRegime.get() as { payload_json: string } | undefined, previous = row ? JSON.parse(row.payload_json) as IntradayRegimeEvent : null;
     const candidate = evaluateIntradayRegime({ charts, observedAt: utcIso(observedAt), previous });
     if (candidate.source_mode !== "LIVE" || candidate.evidence_eligibility !== "NATURAL_STRUCTURE_ONLY") throw new Error("研究或回放盘型证据禁止写入生产事件表");
     if (previous && candidate.trading_date === previous.trading_date && candidate.data_timestamp === previous.data_timestamp && candidate.state === previous.state && candidate.direction === previous.direction && candidate.path_stage === previous.path_stage && candidate.participation_window.status === previous.participation_window.status) return [] as IntradayRegimeEvent[];
     const identity = `${candidate.trading_date}:${candidate.data_timestamp ?? candidate.changed_at}:${candidate.state}:${candidate.direction}:${candidate.participation_window.status}`;
-    const event: IntradayRegimeEvent = { ...candidate, event_id: `intraday-regime-${createHash("sha256").update(identity).digest("hex").slice(0, 24)}` };
+    const event: IntradayRegimeEvent = { ...candidate, ...(sourceSelection ? { source_selection_id: activeMarket.selection_id } : {}), event_id: `intraday-regime-${createHash("sha256").update(sourceSelection ? `${activeMarket.selection_id}:${identity}` : identity).digest("hex").slice(0, 24)}` };
     const payload = JSON.stringify(event), payloadHash = createHash("sha256").update(payload).digest("hex");
     const inserted = insertIntradayRegime.run(event.event_id, event.previous_event_id, event.trading_date, event.state, event.direction, event.path_stage, event.participation_window.status, event.source_mode, event.evidence_eligibility, event.changed_at, event.data_timestamp, payloadHash, payload);
     return inserted.changes ? [event] : [];
   }
 
-  function settlementHistory() {
+  function settlementHistory(binding: MarketBinding = activeMarket) {
     const history = { SPY: [] as TsSettlementBar[], QQQ: [] as TsSettlementBar[] };
-    for (const row of marketBarRows.all() as Array<Record<string, unknown>>) {
+    if (binding.verified !== 1) return history;
+    const rows = binding.selection_id ? sourceMarketBarRows.all(binding.source, binding.selection_id) : marketBarRows.all();
+    for (const row of rows as Array<Record<string, unknown>>) {
       const symbol = row.symbol as "SPY" | "QQQ";
       history[symbol].push({ symbol, begins_at: row.begins_at as string, session_date: row.session_date as string, open: Number(row.open), high: Number(row.high), low: Number(row.low), close: Number(row.close), volume: row.volume === null ? null : Number(row.volume), snapshot_hash: row.snapshot_hash as string });
     }
@@ -1887,14 +2002,15 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function settlePendingForecasts(at = new Date().toISOString()) {
-    const now = new Date(at), history = settlementHistory();
+    const now = new Date(at);
     let newlySettled = 0, duePending = 0;
     const errors: string[] = [];
     for (const row of pendingForecastRows.all() as Array<{ forecast_run_id: string; forecast_identity_json: string | null; payload_json: string }>) {
       const output = JSON.parse(row.payload_json) as TsOutput;
       try {
         const identity = row.forecast_identity_json ? JSON.parse(row.forecast_identity_json) as TsForecastIdentity : undefined;
-        const settlement = settleTsForecast(output, history, now.toISOString(), identity);
+        const binding = forecastMarket(row.forecast_run_id);
+        const settlement = settleTsForecast(output, settlementHistory(binding), now.toISOString(), identity, binding.source);
         if (!settlement) {
           if (forecastDue(output, now, null)) duePending += 1;
           continue;
@@ -1911,10 +2027,12 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function settlePendingCandidateForecasts(at = new Date().toISOString()) {
+    if (activeMarket.source !== "ROBINHOOD" || activeMarket.verified !== 1) return { newlySettled: 0 };
     const history = settlementHistory();
     let newlySettled = 0;
     for (const row of pendingCandidateRows.all() as Array<{ record_id: string; received_at: string; payload_json: string }>) {
       const forecast = JSON.parse(row.payload_json) as TsSignalCandidateForecast;
+      if (sourceSelection && !sameMarket(forecastMarket(forecast.official_forecast_run_id))) continue;
       for (const horizon of ["30M", "60M"] as const) {
         const recordId = `${forecast.candidate_forecast_id}:settlement:${horizon}`;
         if (existingOutput.get(recordId)) continue;
@@ -1964,8 +2082,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function getOptionIvHistory(): OptionIvArchiveObservation[] {
+    if (activeMarket.source !== "ROBINHOOD" || activeMarket.verified !== 1) return [];
     const result: OptionIvArchiveObservation[] = [], seen = new Set<string>();
-    for (const row of optionIvArchiveRows.all() as Array<{ received_at: string; payload_json: string }>) {
+    for (const row of optionIvArchiveRows.all(activeMarket.selection_id, activeMarket.selection_id) as Array<{ received_at: string; payload_json: string }>) {
       const payload = JSON.parse(row.payload_json) as { source_mode?: string; observed_at?: string; market_sources?: ReadonlyMarketSources };
       const market = payload.market_sources;
       const marketDate = market?.market_session?.market_date;
@@ -1992,6 +2111,8 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function settlePendingOptionAdvice(at = new Date().toISOString()) {
+    // Existing option-advice records have no source-selection binding; never reprice them with a new market epoch.
+    if (sourceSelection) return { status: "COMPLETED" as const, newlySettled: 0, duePending: 0, errors: [] as string[] };
     const history = settlementHistory(), optionArchive = getOptionIvHistory(), { result } = optionAdviceInputs();
     let newlySettled = 0, duePending = 0;
     const errors: string[] = [];
@@ -2051,7 +2172,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       identity: row.forecast_identity_json ? JSON.parse(row.forecast_identity_json) as TsForecastIdentity : null,
       settlement: row.settlement_json ? JSON.parse(row.settlement_json as string) as TsSettlementResult : null,
     }));
-    const official = rows.filter((row) => row.eligibility === "OFFICIAL_LIVE"), settled = official.filter((row) => row.settlement), resolved = settled.filter((row) => row.settlement?.status === "RESOLVED");
+    const official = rows.filter((row) => row.eligibility === "OFFICIAL_LIVE" && sameMarket(forecastMarket(row.forecast_run_id))), settled = official.filter((row) => row.settlement), resolved = settled.filter((row) => row.settlement?.status === "RESOLVED");
     const annotations = listOperationalAnnotations();
     const checkpoints = (tsCheckpointRows.all(activatedAt) as Array<{ payload_json: string }>).map((row) => JSON.parse(row.payload_json) as ScheduleCheckpoint).filter((item) => eligibleForSuccessStatistics(item, annotations));
     const checkpointByTime = new Map<string, ScheduleCheckpoint>();
@@ -2064,7 +2185,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const due = official.filter((row) => forecastDue(row.output, now, row.settlement)).length;
     const exclusions: TsSettlementOverview["exclusions"] = checkpointExclusions(checkpoints, activatedAt);
     for (const item of expected.filter((checkpoint) => checkpoint.status === "SUCCEEDED" && !deliveredKeys.has(`${checkpoint.scheduled_pt.slice(0, 10)}:${checkpoint.business_slot}`))) exclusions.push({ slot: item.business_slot, status: "NOT_REPORTED", reason: "该槽已触发，但没有留下可结算的自然 LIVE TS 预测" });
-    for (const row of official.filter((forecast) => !forecast.settlement && forecastDue(forecast.output, now, null))) exclusions.push({ slot: row.official_slot, status: "DATA_BLOCKED", reason: "预测已永久保存，但观察窗口结束后仍缺少完整 Robinhood 5 分钟 K 线" });
+    for (const row of official.filter((forecast) => !forecast.settlement && forecastDue(forecast.output, now, null))) exclusions.push({ slot: row.official_slot, status: "DATA_BLOCKED", reason: `预测已永久保存，但观察窗口结束后仍缺少完整 ${activeMarket.source} 5 分钟 K 线` });
     const direction = Object.fromEntries(["SPY", "QQQ"].map((symbol) => {
       const results = settled.map((row) => row.settlement!.symbols[symbol as "SPY" | "QQQ"]);
       const correct = results.filter((result) => result.direction_correct).length;
@@ -2109,7 +2230,7 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const rangeResults = trustedSettled.flatMap((item) => (["SPY", "QQQ"] as const).map((symbol) => item.symbols[symbol].range_result).filter((item) => item.status !== "NOT_SCORABLE"));
     const keyLevels = trustedSettled.flatMap((item) => (["SPY", "QQQ"] as const).flatMap((symbol) => item.symbols[symbol].key_levels));
     const trustedTimes = trustedRows.map((row) => row.published_at).sort();
-    const independentTradingDays = trustedObservationDates.all().length;
+    const independentTradingDays = trustedObservationDates.all(...sourceFilterParameters).length;
     const trusted: TsSettlementOverview["trusted"] = {
       status: trustedSettled.length >= 30 ? "READY" : "INSUFFICIENT_EVIDENCE",
       message: trustedSettled.length >= 30 ? "UNVALIDATED：已达到初步统计门槛，但尚未同时通过60日、简单基线、MCC、Brier和Risk-Coverage验收" : "UNVALIDATED：当前版本样本不足，尚未证明预测优势",
@@ -2127,14 +2248,14 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       risk_coverage: evaluation.risk_coverage,
       baselines: evaluation.baselines,
     };
-    const legacyRows = official.filter((row) => row.identity?.status !== "VERIFIED_RUNTIME"), legacySettled = legacyRows.flatMap((row) => row.settlement ? [row.settlement] : []), enhanced = rows.filter((row) => row.eligibility === "EXCLUDED_NON_LIVE" && row.source_mode === "LIVE");
-    const barVersion = marketBarVersion.get() as { count: number; latest: string | null }, projectionKey = `${barVersion.count}:${barVersion.latest ?? ""}:${legacySettled.length}`;
+    const legacyRows = official.filter((row) => row.identity?.status !== "VERIFIED_RUNTIME"), legacySettled = legacyRows.flatMap((row) => row.settlement ? [row.settlement] : []), enhanced = rows.filter((row) => row.eligibility === "EXCLUDED_NON_LIVE" && row.source_mode === "LIVE" && sameMarket(forecastMarket(row.forecast_run_id)));
+    const barVersion = (sourceSelection ? database.prepare("SELECT COUNT(*) AS count,MAX(begins_at) AS latest FROM ts_source_market_bars WHERE source=? AND selection_id=?").get(activeMarket.source, activeMarket.selection_id) : marketBarVersion.get()) as { count: number; latest: string | null }, projectionKey = `${activeMarket.selection_id}:${barVersion.count}:${barVersion.latest ?? ""}:${legacySettled.length}`;
     if (includeLegacyProjection && strictProjectionCache?.key !== projectionKey) {
       const history = settlementHistory();
       strictProjectionCache = { key: projectionKey, settlements: legacyRows.flatMap((row) => {
         if (!row.settlement) return [];
         const received = utcIso(row.gateway_received_at), observed = utcIso(row.gateway_observed_at), identity: TsForecastIdentity = { contract_id: TS_FORECAST_IDENTITY_CONTRACT, status: "LEGACY_PROJECTION", forecast_contract_version: row.output.contract_version, model_release_commit: row.output.evidence_snapshot.release_commit, generator_commit: null, runtime_release_sha256: null, observed_at: observed, received_at: received, gateway_delay_ms: Math.max(0, Date.parse(received) - Date.parse(observed)) };
-        const projected = settleTsForecast(row.output, history, row.settlement.settled_at, identity);
+        const projected = settleTsForecast(row.output, history, row.settlement.settled_at, identity, activeMarket.source);
         return projected ? [projected] : [];
       }) };
     }
@@ -2415,12 +2536,13 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       optionLifecycle: { activated_at: new Date(0).toISOString(), live_strategy_count: 0, live_position_state_count: 0, pending_count: 0, settled_count: 0, recent_settlements: [] }, ownerQueue, currentTruth,
       codexManager: getCodexManagerState(), externalExpert: getExternalExpertOverview(), macroEventLearning: getMacroEventLearning(now),
     };
-    const row = latest.get() as { snapshot_id: string; raw_json: string } | undefined;
+    const row = sourceSelection ? undefined : latest.get() as { snapshot_id: string; raw_json: string } | undefined;
     const checkpoints = (scheduleCheckpointRows.all() as Array<{ payload_json: string }>).map((item) => JSON.parse(item.payload_json) as ScheduleCheckpoint);
     return { payload: row ? parseSnapshot(row.raw_json) : null, archiveCount, ...outputProjection, runLedger: truthLedger, selfCheck, dataSources, marketIntelligence: getMarketIntelligence(), scheduler: schedulerState(checkpoints, now, activatedAt, listOperationalAnnotations()), marketRadar: getMarketRadar(), tsSettlement: getTsSettlement(now, view === "settlements"), ownerTrigger: getOwnerTrigger(), intradayRegime, investmentKernel: getInvestmentKernel(), spxwProxy, spxConvexity, optionLifecycle: getOptionLifecycle(), ownerQueue, currentTruth, codexManager: getCodexManagerState(), externalExpert: getExternalExpertOverview(), macroEventLearning: getMacroEventLearning(now), paperPlans: { ...projectPaperPlans(paperPlans.recentEvents(), now.toISOString()), learning: paperPlans.learning() } };
   }
 
   function writeDataSource(source: DataSourceState) {
+    if (sourceSelection) { upsertSelectedSource.run(activeMarket.selection_id, source.source, JSON.stringify(source)); return; }
     upsertDataSource.run(
       source.source, source.status, source.configured ? 1 : 0, source.authorization,
       source.last_success_at ? utcIso(source.last_success_at) : null, source.as_of ? utcIso(source.as_of) : null,
@@ -2429,8 +2551,8 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
   }
 
   function rebuildCausalChain(eventFingerprint: string, updatedAt: string) {
-    const rows = eventsByFingerprint.all(eventFingerprint) as Array<Record<string, unknown>>;
-    if (!rows.length) return;
+    const rows = eventsByFingerprint.all(eventFingerprint, activeMarket.selection_id, activeMarket.selection_id) as Array<Record<string, unknown>>;
+    if (!rows.length) return false;
     const aliases = new Map([["AP", "Associated Press"], ["AP News", "Associated Press"], ["WSJ", "The Wall Street Journal"]]);
     const sources = new Set(rows.map((row) => aliases.get(row.source as string) ?? row.source as string));
     // Link/title matches alone do not verify a company announcement, including retained candidate records.
@@ -2439,16 +2561,17 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     const canonical = rows[0];
     const affected = [...new Set(rows.flatMap((row) => JSON.parse(row.affected_symbols_json as string) as string[]))];
     const expiresAt = rows.map((row) => row.expires_at as string | null).filter((value): value is string => Boolean(value)).sort()[0];
-    if (!expiresAt) return;
+    if (!expiresAt) return false;
     const evidence = rows.map((row) => ({ source: row.source as string, title: row.title as string, url: row.source_url as string | null, published_at: row.published_at as string | null }));
     const eventEvidence = verified ? "VERIFIED" : "PARTIAL";
-    setEventEvidence.run(eventEvidence, eventFingerprint);
+    setEventEvidence.run(eventEvidence, eventFingerprint, activeMarket.selection_id, activeMarket.selection_id);
     upsertCausalChain.run(
       eventFingerprint, eventFingerprint, canonical.event_category as string,
       verified ? `已核验事件身份：${canonical.title}` : `待验证假设：${canonical.title}`,
       JSON.stringify(affected), "待验证假设", "待验证假设", "待验证假设", JSON.stringify(evidence), JSON.stringify([]),
       "NOT_OBSERVED", null, "待验证假设：到期前缺少价格或期权市场确认", utcIso(expiresAt), "待验证假设", eventEvidence, utcIso(updatedAt),
     );
+    return true;
   }
 
   function hydrateComplaint(row: Record<string, unknown> | undefined) {
@@ -2638,17 +2761,17 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
     getMarketRadar,
     async getActiveAsync(view?: "forecast" | "settlements") {
       if (file === ":memory:") return getActive(view);
-      return runSqliteMaintenance({ kind: "snapshot", file, view, investmentProfile, runtimeIdentity });
+      return runSqliteMaintenance({ kind: "snapshot", file, view, investmentProfile, runtimeIdentity, sourceSelection });
     },
     getRuntimeContext,
     getScheduleLedgerSupervision,
     async getScheduleLedgerSupervisionAsync(checkedAt?: string) {
       if (file === ":memory:") return getScheduleLedgerSupervision(checkedAt);
-      return runSqliteMaintenance({ kind: "schedule-supervision", file, checkedAt, investmentProfile, runtimeIdentity });
+      return runSqliteMaintenance({ kind: "schedule-supervision", file, checkedAt, investmentProfile, runtimeIdentity, sourceSelection });
     },
     async getRuntimeContextAsync() {
       if (file === ":memory:") return getRuntimeContext();
-      return runSqliteMaintenance({ kind: "runtime-context", file, investmentProfile, runtimeIdentity });
+      return runSqliteMaintenance({ kind: "runtime-context", file, investmentProfile, runtimeIdentity, sourceSelection });
     },
     getTsCoreDailySummary,
     getExternalExpertOverview,
@@ -2767,6 +2890,11 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       return ((outputRaw.get(recordId) ?? stockOutputById.get(recordId)) as { raw_json: string } | undefined)?.raw_json ?? null;
     },
     getLatestOutputRaw(outputType: OutputType, sourceMode?: "LIVE" | "REPLAY"): string | null {
+      if (sourceSelection) {
+        if (outputType === "STOCK_MANUAL_PLAN") return null; // No source-selection contract for historical manual plans.
+        const row = (database.prepare("SELECT record_id,output_type,payload_json,raw_json FROM output_records WHERE output_type=? AND (? IS NULL OR json_extract(payload_json,'$.source_mode')=?) ORDER BY julianday(observed_at) DESC,sequence DESC LIMIT 200").all(outputType, sourceMode ?? null, sourceMode ?? null) as Array<{ record_id: string; output_type: string; payload_json: string; raw_json: string }>).find((item) => currentSourceOutput({ ...item, payload: JSON.parse(item.payload_json) }));
+        return row?.raw_json ?? null;
+      }
       if (outputType === "STOCK_MANUAL_PLAN") return sourceMode === "REPLAY" ? null : (database.prepare("SELECT raw_json FROM stock_manual_plans ORDER BY observed_at DESC, sequence DESC LIMIT 1").get() as { raw_json: string } | undefined)?.raw_json ?? null;
       const row = (sourceMode ? database.prepare("SELECT record_id FROM output_records WHERE output_type = ? AND json_extract(payload_json, '$.source_mode') = ? ORDER BY julianday(observed_at) DESC, sequence DESC LIMIT 1").get(outputType, sourceMode) : latestOutputTypeRow.get(outputType)) as { record_id: string } | undefined;
       return row ? (outputRaw.get(row.record_id) as { raw_json: string }).raw_json : null;
@@ -2796,8 +2924,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
           AND julianday(f.published_at) >= julianday(?) - 7
           AND julianday(f.published_at) < julianday(?)
           AND (${priorScope})
+          ${sourceFilter("f")}
         ORDER BY f.published_at DESC LIMIT 1
-      `).all(before, before, before, before, time === "06:30" ? before : day).filter((row) => row.delivered_at !== null);
+      `).all(before, before, before, before, time === "06:30" ? before : day, ...sourceFilterParameters).filter((row) => row.delivered_at !== null);
     },
     getPaperForecastContext(at: string, scope: "INTRADAY" | "NEXT_SESSION_BACKGROUND" = "INTRADAY"): Array<Record<string, unknown>> {
       if (!Number.isFinite(Date.parse(at))) return [];
@@ -2820,17 +2949,20 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
           AND ${background ? "f.report_type IN ('NEXT_SESSION','WEEKEND_OUTLOOK') AND f.market_date < ?" : "f.report_type IN ('OPENING_FORECAST','OPEN_15M_CHECK','OPEN_30M_CHECK','INTRADAY_30_60M') AND f.market_date = ?"}
           AND julianday(output.received_at) <= julianday(?)
           AND julianday(f.published_at) <= julianday(?) AND delivered_at IS NOT NULL
+          ${sourceFilter("f")}
         ORDER BY julianday(f.published_at) DESC LIMIT ${background ? 20 : 1}
-      `).all(at, ptDateKey(at), at, at);
+      `).all(at, ptDateKey(at), at, at, ...sourceFilterParameters);
       return background ? rows.filter((row) => { try { return forecastTradingDate(JSON.parse(row.payload_json as string) as TsOutput) === ptDateKey(at); } catch { return false; } }) : rows;
     },
     getPaperEntryMarketEvidence(symbol: string, at: string): PaperEntryMarketEvidence | null {
+      if (activeMarket.source !== "ROBINHOOD" || activeMarket.verified !== 1) return null;
       if (!Number.isFinite(Date.parse(at))) return null;
       const a1 = database.prepare(`SELECT record_id, observed_at, received_at, payload_json FROM output_records
         WHERE output_type = 'A1_SHADOW_RESULT' AND json_extract(payload_json, '$.source_mode') = 'LIVE'
           AND json_extract(payload_json, '$.mode') = 'SHADOW' AND julianday(received_at) <= julianday(?)
           AND julianday(observed_at) <= julianday(?)
-        ORDER BY julianday(observed_at) DESC, sequence DESC LIMIT 1`).get(at, at) as { record_id: string; observed_at: string; received_at: string; payload_json: string } | undefined;
+          AND (?='' OR json_extract(payload_json,'$.v2_result.source_selection.selection_id')=?)
+        ORDER BY julianday(observed_at) DESC, sequence DESC LIMIT 1`).get(at, at, activeMarket.selection_id, activeMarket.selection_id) as { record_id: string; observed_at: string; received_at: string; payload_json: string } | undefined;
       if (!a1 || !/^live-shadow:\d{8}T\d{6}Z:A1$/.test(a1.record_id) || ptDateKey(a1.received_at) !== ptDateKey(at)) return null;
       const p = JSON.parse(a1.payload_json), source = p.market_sources as ReadonlyMarketSources | undefined;
       if (!source || !source.snapshot_id || !/^[a-f0-9]{64}$/.test(source.snapshot_hash) || p.market_snapshot_id !== source.snapshot_id || p.market_snapshot_hash !== source.snapshot_hash) return null;
@@ -3018,8 +3150,9 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
       database.exec("BEGIN IMMEDIATE");
       try {
         endExpiredSpxWatches(observedAt);
+        charts = selectedCharts(charts);
         for (const chart of charts) {
-          if (chart.source !== "ROBINHOOD" || (chart.symbol !== "SPY" && chart.symbol !== "QQQ") || chart.interval !== "5m" || chart.status === "DATA_BLOCKED") continue;
+          if ((chart.symbol !== "SPY" && chart.symbol !== "QQQ") || chart.interval !== "5m" || chart.status === "DATA_BLOCKED") continue;
           const payload = JSON.stringify(chart), hash = createHash("sha256").update(payload).digest("hex");
           writeMarketBars(chart.symbol, chart.bars as Array<Record<string, unknown>>, hash, observedAt);
         }
@@ -3057,9 +3190,10 @@ export function openSnapshotDatabase(file = resolve(import.meta.dirname, "../dat
             event.expires_at ? utcIso(event.expires_at) : null, event.raw_json, event.raw_sha256,
           );
           inserted += Number(result.changes);
+          if (sourceSelection) insertSelectedNewsRecord.run(activeMarket.selection_id, "EVENT", event.event_id);
           if (event.event_fingerprint) fingerprints.add(event.event_fingerprint);
         }
-        for (const fingerprint of fingerprints) rebuildCausalChain(fingerprint, update.source.checked_at);
+        for (const fingerprint of fingerprints) if (rebuildCausalChain(fingerprint, update.source.checked_at) && sourceSelection) insertSelectedNewsRecord.run(activeMarket.selection_id, "CHAIN", fingerprint);
         if (update.source.source === "FINNHUB") {
           const earnings = update.events.filter((event) => event.kind === "EARNINGS");
           const checkedAt = utcIso(update.source.checked_at);

@@ -15,6 +15,7 @@ import { buildPositionCopilotState } from "./position-copilot.ts";
 import { buildTsRegimeRiskContext, type TsRegimeRiskContext } from "../app/ts-regime-risk.ts";
 import { OPENING_RECOVERY_EFFECTIVE_DATE, openingGraceSeconds, utcForPt, type TsCoreTerminalOutcome } from "../app/timeline-schedule.ts";
 import { buildTsSignalCandidate } from "../app/ts-signal-candidate.ts";
+import { activeSourceSelection, collectSelectedMarket } from "./selected-sources.ts";
 
 export const SHADOW_COMPONENTS = ["A1", "A2", "TS", "COMMITTEE", "D", "A3_REVIEW", "A3", "CODEX_GUARD"] as const;
 type ShadowComponent = (typeof SHADOW_COMPONENTS)[number];
@@ -553,6 +554,8 @@ export function defaultExecutor(paths: { dataRoot: string; v2Root: string }, dep
     return result;
   };
   return async (component, input) => {
+    const selection = process.env.TRADING_OS_SOURCE_SETTINGS ? activeSourceSelection(resolve(process.cwd(), "..")) : null;
+    if (selection) input = { ...input, SOURCE_SELECTION: selection };
     if (component === "A1") {
       const observedAt = new Date().toISOString();
       const timing = runtimeTiming(paths.dataRoot, input.run_id), lag = monitorEventLoopDelay({ resolution: 20 });
@@ -564,11 +567,11 @@ export function defaultExecutor(paths: { dataRoot: string; v2Root: string }, dep
         const freezeDeadline = input.SLOT_FREEZE_DEADLINE_AT === undefined ? Infinity : Date.parse(String(input.SLOT_FREEZE_DEADLINE_AT));
         const opening = input.source_mode === "LIVE" && input.RUN_REASON === "早盘固定分析" && ptDateKey(observedAt) >= OPENING_RECOVERY_EFFECTIVE_DATE && Number.isFinite(freezeDeadline);
         if (Number.isNaN(freezeDeadline) || Date.now() > freezeDeadline) throw new ShadowRuntimeError("TIMED_OUT", "A1_SLOT_FREEZE_DEADLINE_EXCEEDED");
-        const market = dependencies.readMarket ? dependencies.readMarket(observedAt, input) : withRobinhoodMcp({ allowlist: ROBINHOOD_READONLY_TOOLS, onTiming: timing }, (session) => collectRobinhoodReadonly(session, observedAt, runtimeContext.marketIntelligence, runtimeContext.marketRadar?.snapshot, input.SLOT_FREEZE_DEADLINE_AT as string | undefined, timing));
+        const market = dependencies.readMarket ? dependencies.readMarket(observedAt, input) : selection ? collectSelectedMarket(observedAt, input.SLOT_FREEZE_DEADLINE_AT as string | undefined) : withRobinhoodMcp({ allowlist: ROBINHOOD_READONLY_TOOLS, onTiming: timing }, (session) => collectRobinhoodReadonly(session, observedAt, runtimeContext.marketIntelligence, runtimeContext.marketRadar?.snapshot, input.SLOT_FREEZE_DEADLINE_AT as string | undefined, timing));
         // Reserve the existing 5s process cleanup grace plus 5s for immutable A1 commit.
         // Insufficient optional budget must not start a worker that can only finish after the slot.
         const macroDeadline = Math.min(Date.parse(observedAt) + 30_000, freezeDeadline - 10_000);
-        const macro = (macroDeadline <= Date.now() ? Promise.reject(new ShadowRuntimeError("TIMED_OUT", "OFFICIAL_MACRO_OPTIONAL_BUDGET_EXHAUSTED")) : runPython("OFFICIAL_MACRO", { ...input, ...(opening ? { run_id: `${input.run_id}:opening-${observedAt.replace(/\D/g, "")}` } : {}), MARKET_SNAPSHOT: { generated_at: observedAt } }, macroDeadline, timing)).then((result) => result.payload).catch((error) => {
+        const macro = (selection?.selected.news.provider === "NONE" ? Promise.reject(new ShadowRuntimeError("DATA_BLOCKED", "NEWS_DISABLED_BY_USER")) : macroDeadline <= Date.now() ? Promise.reject(new ShadowRuntimeError("TIMED_OUT", "OFFICIAL_MACRO_OPTIONAL_BUDGET_EXHAUSTED")) : runPython("OFFICIAL_MACRO", { ...input, ...(opening ? { run_id: `${input.run_id}:opening-${observedAt.replace(/\D/g, "")}` } : {}), MARKET_SNAPSHOT: { generated_at: observedAt } }, macroDeadline, timing)).then((result) => result.payload).catch((error) => {
           if (error instanceof Error && error.cause === "PROCESS_TREE_NOT_CLOSED") throw error;
           const windowStart = ptDateKey(observedAt);
           const windowEnd = new Date(Date.parse(`${windowStart}T12:00:00.000Z`) + 6 * 86_400_000).toISOString().slice(0, 10);
@@ -594,17 +597,20 @@ export function defaultExecutor(paths: { dataRoot: string; v2Root: string }, dep
         const marketSources = refreshCoreFreshness(marketResult.value, new Date().toISOString());
         mark("a1_freshness_end");
         const officialMacro: Record<string, unknown> = macroResult.value;
-        const robinhood = marketSources.providers.find((provider) => provider.source === "ROBINHOOD")!;
-        const dataCutoffAt = robinhood.as_of ?? observedAt;
+        const primaryProvider = selection?.selected.market.provider ?? "ROBINHOOD";
+        const provider = marketSources.providers.find((item) => item.source === primaryProvider);
+        if (!provider) throw new ShadowRuntimeError("DATA_BLOCKED", "SELECTED_MARKET_PROVIDER_MISSING");
+        const dataCutoffAt = provider.as_of ?? observedAt;
         const macroCoverage = officialMacro.coverage as Record<string, string> | undefined;
         const macroMarket = officialMacro.market_context as { status?: string } | undefined;
         const macroReady = Boolean(macroCoverage && Object.values(macroCoverage).every((status) => status === "LIVE") && macroMarket?.status === "LIVE");
         const v2Result = {
           adapter: "TRADING_OS_GENERIC_MARKET_TO_V2_A1",
-          source: "ROBINHOOD_OFFICIAL_TRADING_MCP",
+          source: primaryProvider === "ROBINHOOD" ? "ROBINHOOD_OFFICIAL_TRADING_MCP" : "TRADIER_READONLY_MARKET_API",
+          ...(selection ? { source_selection: selection } : {}),
           snapshot_id: marketSources.snapshot_id,
           snapshot_hash: marketSources.snapshot_hash,
-          tradier_status: "DISABLED_BACKUP",
+          tradier_status: primaryProvider === "TRADIER" ? provider.status : "DISABLED_BACKUP",
           finnhub_status: runtimeContext.dataSources?.find((source) => source.source === "FINNHUB")?.status ?? "NOT_OBSERVED",
           event_count: runtimeContext.marketIntelligence?.events?.length ?? 0,
           verified_causal_chain_count: runtimeContext.marketIntelligence?.causalChains?.filter((chain) => (chain as { event_evidence_state?: string }).event_evidence_state === "VERIFIED").length ?? 0,
@@ -617,7 +623,7 @@ export function defaultExecutor(paths: { dataRoot: string; v2Root: string }, dep
         const payload = {
           contract_version: "v1", component: "A1", mode: "SHADOW", actionable: false, source_mode: input.source_mode,
           status: marketSources.status === "LIVE" ? "HEALTHY" : marketSources.status === "MARKET_CLOSED" ? "DEGRADED_NO_TRADE" : "BLOCKED", observed_at: observedAt, data_cutoff_at: dataCutoffAt,
-          freshness_seconds: robinhood.freshness_seconds,
+          freshness_seconds: provider.freshness_seconds,
           result_hash: createHash("sha256").update(canonicalJson(v2Result)).digest("hex"), evidence_ref: evidenceRef,
           market_snapshot_id: marketSources.snapshot_id, market_snapshot_hash: marketSources.snapshot_hash,
           data_gaps: [...marketSources.errors.map((error) => `${error.scope}: ${error.code}`), ...(marketSources.market_environment?.data_gaps ?? []), ...(macroReady ? [] : ["OFFICIAL_MACRO_DEGRADED"])],
@@ -650,7 +656,7 @@ export function defaultExecutor(paths: { dataRoot: string; v2Root: string }, dep
       } catch (error) {
         mark("a1_failed");
         if (error instanceof ShadowRuntimeError) throw error;
-        throw new ShadowRuntimeError("DATA_BLOCKED", `Robinhood 官方 Trading MCP 只读采集失败：${safeError(error)}`);
+        throw new ShadowRuntimeError("DATA_BLOCKED", `所选行情源只读采集失败：${safeError(error)}`);
       } finally {
         lag.disable();
         timing({ event: "a1_event_loop_max_delay", at: new Date().toISOString(), monotonic_ms: performance.now(), ...(lag.count ? { duration_ms: lag.max / 1_000_000 } : {}) });

@@ -138,16 +138,8 @@ class TSSettlementScheduleTests(unittest.TestCase):
         self.assertNotIn("private", serialized)
         self.assertNotIn("token", serialized)
 
-    def test_installer_registers_separate_settlement_task(self) -> None:
-        script = (ROOT / "scripts" / "install_tasks.ps1").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('"TradingOSV2-TS-Settlement"', script)
-        self.assertIn(
-            '"-m trading_os_v2.cli ts-settlement --scheduled"',
-            script,
-        )
-        self.assertIn('-Daily -At "13:50"', script)
+    def test_owner_settlement_task_installer_is_not_distributed(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "install_tasks.ps1").exists())
 
 
 if __name__ == "__main__":

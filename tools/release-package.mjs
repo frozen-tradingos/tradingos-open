@@ -6,10 +6,10 @@ import { spawnSync } from 'node:child_process';
 
 export const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const roots = ['.agents/skills', 'tools', 'tests', 'web/app', 'web/build', 'web/contracts', 'web/server', 'web/tests', 'v2-reference/trading_os_v2', 'v2-reference/contracts', 'v2-reference/tests', 'web/public/samples'];
-const singles = ['AGENTS.md', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', '.gitignore', '.gitattributes', 'package.json', 'pnpm-lock.yaml', 'requirements.txt', 'Start.cmd', 'Start.ps1', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'web/eslint.config.mjs', 'web/next-env.d.ts', 'web/next.config.ts', 'web/postcss.config.mjs', 'web/tsconfig.json', 'web/vite.config.ts', 'web/PROJECT_BOUNDARY.json', 'web/.openai/hosting.json', 'web/worker/index.ts', 'v2-reference/pyproject.toml', 'v2-reference/config/system.json'];
+const singles = ['AGENTS.md', 'README.md', 'docs/PROVIDERS.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', '.gitignore', '.gitattributes', 'package.json', 'pnpm-lock.yaml', 'requirements.txt', 'Start.cmd', 'Start.ps1', 'web/package.json', 'web/pnpm-lock.yaml', 'web/pnpm-workspace.yaml', 'web/eslint.config.mjs', 'web/next-env.d.ts', 'web/next.config.ts', 'web/postcss.config.mjs', 'web/tsconfig.json', 'web/vite.config.ts', 'web/PROJECT_BOUNDARY.json', 'web/.openai/hosting.json', 'web/worker/index.ts', 'v2-reference/pyproject.toml', 'v2-reference/config/system.json'];
 const scripts = ['web/scripts/live-shadow-v2.py', 'web/scripts/invoke-live-shadow-step.ps1', 'web/scripts/setup-finnhub.ps1', 'web/scripts/reselect-paper-plans.ts'];
 const textExtensions = new Set(['.md', '.json', '.mjs', '.ts', '.tsx', '.css', '.py', '.toml', '.yaml', '.ps1', '.cmd']);
-const excludedDirectories = new Set(['data', 'runtime', 'node_modules', '.venv', '__pycache__', '.pytest_cache', '.git', '.codex', '.wrangler', '.next', 'dist', '_工作文件', 'release']);
+const excludedDirectories = new Set(['data', 'runtime', 'node_modules', '.tools', '.venv', '__pycache__', '.pytest_cache', '.git', '.codex', '.wrangler', '.next', 'dist', '_工作文件', 'release']);
 const blockedNames = /(?:^\.env(?:\.|$)|^\.?(?:auth|credentials)\.json$|\.(?:sqlite\w*|db|pem|pfx|p12|key|log|pyc)$|production-canary)/i;
 const rules = [
   ['personal email or private machine path', /\b[A-Za-z0-9._%+-]+@(?:gmail|outlook|hotmail|yahoo)\.com\b|[CD]:[\\/]Codex[\\/]|C:[\\/]Users[\\/](?!Public\b|example\b)/i],

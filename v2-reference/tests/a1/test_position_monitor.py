@@ -221,8 +221,8 @@ class MonitorHarness:
         }
         delivery_key = f"position-fault-{sha256_json(identity)[:20]}"
         message_ids = {
-            "a1": "1532221553020899421",
-            "owner": "1532221596020904091",
+            "a1": "1000000000000000001",
+            "owner": "1000000000000000002",
         }
         messages = [
             {
@@ -678,7 +678,7 @@ class PositionMonitorTests(unittest.TestCase):
                     )
                     if change == "message_id":
                         artifact["messages"][0]["message_id"] = (
-                            "1532221553020899422"
+                            "1000000000000000003"
                         )
                     elif change == "text_id":
                         artifact["messages"][0]["message_id"] = "message-a1"

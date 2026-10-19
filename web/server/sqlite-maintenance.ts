@@ -6,11 +6,12 @@ import { Worker } from "node:worker_threads";
 import type { SnapshotState } from "../app/snapshot-import.ts";
 import type { InvestmentProfileMode } from "../app/investment-kernel.ts";
 import type { openSnapshotDatabase } from "../build/local-data-core.ts";
+import type { validateSourceSettings } from "../../tools/source-settings.mjs";
 
 type Check = { kind: "check"; file: string };
 type Backup = { kind: "backup"; file: string; directory: string; at: string };
 type Evidence = { kind: "evidence"; file: string; dataRoot: string };
-type Snapshot = { kind: "snapshot"; file: string; view?: "forecast" | "settlements"; investmentProfile: InvestmentProfileMode; runtimeIdentity: { deployedCommit: string; runtimeSha256: string } };
+type Snapshot = { kind: "snapshot"; file: string; view?: "forecast" | "settlements"; investmentProfile: InvestmentProfileMode; runtimeIdentity: { deployedCommit: string; runtimeSha256: string }; sourceSelection?: ReturnType<typeof validateSourceSettings> | null };
 type RuntimeContext = Omit<Snapshot, "kind" | "view"> & { kind: "runtime-context" };
 type ScheduleSupervision = Omit<Snapshot, "kind" | "view"> & { kind: "schedule-supervision"; checkedAt?: string };
 type ScheduleSupervisionResult = ReturnType<ReturnType<typeof openSnapshotDatabase>["getScheduleLedgerSupervision"]>;

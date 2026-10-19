@@ -22,6 +22,7 @@ for (const mode of ["normal-stop", "launcher-crash", "worker-finished"]) test(`c
   const originalWrapper = await readFile(join(root, "tools", "run-contained-app.ps1"));
   await copyFile(join(root, "tools", "run-contained-app.ps1"), join(tools, "run-contained-app.ps1"));
   await copyFile(join(root, "tools", "public-entry.mjs"), join(tools, "public-entry.mjs"));
+  await copyFile(join(root, "tools", "source-settings.mjs"), join(tools, "source-settings.mjs"));
   assert.deepEqual(await readFile(join(tools, "run-contained-app.ps1")), originalWrapper, "real containment code and fixed worker seam are copied unchanged");
   const pidFile = join(directory, "synthetic-pids.json"), beatFile = join(directory, "synthetic-heartbeat.txt");
   const grandchild = `const fs=require('node:fs');setInterval(()=>fs.writeFileSync(${JSON.stringify(beatFile)},String(Date.now())),25);`;

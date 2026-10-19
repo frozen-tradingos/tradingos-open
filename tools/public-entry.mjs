@@ -4,6 +4,7 @@ import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { readSourceSettings, saveSourceSettings } from "./source-settings.mjs";
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const web = join(root, "web"), data = join(web, "data");
@@ -12,15 +13,15 @@ const modelHome = join(data, "model-codex-home"), brokerHome = join(data, "robin
 const python = join(root, ".venv", "Scripts", "python.exe");
 
 export function safePaths(base = root) {
-  for (const path of [base, join(base, "web"), join(base, "web", "data"), join(base, "web", "data", "model-codex-home"), join(base, "web", "data", "robinhood-codex-home"), join(base, "web", "data", "public-setup.json"), join(base, "web", "data", "owner-access.json"), join(base, "web", "data", "finnhub-credentials.json"), join(base, 'web', 'data', 'trading-os-web.sqlite'), join(base, ".venv")]) {
-    try { if (lstatSync(path).isSymbolicLink()) throw new Error("Linked runtime directories are forbidden; use a fresh extracted copy."); }
+  for (const path of [base, join(base, "web"), join(base, "web", "data"), join(base, "web", "data", "model-codex-home"), join(base, "web", "data", "robinhood-codex-home"), ...["public-setup.json", "owner-access.json", "finnhub-credentials.json", "source-settings.json", "tradier-live-credentials.json", "tradier-sandbox-credentials.json", "trading-os-web.sqlite"].map((name) => join(base, "web", "data", name)), join(base, ".venv"), join(base, ".tools")]) {
+    try { const stat = lstatSync(path); if (stat.isSymbolicLink() || stat.isFile() && stat.nlink !== 1) throw new Error("Linked runtime directories are forbidden; use a fresh extracted copy."); }
     catch (error) { if (error.code !== "ENOENT") throw error; }
   }
 }
 
 export function cleanEnvironment(source = process.env, home = modelHome) {
   const keep = ["SystemRoot", "WINDIR", "COMSPEC", "PATH", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "LOCALAPPDATA", "APPDATA", "PROGRAMFILES", "PROGRAMFILES(X86)"];
-  return { ...Object.fromEntries(keep.flatMap((key) => source[key] ? [[key, source[key]]] : [])), CODEX_HOME: home, TRADING_OS_PROJECT_ID: "trading-os-stock-web", TRADING_OS_DATA_ROOT: data, TRADING_OS_PUBLIC_AUTOMATION: "0", PYTHONDONTWRITEBYTECODE: "1", PIP_CACHE_DIR: join(root, "_工作文件", "pip-cache"), UV_CACHE_DIR: join(root, "_工作文件", "uv-cache"), npm_config_cache: join(root, "_工作文件", "npm-cache") };
+  return { ...Object.fromEntries(keep.flatMap((key) => source[key] ? [[key, source[key]]] : [])), CODEX_HOME: home, TRADING_OS_PROJECT_ID: "trading-os-stock-web", TRADING_OS_DATA_ROOT: data, TRADING_OS_PUBLIC_AUTOMATION: "0", NEXT_TELEMETRY_DISABLED: "1", WRANGLER_SEND_METRICS: "false", PYTHONDONTWRITEBYTECODE: "1", PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8", PIP_CONFIG_FILE: process.platform === "win32" ? "NUL" : "/dev/null", PIP_INDEX_URL: "https://pypi.org/simple", PIP_CACHE_DIR: join(root, "_工作文件", "pip-cache"), UV_CACHE_DIR: join(root, "_工作文件", "uv-cache"), npm_config_cache: join(root, "_工作文件", "npm-cache") };
 }
 
 function state() {
@@ -77,11 +78,12 @@ export function offlineDoctor() {
     ["Private Python environment", existsSync(python)],
     ["Local password set", existsSync(join(data, "owner-access.json"))],
     ["Own model login completed locally (not live-verified)", saved.model_login_completed === true],
-    ["Own Robinhood OAuth completed locally (not live-verified)", saved.broker_login_completed === true],
-    ["Optional Finnhub key stored locally (not live-verified)", existsSync(join(data, "finnhub-credentials.json"))],
+    ["Broker authorization completed locally (not live-verified)", saved.broker_login_completed === true],
+    ["Optional news key stored locally (not live-verified)", existsSync(join(data, "finnhub-credentials.json"))],
     ["Own research/risk profile confirmed locally", saved.research_profile_completed === true],
   ];
-  return { checks, offlineReady: checks.slice(0, 6).every(([, pass]) => pass), authorizationStepsComplete: saved.model_login_completed === true && saved.broker_login_completed === true, mode: "BLANK_BY_DEFAULT", origin: "http://127.0.0.1:4160", external_requests: 0, authorization: "Provider validity and data coverage remain unverified until an explicit live run." };
+  const selection = readSourceSettings();
+  return { checks, offlineReady: checks.slice(0, 6).every(([, pass]) => pass), authorizationStepsComplete: Boolean(selection && saved.model_login_completed === true && (selection.selected.market.provider !== "ROBINHOOD" || saved.broker_login_completed === true)), sources: selection ? { ...selection, verification: "NOT_VERIFIED_OFFLINE" } : { verification: "NOT_CONFIGURED" }, mode: "BLANK_BY_DEFAULT", origin: "http://127.0.0.1:4160", external_requests: 0, authorization: "Provider validity and data coverage remain unverified until an explicit connection check. No complete live forecast has been verified by installation tests." };
 }
 
 export function pythonVenvCommand() {
@@ -94,9 +96,9 @@ export function pythonVenvCommand() {
 }
 
 async function install() {
-  await confirm("This downloads locked open-source dependencies and builds locally. No paid service is opened. Node.js 24.x, pnpm 11.16.0 and Python 3.13 (or uv with Python 3.13 already available) must already be installed.");
+  if (!process.argv.includes("--downloads-consented")) await confirm("Download locked open-source dependencies and build this copy? No paid service is opened. Start.cmd prepares the required runtimes locally; it does not change global software.");
   const pnpm = spawnSync("cmd.exe", ["/d", "/c", "pnpm --version"], { encoding: "utf8", env: cleanEnvironment(), windowsHide: true });
-  if (pnpm.status !== 0 || pnpm.stdout.trim() !== "11.16.0") throw new Error("Install pnpm 11.16.0 from https://pnpm.io/installation; automatic global installs are disabled.");
+  if (pnpm.status !== 0 || pnpm.stdout.trim() !== "11.16.0") throw new Error("Required package manager is missing. Close this window and run Start.cmd; no global installation is required.");
   run("cmd.exe", ["/d", "/c", "pnpm install --frozen-lockfile --store-dir ..\\_工作文件\\pnpm-store"]);
   if (!existsSync(python)) {
     const [command, args] = pythonVenvCommand();
@@ -104,7 +106,50 @@ async function install() {
   }
   run(python, ["-m", "pip", "install", "--require-hashes", "-r", join(root, "requirements.txt")]);
   run("cmd.exe", ["/d", "/c", "pnpm build"]);
-  console.log("Local dependencies and interface prepared. Next set your password, then complete your own authorizations.");
+  console.log("安装完成。接下来设置本地密码、选择数据源，再按提示完成自己的授权；尚未验证真实预测。");
+}
+
+async function chooseSources() {
+  await availablePort(); // Switching an active copy is deliberately not a hot reload.
+  const previous = readSourceSettings();
+  console.log("\n选择行情源。下面显示真实服务商，便于你确认授权对象；可用性取决于你自己的账号与数据权限。\n1 券商官方只读连接（Robinhood；真实授权/完整预测待用户验证）\n2 独立行情 API（Tradier Production；接口离线测试通过，真实权限未验证）\n3 独立行情 Sandbox（Tradier；延迟数据，只供连接测试，不生成自然预测）\n0 取消");
+  const market = { "1": { provider: "ROBINHOOD", environment: "LIVE" }, "2": { provider: "TRADIER", environment: "LIVE" }, "3": { provider: "TRADIER", environment: "SANDBOX" } }[await question("行情源: ")];
+  if (!market) return;
+  console.log("\n新闻与日历：\n1 仅官方宏观公告（免费公开源，具体栏目按实际送达显示）\n2 自选新闻 API（Finnhub；自备密钥及权限，真实连接未验证）\n3 不接新闻\n0 取消");
+  const news = { "1": "OFFICIAL_ONLY", "2": "FINNHUB", "3": "NONE" }[await question("新闻源: ")];
+  if (!news) return;
+  const selected = { market, news: { provider: news }, broker: { provider: market.provider === "ROBINHOOD" ? "ROBINHOOD" : "NONE" } };
+  console.log("替代行情接口目前只接行情，不读取持仓、不补造期权或交易信号。其他券商仍未接通。切换不会删历史，也不会沿用旧来源的通过状态。");
+  await confirm("保存上述选择？授权和连接检查需在后续步骤完成。", "SAVE");
+  protect(data); saveSourceSettings(selected, { confirmed: true, expectedRevision: previous?.revision ?? null });
+  console.log("已保存选择，状态：未验证。下一步选择「授权当前数据源」，然后运行「只读连接检查」。");
+}
+
+async function sourceAuthorization() {
+  const settings = readSourceSettings();
+  if (!settings) throw new Error("请先选择数据源（菜单4）。");
+  if (settings.selected.market.provider === "ROBINHOOD") return authorize("broker");
+  await availablePort(); protect(data);
+  run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "tools", "set-market-key.ps1"), "-Environment", settings.selected.market.environment]);
+}
+
+async function probeSources() {
+  const settings = readSourceSettings();
+  if (!settings) throw new Error("请先选择数据源（菜单4）。");
+  await availablePort();
+  await confirm("只读取所选行情源的 SPY / QQQ 报价和K线；不调用模型、不下单。数据商仍可能按你的套餐计费，请先确认自己的权限。继续？", "CHECK");
+  const previous = { automation: process.env.TRADING_OS_PUBLIC_AUTOMATION, sources: process.env.TRADING_OS_SOURCE_SETTINGS };
+  process.env.TRADING_OS_PUBLIC_AUTOMATION = "1"; process.env.TRADING_OS_SOURCE_SETTINGS = JSON.stringify(settings);
+  try {
+    const { collectSelectedMarket, marketConnectionReceipt } = await import("../web/server/selected-sources.ts");
+    const snapshot = await collectSelectedMarket(new Date().toISOString(), undefined, root, "MARKET_ONLY");
+    const receipt = marketConnectionReceipt(settings, snapshot);
+    console.log(JSON.stringify(receipt, null, 2));
+    console.log("此结果只证明本次读取能力，不证明预测准确、可交易或其他券商已支持。Sandbox不计为真实行情通过。");
+    if (!receipt.ready) throw new Error("所选行情尚未通过完整报价/K线检查；保留阻断状态，不标记为已支持。");
+  } finally {
+    for (const [key, value] of [["TRADING_OS_PUBLIC_AUTOMATION", previous.automation], ["TRADING_OS_SOURCE_SETTINGS", previous.sources]]) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+  }
 }
 
 async function authorize(kind) {
@@ -164,7 +209,10 @@ async function launch(live) {
   const report = offlineDoctor();
   if (!report.offlineReady) throw new Error("Local prerequisites are incomplete. Run doctor and finish missing setup steps.");
   if (live) {
-    if (!report.authorizationStepsComplete) throw new Error("Complete your own model login and Robinhood OAuth before enabling automatic analysis.");
+    const settings = readSourceSettings();
+    if (!settings) throw new Error("请先选择数据源；未选择时不调用外部服务。");
+    if (settings.selected.market.environment === "SANDBOX") throw new Error("Sandbox只允许连接测试；请在菜单10测试，不生成自然预测。");
+    if (!report.authorizationStepsComplete) throw new Error("请完成自己的模型登录和当前来源授权；授权完成仍需真实数据检查。");
     if (state().research_profile_completed !== true) throw new Error('Set and confirm your own research/risk profile first (menu 9).');
     const { readResearchProfile } = await import('./research-profile.mjs');
     if (!readResearchProfile()) throw new Error('The confirmed research profile is missing. Return to menu 9; no automatic analysis was started.');
@@ -177,7 +225,9 @@ async function launch(live) {
 
 export async function runContainedApp(live = false) {
   const sourceIdentity = live ? { TRADING_OS_BUNDLED_SOURCE_IDENTITY: JSON.stringify((await import("./source-identity.mjs")).readBundledSourceIdentity(root)) } : {};
-  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "tools", "run-contained-app.ps1"), "-NodePath", process.execPath], { cwd: web, env: { ...cleanEnvironment(), ...sourceIdentity, TRADING_OS_PUBLIC_AUTOMATION: live ? "1" : "0" }, stdio: ["pipe", "inherit", "inherit"], windowsHide: true });
+  const settings = readSourceSettings();
+  if (live && !settings) throw new Error("SOURCE_SELECTION_REQUIRED");
+  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "tools", "run-contained-app.ps1"), "-NodePath", process.execPath], { cwd: web, env: { ...cleanEnvironment(), ...sourceIdentity, ...(settings ? { TRADING_OS_SOURCE_SETTINGS: JSON.stringify(settings) } : {}), TRADING_OS_PUBLIC_AUTOMATION: live ? "1" : "0" }, stdio: ["pipe", "inherit", "inherit"], windowsHide: true });
   let stopping = false, forcedStop;
   const stop = () => {
     if (stopping) return;
@@ -199,9 +249,9 @@ export async function runContainedApp(live = false) {
 }
 
 async function menu() {
-  console.log("\nTrading OS Open — independent local candidate\n1 Prepare dependencies and build\n2 Set local password\n3 Sign in to your model account\n4 Authorize Robinhood read-only\n5 Optional Finnhub news key\n6 Offline doctor\n7 Open workspace (no external calls)\n8 Explicitly enable live read-only analysis this session\n9 Set your own research and risk limits\n0 Exit\n");
+  console.log("\nTrading OS Open · 独立本地预览版\n1 安装或修复本包依赖\n2 设置本地登录密码\n3 登录自己的模型账号\n4 选择 / 切换行情与新闻源\n5 授权当前数据源（隐藏输入密钥或官方授权）\n6 本地配置检查（不联网）\n7 打开工作区（不联网）\n8 本次启用真实只读研究（可能产生自有服务费用）\n9 设置自己的研究与风险限额\n10 只读连接检查（不调用模型）\n11 配置所选新闻源密钥\n0 退出\n");
   const choice = await question("Choose: ");
-  return { "1": "install", "2": "password", "3": "model-login", "4": "broker-login", "5": "news-key", "6": "doctor", "7": "launch", "8": "live", "9": "profile", "0": "exit" }[choice] ?? "exit";
+  return { "1": "install", "2": "password", "3": "model-login", "4": "sources", "5": "source-login", "6": "doctor", "7": "launch", "8": "live", "9": "profile", "10": "check-sources", "11": "news-key", "0": "exit" }[choice] ?? "exit";
 }
 
 export async function main(command = process.argv[2] ?? "menu") {
@@ -221,11 +271,13 @@ export async function main(command = process.argv[2] ?? "menu") {
   if (command === "install") return install();
   if (command === "password") { protect(data); return run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "tools", "set-local-password.ps1")]); }
   if (command === "model-login") return authorize("model");
-  if (command === "broker-login") return authorize("broker");
+  if (command === "sources") return chooseSources();
+  if (command === "source-login" || command === "broker-login") return sourceAuthorization();
+  if (command === "check-sources") return probeSources();
   if (command === "profile") return researchProfile();
-  if (command === "news-key") { protect(data); return run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(web, "scripts", "setup-finnhub.ps1")]); }
+  if (command === "news-key") { if (readSourceSettings()?.selected.news.provider !== "FINNHUB") throw new Error("当前未选择需要密钥的新闻源；请先在菜单4选择。"); protect(data); return run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(web, "scripts", "setup-finnhub.ps1")]); }
   if (command === "launch" || command === "live") return launch(command === "live");
-  throw new Error("Unknown command. Use menu, install, password, model-login, broker-login, profile, news-key, doctor, launch or live.");
+  throw new Error("Unknown command. Use menu, install, password, model-login, sources, source-login, check-sources, profile, news-key, doctor, launch or live.");
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main().catch((error) => { console.error(error.message); console.error("The step was not marked successful. Never send keys or login links to chat."); process.exitCode = 1; });

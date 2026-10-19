@@ -7,7 +7,7 @@ const sourceRoots = ["web/app", "web/build", "web/server", "web/contracts", "too
 const sourceFiles = ["web/package.json", "web/pnpm-lock.yaml", "web/vite.config.ts", "requirements.txt", "web/scripts/live-shadow-v2.py", "web/scripts/invoke-live-shadow-step.ps1", "web/scripts/setup-finnhub.ps1", "web/scripts/reselect-paper-plans.ts"];
 const required = ["web/app/snapshot-import.ts", "web/build/local-data-core.ts", "web/server/local-owner-server.ts", "tools/source-identity.mjs", "v2-reference/trading_os_v2/orchestrator/service.py", "v2-reference/trading_os_v2/common/config.py", "v2-reference/contracts/v2/ts-output.schema.json", "v2-reference/config/system.json", "web/dist/server/index.js"];
 const ignored = new Set(["__pycache__", ".pytest_cache", "node_modules"]);
-const forbidden = new Set(["data", "runtime", ".git", ".codex", ".venv", "node_modules", "_工作文件", "release"]);
+const forbidden = new Set(["data", "runtime", ".git", ".codex", ".tools", ".venv", "node_modules", "_工作文件", "release"]);
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 
 function checkedPath(root, path) {

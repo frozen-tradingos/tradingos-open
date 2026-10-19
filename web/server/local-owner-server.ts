@@ -8,14 +8,14 @@ import { Worker } from "node:worker_threads";
 import { startProdServer } from "vinext/server/prod-server";
 import { handleComplaintApi, handleOutputGatewayApi, handleRunLedgerApi, handleSnapshotApi, openSnapshotDatabase } from "../build/local-data-core.ts";
 import { createLiveShadowRuntime, type LiveShadowRuntimeOptions } from "./live-shadow-runtime.ts";
-import { classifySpxContractQuote, collectExternalOptionQuote, collectRobinhoodAccount, collectRobinhoodMarketChart, collectRobinhoodReadonly, collectSpxOptionChains, collectSpxOptionContracts, collectSpxOptionContractsById, collectSpxOptionHistory, collectSpxOptionQuotes, robinhoodMarketSession, ROBINHOOD_READONLY_TOOLS, selectChartSessions, withRobinhoodMcp, type RobinhoodChartData, type RobinhoodChartInterval, type RobinhoodChartRange, type SpxOptionChain } from "./robinhood-mcp.ts";
+import { classifySpxContractQuote, collectExternalOptionQuote, collectRobinhoodAccount, collectSpxOptionChains, collectSpxOptionContracts, collectSpxOptionContractsById, collectSpxOptionHistory, collectSpxOptionQuotes, robinhoodMarketSession, selectChartSessions, withRobinhoodMcp, type RobinhoodChartData, type RobinhoodChartInterval, type RobinhoodChartRange, type SpxOptionChain } from "./robinhood-mcp.ts";
 import { ownerObservationRows } from "../app/owner-market-decisions.ts";
 import { spxContractIdentity } from "../app/spx-convexity-ledger.ts";
 import type { PositionMonitorV1, ShadowComponentResult, SnapshotState, SpxContractQuoteStatus, SpxOptionContract, SpxOptionQuote } from "../app/snapshot-import.ts";
 import { isOwnerSnapshotFresh } from "../app/snapshot-import.ts";
 import { assessPositionRisks } from "./position-copilot.ts";
 import type { InvestmentProfileMode } from "../app/investment-kernel.ts";
-import { collectLocalMaintenanceFindings, createIncidentGuard } from "./incident-guard.ts";
+import { createIncidentGuard } from "./incident-guard.ts";
 import { collectFinnhubOfficial } from "./finnhub.ts";
 import { projectCompanyEvidence } from "../app/company-evidence.ts";
 import { APPROVED_STOCKS } from "../app/snapshot-import.ts";
@@ -30,6 +30,7 @@ import { readEventDisclosureObservation, renderEventDisclosureObservation } from
 import { createPaperPlanRuntime } from "./paper-plan-runtime.ts";
 import { createSpxPaperRuntime } from "./spx-paper-runtime.ts";
 import { publicAutomationEnabled, publicProfile, publicResearchConfigured } from "./public-runtime.ts";
+import { activeSourceSelection, collectSelectedMarket, selectedMarketChart } from "./selected-sources.ts";
 
 const OWNER = "owner";
 const OWNER_PORT = 4160;
@@ -508,7 +509,7 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
   let snapshots: ReturnType<typeof openSnapshotDatabase>;
   try {
     gatewayKey = loadOrCreateGatewayKey(options.gatewayKeyPath ?? resolve(dataRoot, "local-output-gateway.key"));
-    snapshots = openSnapshotDatabase(options.databasePath ?? resolve(dataRoot, "trading-os-web.sqlite"), { investmentProfile: options.investmentProfile });
+    snapshots = openSnapshotDatabase(options.databasePath ?? resolve(dataRoot, "trading-os-web.sqlite"), { investmentProfile: options.investmentProfile, sourceSelection: process.env.TRADING_OS_SOURCE_SETTINGS ? activeSourceSelection(resolve(projectRoot, "..")) : null });
   } catch (error) {
     releaseLock();
     throw error;
@@ -551,10 +552,11 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
   };
 
   const marketChart = (symbol: "SPY" | "QQQ", interval: RobinhoodChartInterval, range: RobinhoodChartRange) => {
-    const key = `${symbol}:${interval}:${range}`;
+    const settings = activeSourceSelection(resolve(projectRoot, ".."));
+    const key = `${settings?.selection_id ?? "none"}:${symbol}:${interval}:${range}`;
     const cached = chartCache.get(key);
     if (cached && cached.expiresAt > Date.now()) return cached.value;
-    const value = withRobinhoodMcp({ projectRoot, allowlist: ["get_equity_quotes", "get_equity_historicals"] }, (session) => collectRobinhoodMarketChart(session, symbol, interval, new Date().toISOString(), range));
+    const value = selectedMarketChart(symbol, interval, range, resolve(projectRoot, ".."));
     chartCache.set(key, { expiresAt: Date.now() + 45_000, value });
     void value.catch(() => { if (chartCache.get(key)?.value === value) chartCache.delete(key); });
     return value;
@@ -599,7 +601,7 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
   for (const action of snapshots.getPendingOwnerActions()) startSpxContractRead(action.action_id);
 
   const finnhubNews = () => {
-    if (!publicAutomationEnabled()) return collectFinnhubOfficial({ token: "", credentialPath: "", approvedCapabilities: null });
+    if (!publicAutomationEnabled() || activeSourceSelection(resolve(projectRoot, ".."))?.selected.news.provider !== "FINNHUB") return collectFinnhubOfficial({ token: "", credentialPath: "", approvedCapabilities: null });
     if (finnhubCache && finnhubCache.expiresAt > Date.now()) return finnhubCache.value;
     const value = (async () => {
       // Read already archived candidates; never wait for or start an A1 collection from the news check.
@@ -630,7 +632,7 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
 
   try {
     if (runtimeRole === "WEB" && options.snapshotWorker !== false) {
-      snapshotWorker = new Worker(new URL("./owner-snapshot-worker.ts", import.meta.url), { workerData: { databasePath: options.databasePath ?? resolve(dataRoot, "trading-os-web.sqlite") } });
+      snapshotWorker = new Worker(new URL("./owner-snapshot-worker.ts", import.meta.url), { workerData: { databasePath: options.databasePath ?? resolve(dataRoot, "trading-os-web.sqlite"), sourceSelection: process.env.TRADING_OS_SOURCE_SETTINGS ? activeSourceSelection(resolve(projectRoot, "..")) : null } });
       await new Promise<void>((resolveReady, rejectReady) => {
         const unavailable = (error: Error) => { prebuiltSnapshots = null; clearTimeout(timeout); rejectReady(error); };
         const timeout = setTimeout(() => unavailable(new Error("owner snapshot worker startup timed out")), 20_000);
@@ -803,7 +805,7 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
           return sendJson(response, 400, { error: "受控经理动作类型无效" });
         }
         if (pathname === "/api/market-chart") {
-          trace.operation = "robinhood_market_chart"; trace.external = true;
+          trace.operation = "selected_market_chart"; trace.external = true;
           if (request.method !== "GET") return sendJson(response, 405, { error: "图表接口只支持 GET" });
           const symbol = url.searchParams.get("symbol");
           const interval = url.searchParams.get("interval");
@@ -811,12 +813,13 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
           if (symbol !== "SPY" && symbol !== "QQQ") return sendJson(response, 400, { error: "symbol 只支持 SPY / QQQ" });
           if (interval !== "1m" && interval !== "5m" && interval !== "15m") return sendJson(response, 400, { error: "interval 只支持 1m / 5m / 15m" });
           if (range !== "1d" && range !== "24h" && range !== "rth" && range !== "gth" && range !== "5d") return sendJson(response, 400, { error: "range 只支持 1d / 24h / rth / gth / 5d" });
-          const cachedChart = chartCache.get(`${symbol}:${interval}:${range}`);
+          const choice = activeSourceSelection(resolve(projectRoot, ".."));
+          const cachedChart = chartCache.get(`${choice?.selection_id ?? "none"}:${symbol}:${interval}:${range}`);
           trace.cache = cachedChart && cachedChart.expiresAt > Date.now() ? "HIT" : "MISS";
           try { return sendJson(response, 200, await marketChart(symbol, interval, range)); }
           catch {
             const observedAt = new Date().toISOString();
-            return sendJson(response, 200, { source: "ROBINHOOD", symbol, interval, range, session_bounds: "NOT_OBSERVED", data_grade: "READ_FAILED", session_dates: [], status: "DATA_BLOCKED", as_of: null, freshness_seconds: null, quote_as_of: null, quote_freshness_seconds: null, bar_as_of: null, bar_freshness_seconds: null, gap_status: "SOURCE_GAP", market_session: robinhoodMarketSession(observedAt), current_price: null, bars: [], error: "SOURCE_GAP：Robinhood 官方图表数据读取失败" });
+            return sendJson(response, 200, { source: choice?.selected.market.provider ?? "NOT_CONFIGURED", source_selection_id: choice?.selection_id ?? null, environment: choice?.selected.market.environment ?? null, symbol, interval, range, session_bounds: "NOT_OBSERVED", data_grade: "READ_FAILED", session_dates: [], status: "DATA_BLOCKED", as_of: null, freshness_seconds: null, quote_as_of: null, quote_freshness_seconds: null, bar_as_of: null, bar_freshness_seconds: null, gap_status: "SOURCE_GAP", market_session: robinhoodMarketSession(observedAt), current_price: null, bars: [], error: "SOURCE_GAP：所选来源尚未接通、未授权或不提供此周期；未切换其他来源或使用样本" });
           }
         }
         if (pathname.startsWith("/api/spxw-proxy")) {
@@ -990,9 +993,8 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
             const result = await finnhubNews();
             return { source: result.source.source, status: result.source.status, authorization: result.source.authorization, checked_at: result.source.checked_at, as_of: result.source.as_of, capability_count: Object.values(result.source.capabilities).filter(Boolean).length };
           }
-          const state = await snapshots.getActiveAsync();
-          const result = await withRobinhoodMcp({ projectRoot, allowlist: ROBINHOOD_READONLY_TOOLS }, (session) => collectRobinhoodReadonly(session, new Date().toISOString(), state.marketIntelligence, state.marketRadar.snapshot));
-          return { source: "ROBINHOOD", snapshot_id: result.snapshot_id, generated_at: result.generated_at, status: result.status, broker_access: "READ_ONLY", broker_write_calls: 0 };
+          const result = await collectSelectedMarket(new Date().toISOString(), undefined, resolve(projectRoot, ".."));
+          return { source: activeSourceSelection(resolve(projectRoot, ".."))?.selected.market.provider ?? "NOT_CONFIGURED", snapshot_id: result.snapshot_id, generated_at: result.generated_at, status: result.status, broker_access: "READ_ONLY", broker_write_calls: 0 };
         },
         requestDepartmentRecheck: async (target, reason) => {
           const requestedAt = new Date().toISOString(), requestId = `department-recheck:${createHash("sha256").update(`${target}:${reason}:${requestedAt}`).digest("hex").slice(0, 24)}`;
@@ -1008,7 +1010,7 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
         gatewayKey,
         priorTsForecasts: (before) => snapshots.getPriorTsForecasts(before),
         runtimeContext: () => snapshots.getRuntimeContextAsync(),
-        runStockPlans: productionRuntime ? createStockManualRuntime({ projectRoot, dataRoot, v2Root: options.shadowRuntime?.v2Root, activatedAt: runtimeStartedAt, readCurrent: () => snapshots.getActiveAsync(), publish: (raw, receivedAt) => { snapshots.importOutputRaw(raw, receivedAt, true, true); invalidateSnapshot(); } }) : undefined,
+        runStockPlans: productionRuntime && activeSourceSelection(resolve(projectRoot, ".."))?.selected.market.provider === "ROBINHOOD" ? createStockManualRuntime({ projectRoot, dataRoot, v2Root: options.shadowRuntime?.v2Root, activatedAt: runtimeStartedAt, readCurrent: () => snapshots.getActiveAsync(), publish: (raw, receivedAt) => { snapshots.importOutputRaw(raw, receivedAt, true, true); invalidateSnapshot(); } }) : undefined,
         importOutputRaw: (raw, receivedAt) => { snapshots.importOutputRaw(raw, receivedAt, true); invalidateSnapshot(); },
         importRunEventRaw: (raw, receivedAt) => { snapshots.importRunEventRaw(raw, receivedAt, true); invalidateSnapshot(); },
         ...options.shadowRuntime,
@@ -1056,13 +1058,14 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
           }, runCodexManager: codexManager ? (trigger, context) => { void codexManager!.run(trigger, context).then(invalidateSnapshot).catch(() => undefined); } : undefined });
       } else shadowRuntime.start();
     }
-    if (options.incidentGuard !== false && productionRuntime) {
+    // This legacy guard includes provider-specific options/account probes; do not relabel another adapter's data as that provider.
+    if (options.incidentGuard !== false && productionRuntime && activeSourceSelection(resolve(projectRoot, ".."))?.selected.market.provider === "ROBINHOOD") {
       const origin = `http://127.0.0.1:${actualPort}`;
       incidentGuard = createIncidentGuard({
         store: snapshots,
         siteVersion,
         marketProbe: async () => {
-          const charts = await withRobinhoodMcp({ projectRoot, timeoutMs: 35_000, allowlist: ["get_equity_quotes", "get_equity_historicals"] }, (session) => Promise.all([collectRobinhoodMarketChart(session, "SPY", "5m", new Date().toISOString(), "5d"), collectRobinhoodMarketChart(session, "QQQ", "5m", new Date().toISOString(), "5d")]));
+          const charts = await Promise.all([marketChart("SPY", "5m", "1d"), marketChart("QQQ", "5m", "1d")]);
           // Wider history is diagnostic only; preserve the existing one-session input to triggers and settlement.
           const currentCharts = charts.map((chart) => { const selected = selectChartSessions(chart.bars, "1d"); return { ...chart, range: "1d" as const, bars: selected.bars, session_dates: selected.dates }; });
           const recorded = snapshots.recordTsMarketCharts(currentCharts), watches = snapshots.getActiveSpxOptionWatches();
@@ -1073,7 +1076,7 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
           snapshots.recordSpxConvexityEvents(recorded.insertedIntradayEvents);
           return charts;
         },
-        newsProbe: finnhubNews,
+        newsProbe: activeSourceSelection(resolve(projectRoot, ".."))?.selected.news.provider === "FINNHUB" ? finnhubNews : undefined,
         pageProbe: async () => {
           const response = await fetch(`${origin}/api/health`, { headers: { authorization: `Bearer ${gatewayKey}` }, signal: AbortSignal.timeout(10_000) });
           return response.ok;
@@ -1085,19 +1088,15 @@ export async function startOwnerServer(options: OwnerServerOptions = {}) {
         },
         recoverShadow: shadowRuntime ? (at) => shadowRuntime!.runTsCore("LIVE", at, "Manager deterministic TS Core recovery") : undefined,
         shadowRunning: (slotId) => shadowRuntime?.isRunning(slotId) ?? false,
-        maintenanceProbe: () => collectLocalMaintenanceFindings({
-          dataRoot,
-          schedulerCheckedAt: timelineScheduler?.checkedAt ?? null,
-          runtimeEntry: resolve(process.env.TRADING_OS_DIST_DIR ?? resolve(projectRoot, "dist"), "server", "index.js"),
-        }),
+        // A foreground portable copy has no Windows supervisor/task contract and does not inspect unrelated desktop crashes.
+        desktopProbe: async () => [],
         intervalMs: 30_000,
         onCodexEscalation: codexManager ? (context) => { void codexManager!.run("INCIDENT_ESCALATION", context).then(invalidateSnapshot).catch(() => undefined); } : undefined,
       });
     }
     if (productionRuntime && !(await snapshots.getActiveAsync()).marketRadar.snapshot) {
       try {
-        const state = await snapshots.getActiveAsync();
-        const sources = await withRobinhoodMcp({ projectRoot, allowlist: ROBINHOOD_READONLY_TOOLS }, (session) => collectRobinhoodReadonly(session, new Date().toISOString(), state.marketIntelligence, state.marketRadar.snapshot));
+        const sources = await collectSelectedMarket(new Date().toISOString(), undefined, resolve(projectRoot, ".."));
         snapshots.recordApprovedCapabilities(sources, `bootstrap:${sources.snapshot_id}`);
       } catch { /* Incident Guard records official-source failures; never replace them with samples. */ }
     }

@@ -7,15 +7,21 @@ import { syncBuiltinESMExports } from "node:module";
 import { EventEmitter } from "node:events";
 import { PassThrough, Writable } from "node:stream";
 import { collectRobinhoodReadonly, robinhoodResponseBody, withRobinhoodMcp } from "../server/robinhood-mcp.ts";
+import { saveSourceSettings } from "../../tools/source-settings.mjs";
 
 const secret = "NEVER_PERSIST_ACCOUNT_OR_BEARER_VALUE";
 function fakeTransport(context, mode = "ok") {
   const children = [];
   const priorAutomation = process.env.TRADING_OS_PUBLIC_AUTOMATION;
+  const priorSelection = process.env.TRADING_OS_SOURCE_SETTINGS;
+  const work = resolve("../_工作文件"); fs.mkdirSync(work, { recursive: true });
+  const packageRoot = fs.mkdtempSync(resolve(work, "synthetic-mcp-selection-"));
+  children.projectRoot = resolve(packageRoot, "web");
+  process.env.TRADING_OS_SOURCE_SETTINGS = JSON.stringify(saveSourceSettings({ market: { provider: "ROBINHOOD", environment: "LIVE" }, news: { provider: "NONE" }, broker: { provider: "ROBINHOOD" } }, { packageRoot, confirmed: true, expectedRevision: null }));
   process.env.TRADING_OS_PUBLIC_AUTOMATION = "1";
   // The transport is fake on every host; CI must not need a Windows CLI package.
   const readdir = fs.readdirSync;
-  context.mock.method(fs, "readdirSync", (path, options) => path === resolve("node_modules", ".pnpm")
+  context.mock.method(fs, "readdirSync", (path, options) => path === resolve(children.projectRoot, "node_modules", ".pnpm")
     ? [{ name: "@openai+codex@fixture-win32-x64", isDirectory: () => true }]
     : readdir(path, options));
   context.mock.method(childProcess, "spawn", () => {
@@ -40,13 +46,16 @@ function fakeTransport(context, mode = "ok") {
     context.mock.restoreAll(); syncBuiltinESMExports();
     if (priorAutomation === undefined) delete process.env.TRADING_OS_PUBLIC_AUTOMATION;
     else process.env.TRADING_OS_PUBLIC_AUTOMATION = priorAutomation;
+    if (priorSelection === undefined) delete process.env.TRADING_OS_SOURCE_SETTINGS;
+    else process.env.TRADING_OS_SOURCE_SETTINGS = priorSelection;
+    fs.rmSync(packageRoot, { recursive: true, force: true });
   });
   return children;
 }
 
 test("MCP timing includes spawn, initialization, request identity and body parsing without private values", async (context) => {
   const children = fakeTransport(context), events = [];
-  const result = await withRobinhoodMcp({ timeoutMs: 50, onTiming: (event) => events.push(event) }, async (session) => robinhoodResponseBody(await session.call("get_equity_quotes", { account: secret })));
+  const result = await withRobinhoodMcp({ projectRoot: children.projectRoot, timeoutMs: 50, onTiming: (event) => events.push(event) }, async (session) => robinhoodResponseBody(await session.call("get_equity_quotes", { account: secret })));
   assert.equal(result.marker, secret); assert.equal(children[0].killCount, 1);
   assert.ok(events.some((event) => event.event === "spawn" && event.spawn_pid === 4321));
   for (const method of ["initialize", "thread/start", "mcpServer/tool/call"]) {
@@ -63,7 +72,7 @@ for (const mode of ["error", "provider_error", "timeout", "exit"]) test(`MCP tim
   const children = fakeTransport(context, mode), events = [];
   const expected = mode === "error" ? /EXPECTED_RPC_ERROR/ : mode === "provider_error" ? /returned an error/ : mode === "timeout" ? /timed out/ : /exited 1/;
   for (const onTiming of [undefined, (event) => events.push(event), () => { throw new Error(secret); }]) {
-    await assert.rejects(withRobinhoodMcp({ timeoutMs: 10, onTiming }, (session) => session.call("get_equity_quotes", {})), expected);
+    await assert.rejects(withRobinhoodMcp({ projectRoot: children.projectRoot, timeoutMs: 10, onTiming }, (session) => session.call("get_equity_quotes", {})), expected);
     assert.equal(children.at(-1).killCount, 1);
   }
   assert.equal(events.find((event) => event.event === "rpc_end" && event.tool === "get_equity_quotes").outcome, { error: "REMOTE_ERROR", provider_error: "PROVIDER_ERROR", timeout: "TIMEOUT", exit: "PROCESS_EXIT" }[mode]);

@@ -12,11 +12,11 @@ type SymbolName = "SPY" | "QQQ";
 type IntervalName = "1m" | "5m" | "15m";
 type RangeName = "1d" | "24h" | "rth" | "gth" | "5d";
 type ChartResponse = {
-  source: "ROBINHOOD";
+  source: "ROBINHOOD" | "TRADIER" | "NOT_CONFIGURED";
   symbol: SymbolName;
   interval: IntervalName;
   range: RangeName;
-  session_bounds: "OFFICIAL_24_5" | "REGULAR_ONLY_EOD_FALLBACK" | "NOT_OBSERVED";
+  session_bounds: "OFFICIAL_24_5" | "REGULAR_ONLY_EOD_FALLBACK" | "REGULAR_ONLY" | "NOT_OBSERVED";
   data_grade: "OFFICIAL_OHLCV" | "RECENT_OFFICIAL_EOD" | "READ_FAILED";
   session_dates: string[];
   status: "LIVE" | "MARKET_CLOSED" | "STALE" | "DATA_BLOCKED";
@@ -141,10 +141,10 @@ export function TsForecastCockpit({ outputs, unavailableReason, extendedHours, s
       try {
         const response = await fetch(`/api/market-chart?symbol=${symbol}&interval=${interval}&range=${range}`, { cache: "no-store", signal: controller.signal });
         const body = await response.json() as ChartResponse | { error?: string };
-        if (!response.ok) throw new Error("error" in body && body.error ? body.error : "Robinhood 图表读取失败");
+        if (!response.ok) throw new Error("error" in body && body.error ? body.error : "所选行情源图表读取失败");
         if (active) { setData(body as ChartResponse); setError(null); }
       } catch (requestError) {
-        if (active && !(requestError instanceof DOMException && requestError.name === "AbortError")) { setData(null); setError(requestError instanceof Error ? requestError.message : "Robinhood 图表读取失败"); }
+        if (active && !(requestError instanceof DOMException && requestError.name === "AbortError")) { setData(null); setError(requestError instanceof Error ? requestError.message : "所选行情源图表读取失败"); }
       } finally { if (active) setLoading(false); }
     };
     void refresh();
@@ -476,7 +476,7 @@ export function TsForecastCockpit({ outputs, unavailableReason, extendedHours, s
         <div className="chart-switch" aria-label="选择指数">{(["SPY", "QQQ"] as const).map((name) => <button key={name} type="button" aria-pressed={symbol === name} onClick={() => { if (symbol !== name) { resetRequest(); setSymbol(name); } }}>{name}</button>)}</div>
         <div className="chart-switch" aria-label="选择K线周期">{(["1m", "5m", "15m"] as const).map((name) => <button key={name} type="button" aria-pressed={interval === name} onClick={() => { if (interval !== name) { resetRequest(); setIntervalName(name); } }}>{intervalText[name]}</button>)}</div>
         <div className="chart-switch" aria-label="选择日期范围">{(["1d", "24h", "rth", "gth", "5d"] as const).map((name) => <button key={name} type="button" aria-pressed={range === name} onClick={() => { if (range !== name) { resetRequest(); setRange(name); } }}>{rangeText[name]}</button>)}</div>
-        <span className="session-chip">{data?.session_bounds === "OFFICIAL_24_5" ? `官方完整K线 · ${sessionText[data.market_session.phase ?? "CLOSED"]}` : data?.session_bounds === "REGULAR_ONLY_EOD_FALLBACK" ? "最近可用常规时段 EOD" : "官方行情读取失败"}</span>
+        <span className="session-chip">{data?.session_bounds === "OFFICIAL_24_5" ? `官方完整K线 · ${sessionText[data.market_session.phase ?? "CLOSED"]}` : data?.session_bounds === "REGULAR_ONLY_EOD_FALLBACK" ? "最近可用常规时段 EOD" : data?.session_bounds === "REGULAR_ONLY" ? "所选来源 · 仅常规时段5分钟K线" : "所选行情读取失败"}</span>
         <span className="view-mode-chip" data-mode={viewMode}>{viewMode === "AUTO" ? "自动跟随" : "手动视野"}</span>
         <span className="chart-data-state" data-status={data?.status ?? "DATA_BLOCKED"} aria-live="polite">{loading ? "正在读取" : statusText[data?.status ?? "DATA_BLOCKED"]}</span>
       </div>
@@ -489,7 +489,7 @@ export function TsForecastCockpit({ outputs, unavailableReason, extendedHours, s
         <article><span>条件目标</span><strong>{target?.toFixed(2) ?? contractMissing}</strong></article>
       </div>
       <div className="chart-session-strip" data-status={data?.status ?? "NOT_OBSERVED"}>
-        <span>当前行情时段</span><strong>{data ? `${sessionText[data.market_session.phase ?? "CLOSED"]} · ${data.data_grade === "OFFICIAL_OHLCV" ? "官方 OHLCV" : data.data_grade === "RECENT_OFFICIAL_EOD" ? "最近 EOD" : "读取失败"}` : "正在确认官方数据"}</strong><small>{data?.session_bounds === "OFFICIAL_24_5" ? `Robinhood 官方 24_5 K线 · 交易日 ${data.market_session.trading_date ?? data.market_session.market_date} · ${sessionCoverage}` : data?.error ?? extendedHours?.error ?? "没有可靠数据时不会用样本补齐"}</small>
+        <span>当前行情时段</span><strong>{data ? `${sessionText[data.market_session.phase ?? "CLOSED"]} · ${data.data_grade === "OFFICIAL_OHLCV" ? "官方 OHLCV" : data.data_grade === "RECENT_OFFICIAL_EOD" ? "最近 EOD" : "读取失败"}` : "正在确认官方数据"}</strong><small>{data?.session_bounds === "OFFICIAL_24_5" ? `所选来源 24_5 K线 · 交易日 ${data.market_session.trading_date ?? data.market_session.market_date} · ${sessionCoverage}` : data?.error ?? extendedHours?.error ?? "没有可靠数据时不会用样本补齐"}</small>
       </div>
       <div className="chart-trigger-strip"><span>主路径触发</span><strong>{mainTrigger ? conditionText(mainTrigger) : contractMissing}</strong><small>只有满足合同条件并由后续槽确认，路径才继续有效；图中范围不是价格承诺。</small></div>
       <div className="chart-control-row" aria-label="图表操作">
@@ -504,7 +504,7 @@ export function TsForecastCockpit({ outputs, unavailableReason, extendedHours, s
       </div>
       <div className="forecast-stage-grid">
         <div className="chart-frame" onPointerDownCapture={markManualView} onWheelCapture={markManualView} onTouchStartCapture={markManualView}>
-          <div ref={containerRef} className="chart-canvas" aria-label={`${symbol} ${intervalText[interval]} Robinhood K线图`} />
+          <div ref={containerRef} className="chart-canvas" aria-label={`${symbol} ${intervalText[interval]} 所选行情源K线图`} />
           <div className="chart-phase-ribbon" ref={phaseRibbonRef} hidden aria-hidden="true"><span>真实历史K线</span><span>概率预测区域</span></div>
           <svg className="forecast-fan-overlay" ref={fanOverlayRef} style={{ display: layers.paths ? "block" : "none" }} aria-hidden="true">
             <path className="shared-uncertainty-fan" data-fan-shared="true" />
@@ -522,7 +522,7 @@ export function TsForecastCockpit({ outputs, unavailableReason, extendedHours, s
           <div className="forecast-node-overlay" ref={nodeOverlayRef} aria-hidden="true">{model.nodes.map((node) => <span key={`${node.time}-${node.label}`} data-node-time={node.time}><b>{node.label}</b><small>{formatEtDateTime(node.time * 1_000)}</small></span>)}</div>
           <div className="forecast-path-labels" ref={pathLabelOverlayRef} aria-hidden="true">{pathNames.map((name) => <span key={name} data-path-name={name} data-path={name}><b>{name === "main" ? "主路径" : name === "reverse" ? "反向路径" : "极端路径"} {model.pathMeta[name].probability}</b><small>{model.pathMeta[name].direction}</small></span>)}</div>
           {localZoom && layers.paths ? <ForecastLocalZoom model={model} selectedPath={selectedPath} /> : null}
-          {(blocked || error) && <div className="chart-blocked" role="status"><strong>数据被阻断</strong><span>{error ?? data?.error ?? "Robinhood 没有返回可验证的真实 K 线；未使用模拟数据。"}</span></div>}
+          {(blocked || error) && <div className="chart-blocked" role="status"><strong>数据被阻断</strong><span>{error ?? data?.error ?? "所选来源没有返回可验证的真实 K 线；未使用模拟数据。"}</span></div>}
         </div>
         <aside className="forecast-decision-rail" aria-label="当前预测摘要">
           <section className="rail-direction" data-direction={ts?.symbol_outlooks[symbol].direction ?? "NOT_OBSERVED"}><span>当前方向</span><strong>{ownerText(forecast.direction)}</strong><p>{ts?.symbol_outlooks[symbol].summary ?? unavailableReason}</p></section>
@@ -535,7 +535,7 @@ export function TsForecastCockpit({ outputs, unavailableReason, extendedHours, s
       <div className="chart-height-control"><label className="chart-height-slider"><strong>拖动调整图表高度</strong><input type="range" min="320" max="1200" step="20" value={chartHeight ?? 600} onInput={(event) => applyChartHeight(Number(event.currentTarget.value))} onChange={(event) => applyChartHeight(Number(event.currentTarget.value))} aria-label="拖动调整图表高度" /><output>{chartHeight === null ? "自动高度" : `${chartHeight}px`}</output></label><button type="button" onClick={resetChartHeight} disabled={chartHeight === null}>恢复自动高度</button></div>
       <p className="chart-gesture-hint">图内横向拖动平移，滚轮、触控板或双指缩放时间；拖动“现在”分割线分配预测空间；右侧“价格”手柄上下拖动缩放纵轴；底边手柄改变图表高度。手动视野会在自动刷新后保持。</p>
       <div className="chart-path-legend" aria-label="TS概率路径图例">{pathNames.map((name) => <button type="button" key={name} data-path={name} aria-pressed={selectedPath === name} onClick={() => setSelectedPath(name)}><i style={{ background: pathColors[name] }} />{model.pathMeta[name].label}</button>)}<span><i className="shared-fan-dot" />共享情景范围</span><span><i className="vwap-dot" />VWAP</span><span className="path-band-note">合同路径范围：共享扇形只绘制一次；单路径上下边界仅来自合同明确范围，不是置信区间</span></div>
-      <p className="chart-source">{symbol} · 来源：Robinhood 官方只读接口 · Quote：{data?.quote_as_of ? `${formatPtDateTime(data.quote_as_of)} / ${formatEtDateTime(data.quote_as_of)} · ${Math.round(data.quote_freshness_seconds ?? 0)}秒` : marketMissing} · Bar：{data?.bar_as_of ? `${formatPtDateTime(data.bar_as_of)} / ${formatEtDateTime(data.bar_as_of)} · ${Math.round(data.bar_freshness_seconds ?? 0)}秒` : marketMissing} · 横轴：美东交易所时间（含交易日期） · {intervalText[interval]}{interval === "15m" ? "（由真实 5 分钟 K 线聚合）" : "（官方原始周期）"} · {data?.session_dates.length ?? 0} 个交易日 / {data?.bars.length ?? 0} 根真实 K 线 · 数据等级：{data?.data_grade ?? "未观察到"} · {data?.gap_status ?? sessionCoverage} · VWAP 只用常规时段同批 K 线量价计算</p>
+      <p className="chart-source">{symbol} · 来源：{data?.source ?? "未配置"} · 只读接口 · Quote：{data?.quote_as_of ? `${formatPtDateTime(data.quote_as_of)} / ${formatEtDateTime(data.quote_as_of)} · ${Math.round(data.quote_freshness_seconds ?? 0)}秒` : marketMissing} · Bar：{data?.bar_as_of ? `${formatPtDateTime(data.bar_as_of)} / ${formatEtDateTime(data.bar_as_of)} · ${Math.round(data.bar_freshness_seconds ?? 0)}秒` : marketMissing} · 横轴：美东交易所时间（含交易日期） · {intervalText[interval]}{interval === "15m" ? "（由真实 5 分钟 K 线聚合）" : "（官方原始周期）"} · {data?.session_dates.length ?? 0} 个交易日 / {data?.bars.length ?? 0} 根真实 K 线 · 数据等级：{data?.data_grade ?? "未观察到"} · {data?.gap_status ?? sessionCoverage} · VWAP 只用常规时段同批 K 线量价计算</p>
       <p className="chart-overlay-note">盘前、正常交易、盘后和隔夜都来自官方 24_5 OHLCV；若 24_5 读取失败，主图只保留最近常规 EOD 并明确降级。隔夜稀疏成交只作次日背景，不改变 TS 合同。</p>
       {systemA && <p className="chart-overlay-note">System A 可选图层：日线 {ownerText(systemA.timeframes.daily.direction)} · 4小时 {ownerText(systemA.timeframes.four_hour.direction)} · 1小时 {ownerText(systemA.timeframes.one_hour.direction)} · 30分钟 {ownerText(systemA.timeframes.thirty_minute.direction)}；只绘制已冻结的支撑与阻力。</p>}
       {!ts && <p className="chart-overlay-note">{unavailableReason}：K 线和 VWAP 可见时继续展示；概率路径与关键位不补造。</p>}

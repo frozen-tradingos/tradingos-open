@@ -485,25 +485,56 @@ def wrapper(component: str, source_mode: str, status: str, observed_at: str,
     }
 
 
-def require_robinhood_snapshot(snapshot: dict[str, Any]) -> None:
+def validate_source_selection(selection: Any) -> dict[str, Any] | None:
+    if selection is None:
+        if os.environ.get("TRADING_OS_PUBLIC_AUTOMATION") == "1":
+            raise DataBlocked("缺少本次启动冻结的数据源选择")
+        return None
+    if not isinstance(selection, dict) or set(selection) != {"version", "revision", "selection_id", "selected"} or type(selection.get("version")) is not int or selection.get("version") != 1 or type(selection.get("revision")) is not int or not 1 <= selection["revision"] <= 9007199254740991:
+        raise DataBlocked("数据源选择版本或结构无效")
+    chosen = selection["selected"]
+    if not isinstance(chosen, dict) or set(chosen) != {"market", "news", "broker"} or any(not isinstance(chosen.get(role), dict) for role in ("market", "news", "broker")):
+        raise DataBlocked("数据源角色选择不完整")
+    market, news, broker = chosen["market"], chosen["news"], chosen["broker"]
+    if set(market) != {"provider", "environment"} or set(news) != {"provider"} or set(broker) != {"provider"} or market.get("provider") not in {"ROBINHOOD", "TRADIER"} or market.get("environment") != "LIVE" or news.get("provider") not in {"OFFICIAL_ONLY", "FINNHUB", "NONE"} or broker.get("provider") not in {"ROBINHOOD", "NONE"}:
+        raise DataBlocked("数据源未适配或Sandbox不具备自然预测资格")
+    canonical = {"version": 1, "revision": selection["revision"], "selected": {"market": {"provider": market["provider"], "environment": market["environment"]}, "news": {"provider": news["provider"]}, "broker": {"provider": broker["provider"]}}}
+    digest = sha256(json.dumps(canonical, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()
+    if selection.get("selection_id") != digest:
+        raise DataBlocked("数据源选择指纹无效")
+    return selection
+
+
+def require_market_snapshot(snapshot: dict[str, Any], selection: dict[str, Any] | None = None) -> str:
+    selection = validate_source_selection(selection)
+    source = selection["selected"]["market"]["provider"] if selection else "ROBINHOOD"
     providers = {
         item.get("source"): item
         for item in snapshot.get("providers", [])
         if isinstance(item, dict)
     }
-    robinhood = providers.get("ROBINHOOD", {})
+    provider = providers.get(source, {})
     if (
-        robinhood.get("status") != snapshot.get("status")
-        or providers.get("TRADIER", {}).get("status") != "DISABLED_BACKUP"
+        provider.get("status") != snapshot.get("status")
+        or selection is None and providers.get("TRADIER", {}).get("status") != "DISABLED_BACKUP"
+        or snapshot.get("delayed") is True
+        or snapshot.get("environment") in {"SANDBOX", "sandbox"}
     ):
-        raise DataBlocked("A2只接受当前Robinhood只读合同；Tradier必须保持DISABLED_BACKUP")
+        raise DataBlocked("A2冻结快照不匹配所选真实行情来源，禁止延迟或Sandbox数据")
     rows = [
         item
         for key in ("quotes", "bars", "options")
         for item in snapshot.get(key, [])
     ]
-    if not rows or any(not isinstance(item, dict) or item.get("source") != "ROBINHOOD" for item in rows):
-        raise DataBlocked("A2冻结快照包含非Robinhood行情证据")
+    if not rows or any(not isinstance(item, dict) or item.get("source") != source for item in rows):
+        raise DataBlocked("A2冻结快照混入其他行情来源")
+    if source == "TRADIER" and any(snapshot.get("capabilities", {}).get(capability) is not True for capability in ("option_chain", "option_bbo", "option_iv", "option_greeks")):
+        raise DataBlocked("Tradier基础行情可读取，但期权链/BBO/IV/Greeks尚未接通；不能启动完整TS预测")
+    return source
+
+
+def require_robinhood_snapshot(snapshot: dict[str, Any]) -> None:
+    require_market_snapshot(snapshot)
 
 
 def frozen_bar_session_date(snapshot: dict[str, Any]) -> str:
@@ -632,8 +663,8 @@ def deduplicate_earnings(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return list(unique.values())[:20]
 
 
-def generic_market_to_v2(snapshot: dict[str, Any], runtime_context: dict[str, Any], run_reason: str, official_macro: dict[str, Any], sha256_json) -> dict[str, Any]:
-    require_robinhood_snapshot(snapshot)
+def generic_market_to_v2(snapshot: dict[str, Any], runtime_context: dict[str, Any], run_reason: str, official_macro: dict[str, Any], sha256_json, source_selection: dict[str, Any] | None = None) -> dict[str, Any]:
+    source = require_market_snapshot(snapshot, source_selection)
     quotes = {
         row["symbol"]: {
             "symbol": row["symbol"], "last": row["last"], "bid": row["bid"],
@@ -696,8 +727,8 @@ def generic_market_to_v2(snapshot: dict[str, Any], runtime_context: dict[str, An
     macro_results = official_macro.get("results", [])
     reliable_official_news = isinstance(official_news, dict) and official_news.get("healthy_feed_count", 0) >= 2 and bool(official_items)
     providers = {
-        "robinhood": {"status": "HEALTHY", "source": "ROBINHOOD_OFFICIAL_TRADING_MCP"},
-        "tradier": {"status": "DISABLED_BACKUP"},
+        "robinhood": {"status": "HEALTHY", "source": "ROBINHOOD_OFFICIAL_TRADING_MCP"} if source == "ROBINHOOD" else {"status": "NOT_CONFIGURED"},
+        "tradier": {"status": "HEALTHY", "source": "TRADIER_OFFICIAL_MARKET_DATA"} if source == "TRADIER" else {"status": "DISABLED_BACKUP"},
         "finnhub": {"status": "HEALTHY" if finnhub_healthy else "DEGRADED", "error": finnhub.get("error"), "earnings_status": "HEALTHY" if earnings_healthy else "DEGRADED", "earnings_error": None if earnings_healthy else finnhub.get("error", "NOT_VERIFIED")},
         "google_news_rss": {"status": "DEGRADED", "error": "NOT_CONFIGURED"},
         "official_news": official_news,
@@ -714,7 +745,7 @@ def generic_market_to_v2(snapshot: dict[str, Any], runtime_context: dict[str, An
             "history": {symbol: [{"date": item["begins_at"][:10], "open": item["open"], "high": item["high"], "low": item["low"], "close": item["close"], "volume": item["volume"]} for item in bars[symbol]["daily"]] for symbol in ("SPY", "QQQ")},
             "timesales": {symbol: [{"time": item["begins_at"], "open": item["open"], "high": item["high"], "low": item["low"], "close": item["close"], "volume": item["volume"]} for item in bars[symbol]["values"] if item["begins_at"][:10] == bar_session_date] for symbol in ("SPY", "QQQ")},
         },
-        "options": options, "earnings": earnings, "news": raw_news, "positions": supported_v2_positions(snapshot), "macro_results": macro_results,
+        "options": options, "earnings": earnings, "news": raw_news, "positions": [] if source_selection and source_selection["selected"]["broker"]["provider"] == "NONE" else supported_v2_positions(snapshot), "macro_results": macro_results,
         "earnings_watch": {"contract_version": "v1", "component": "A1_EARNINGS_WATCH", "actionable": False, "status": "HEALTHY" if earnings_healthy else "DEGRADED", "generated_at": collected_at, "timezone": "America/Los_Angeles", "window_start": pt_day.isoformat(), "window_end": (pt_day + timedelta(days=6)).isoformat(), "selection_rule": "TOP_20_ABSOLUTE_REVENUE_ESTIMATE", "events": [{"event_id": sha256_json({"contract_version": "v1", "component": "A1_EARNINGS_WATCH", "symbol": item["symbol"], "date": item["date"], "session": item["session"]}), "symbol": item["symbol"], "date": item["date"], "session": item["session"], "eps_estimate": None, "revenue_estimate": None, "importance_rank": index, "market_impact_status": "UNVERIFIED_CANDIDATE", "source": "Finnhub Earnings Calendar", "confidence": "scheduled_event"} for index, item in enumerate(earnings if earnings_healthy else [], start=1)]},
         "macro_watch": macro_watch,
     }
@@ -757,6 +788,9 @@ def frozen_cycle(inputs: dict[str, Any], sha256_json) -> tuple[dict[str, Any], d
     result = a2.get("v2_result") if isinstance(a2, dict) else None
     if not isinstance(result, dict) or not isinstance(result.get("packet"), dict):
         raise DataBlocked("缺少A2冻结证据；下游已阻断")
+    selection = validate_source_selection(inputs.get("SOURCE_SELECTION"))
+    if selection is not None and result.get("source_selection") != selection:
+        raise DataBlocked("A2冻结证据不属于本次数据源选择，禁止切源沿用旧证据")
     packet = result["packet"]
     freshness = result.get("input_freshness")
     if not isinstance(freshness, dict) or freshness.get("freshness_hash") != sha256_json({key: value for key, value in freshness.items() if key != "freshness_hash"}):
@@ -1018,19 +1052,23 @@ def ts_report_context(orchestrator, packet: dict[str, Any], freshness: dict[str,
 
 
 def run_step(request: dict[str, Any], v2_root: Path, data_root: Path) -> dict[str, Any]:
+    inputs = request["input"]
+    selection = validate_source_selection(inputs.get("SOURCE_SELECTION"))
+    original_data_root = data_root
+    if selection is not None:
+        data_root = data_root / "source-selections" / selection["selection_id"]
     config, agent_runtime, orchestrator, supervisor = configure(v2_root, data_root)
     from trading_os_v2.a2.service import A2Analyzer
     from trading_os_v2.common.io import sha256_json
     from trading_os_v2.risk.service import enforce_a3_final, enforce_d_plan
 
     component = request["component"]
-    inputs = request["input"]
     source_mode = inputs["source_mode"]
     run_reason = str(inputs.get("RUN_REASON") or "4070 Live Shadow")
     run_id = inputs["run_id"]
     evidence_dir = data_root / "evidence"
     evidence_path = evidence_dir / f"{run_id.replace(':', '-')}-{component.lower()}.json"
-    evidence_ref = f"data/live-shadow/evidence/{evidence_path.name}"
+    evidence_ref = f"data/live-shadow/{evidence_path.relative_to(original_data_root).as_posix()}"
     now = datetime.now(UTC)
 
     if component == "OFFICIAL_MACRO":
@@ -1044,12 +1082,16 @@ def run_step(request: dict[str, Any], v2_root: Path, data_root: Path) -> dict[st
         market_snapshot = a1.get("market_sources") if isinstance(a1, dict) else None
         if not isinstance(market_snapshot, dict):
             raise DataBlocked("缺少A1冻结结果；A2已阻断")
+        selection = validate_source_selection(inputs.get("SOURCE_SELECTION"))
+        if selection is not None and (a1.get("v2_result") or {}).get("source_selection") != selection:
+            raise DataBlocked("A1冻结证据不属于本次数据源选择")
+        market_source = selection["selected"]["market"]["provider"] if selection else "ROBINHOOD"
         eod_analysis = run_reason in {"次日提前分析", "周末分析"}
         if market_snapshot.get("status") != "LIVE" and not (eod_analysis and market_snapshot.get("status") == "MARKET_CLOSED"):
-            raise DataBlocked(f"Robinhood generic market snapshot is {market_snapshot.get('status')}")
+            raise DataBlocked(f"所选行情快照状态为 {market_snapshot.get('status')}")
         runtime_context = inputs.get("RUNTIME_CONTEXT") if isinstance(inputs.get("RUNTIME_CONTEXT"), dict) else {}
         official_macro = verified_official_macro(a1.get("official_macro"), sha256_json)
-        raw = generic_market_to_v2(market_snapshot, runtime_context, run_reason, official_macro, sha256_json)
+        raw = generic_market_to_v2(market_snapshot, runtime_context, run_reason, official_macro, sha256_json, selection)
         try:
             position_monitor, position_gaps = frozen_position_monitor(market_snapshot, raw["positions"], data_root, datetime.now(UTC).isoformat(), orchestrator)
         except (DataBlocked, RuntimeError, OSError, ValueError) as exc:
@@ -1062,7 +1104,7 @@ def run_step(request: dict[str, Any], v2_root: Path, data_root: Path) -> dict[st
         analysis = analyzer.analyze(raw)
         packet = analyzer.freeze(raw, analysis)
         packet["a1"]["market_data"] = {
-            "contract_version": "v1", "source": "ROBINHOOD", "snapshot_id": market_snapshot["snapshot_id"],
+            "contract_version": "v1", "source": market_source, "snapshot_id": market_snapshot["snapshot_id"],
             "snapshot_hash": market_snapshot["snapshot_hash"], "as_of": market_snapshot["as_of"],
         }
         packet_payload = {key: value for key, value in packet.items() if key not in {"run_id", "packet_hash"}}
@@ -1087,6 +1129,8 @@ def run_step(request: dict[str, Any], v2_root: Path, data_root: Path) -> dict[st
         tracker = analysis.get("pattern_tracker", {}) if isinstance(analysis.get("pattern_tracker"), dict) else {}
         pattern_evidence = {"source_mode": source_mode, "data_grade": "NATURAL_LIVE_SLOT" if source_mode == "LIVE" else "REPLAY_ONLY", "status": tracker.get("status", "NOT_OBSERVED"), "as_of": tracker.get("updated_at") or None, "symbols": {symbol: {**{key: value.get(key) for key in ("current_state", "candidate_state", "candidate_bars")}, "state_since": value.get("state_since") or None, "data_time": None if value.get("data_time") == "" else value.get("data_time")} for symbol, value in tracker.get("symbols", {}).items() if isinstance(value, dict)}}
         result = {"analysis": analysis, "packet": packet, "input_freshness": freshness_proof, "official_macro": official_macro, "market_environment": market_snapshot.get("market_environment"), "approved_capabilities": market_snapshot.get("approved_capabilities"), "pattern_evidence": pattern_evidence, "position_monitor": position_monitor, "position_data_gaps": position_gaps}
+        if selection is not None:
+            result["source_selection"] = selection
         gaps = [str(item) for item in analysis.get("data_gaps", []) if str(item)] + position_gaps
         status = "DEGRADED" if gaps else "HEALTHY"
         payload = wrapper("A2", source_mode, status, str(analysis["analyzed_at"]), cutoff, freshness, gaps, result, evidence_ref, market_snapshot, sha256_json)

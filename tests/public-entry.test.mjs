@@ -12,6 +12,8 @@ test("default entry has no provider calls and rejects inherited production crede
   const env = cleanEnvironment({ CODEX_HOME: "private", OPENAI_API_KEY: "synthetic-secret", TRADING_OS_DATA_ROOT: "private", TRADING_OS_RUNTIME_ROLE: "TIER0", PATH: "synthetic-path" });
   assert.equal(env.OPENAI_API_KEY, undefined); assert.equal(env.TRADING_OS_RUNTIME_ROLE, undefined);
   assert.equal(env.TRADING_OS_PUBLIC_AUTOMATION, "0");
+  assert.equal(env.NEXT_TELEMETRY_DISABLED, "1"); assert.equal(env.WRANGLER_SEND_METRICS, "false");
+  assert.equal(env.PYTHONUTF8, "1"); assert.equal(env.PYTHONIOENCODING, "utf-8");
   assert.equal(env.CODEX_HOME, resolve(root, "web/data/model-codex-home"));
   assert.equal(env.TRADING_OS_DATA_ROOT, resolve(root, "web/data"));
   assert.equal(offlineDoctor().external_requests, 0); safePaths();

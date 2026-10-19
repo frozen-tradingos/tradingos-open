@@ -21,9 +21,11 @@ The doctor is offline: completed local authorization steps are not proof that re
 
 ## First use
 
-Guide the user through `Start.cmd` or `pnpm setup`. Environment preparation, a local password, their own model login and supported broker authorization are separate steps. Users enter credentials only in the provider's official flow or the local hidden-input prompt, never in chat.
+Guide the user through `Start.cmd`. It asks permission once to download pinned runtimes and locked dependencies into this copy; no global installs are required. A local password, the user's model login, source selection, authorization and a read-only connection check remain distinct steps. Users enter credentials only in the provider's official flow or the local hidden-input prompt, never in chat. Configuration and switching use menu4; menu5 authorizes the selected source; menu10 checks quotes and bars without a model call. Close the running app before switching sources.
 
-The initial candidate supports Windows x64 and Robinhood official MCP read-only. Other brokers, SnapTrade, SaaS accounts, cloud hosting, domain purchase and billing are not connected. Do not claim otherwise. Optional news access requires the user's own Finnhub authorization and applicable entitlement.
+The candidate targets Windows x64. Read `docs/PROVIDERS.md` for provider identities, capability limits and actual test status. A selectable market-data adapter is not a newly supported brokerage account. Alternative quotes/bars cannot replace missing options, account access, risk evidence or real authorization. Sandbox is delayed test data, never natural LIVE evidence. Other broker adapters, SaaS accounts and billing remain unconnected. Avoid provider branding in general product copy, but identify the actual provider in selection, authorization and technical evidence.
+
+Saving or switching a source only records a new selection identity. It never asserts VERIFIED. Do not reuse a prior selection's validation, cached prices, forecast binding or performance cohort. Preserve historical records with their original provenance. A failed source must not silently fall back to another source or to samples.
 
 Default start is a blank local workspace without external requests. Automatic analysis requires an explicit user-enabled live session. Explain that market/account evidence is sent to the user's model provider and usage may consume quota or incur charges. Do not enable it, log into a provider, purchase data or install a service as an implicit step in a research request.
 

@@ -1,34 +1,16 @@
 from __future__ import annotations
 
-import json
 import os
+import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
-from trading_os_v2.discord_gateway.service import (
-    DiscordFailure,
-    DiscordGateway,
-)
+from trading_os_v2.discord_gateway.service import DiscordFailure, DiscordGateway, _reject_overlong_content
 
 
 def gateway() -> DiscordGateway:
-    return DiscordGateway(
-        {
-            "discord": {
-                "bot_token_env": "DISCORD_TEST_TOKEN",
-                "channels": {"a1": "123456789"},
-            }
-        }
-    )
-
-
-def response(payload: object) -> Mock:
-    value = Mock()
-    value.read.return_value = json.dumps(payload).encode("utf-8")
-    context = MagicMock()
-    context.__enter__.return_value = value
-    context.__exit__.return_value = False
-    return context
+    # SYNTHETIC attempt to enable a non-distributed integration must still fail closed.
+    return DiscordGateway({"discord": {"enabled": True, "bot_token_env": "DISCORD_TEST_TOKEN", "channels": {"a1": "123456789"}}})
 
 
 def a1_message(length: int) -> str:
@@ -36,88 +18,44 @@ def a1_message(length: int) -> str:
     return title + "x" * (length - len(title))
 
 
-class DiscordGatewayWriteTests(unittest.TestCase):
-    def test_send_rejects_content_over_discord_limit_before_request(self) -> None:
+class PublicDiscordGatewayTests(unittest.TestCase):
+    def assert_disabled_without_external_access(self, action) -> None:
+        registry = Mock()
         with (
-            patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}),
-            patch(
-                "trading_os_v2.discord_gateway.service.urllib.request.urlopen"
-            ) as urlopen,
+            patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "SYNTHETIC-NOT-A-TOKEN"}),
+            patch.dict(sys.modules, {"winreg": registry}),
+            patch("trading_os_v2.discord_gateway.service.urllib.request.urlopen") as urlopen,
         ):
-            with self.assertRaisesRegex(DiscordFailure, "超过2000"):
-                gateway().send("a1", a1_message(2001))
-
+            with self.assertRaisesRegex(DiscordFailure, "disabled in the independent public package"):
+                action()
         urlopen.assert_not_called()
+        self.assertEqual(registry.mock_calls, [])
 
-    def test_send_preserves_content_at_discord_limit(self) -> None:
-        content = a1_message(2000)
-        with (
-            patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}),
-            patch(
-                "trading_os_v2.discord_gateway.service.urllib.request.urlopen",
-                return_value=response({"id": "987654321"}),
-            ) as urlopen,
-        ):
-            message_id = gateway().send("a1", content)
+    def test_send_over_limit_is_disabled_without_a_request(self) -> None:
+        with self.assertRaisesRegex(DiscordFailure, "超过2000"):
+            _reject_overlong_content(a1_message(2001))
+        self.assert_disabled_without_external_access(lambda: gateway().send("a1", a1_message(2001)))
 
-        self.assertEqual(message_id, "987654321")
-        request = urlopen.call_args.args[0]
-        body = json.loads(request.data.decode("utf-8"))
-        self.assertEqual(body["content"], content)
-        self.assertEqual(body["allowed_mentions"], {"parse": []})
+    def test_send_at_limit_is_still_disabled(self) -> None:
+        _reject_overlong_content(a1_message(2000))
+        self.assert_disabled_without_external_access(lambda: gateway().send("a1", a1_message(2000)))
 
-    def test_edit_rejects_content_over_discord_limit_before_request(self) -> None:
-        with (
-            patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}),
-            patch(
-                "trading_os_v2.discord_gateway.service.urllib.request.urlopen"
-            ) as urlopen,
-        ):
-            with self.assertRaisesRegex(DiscordFailure, "超过2000"):
-                gateway().edit("a1", "987654321", a1_message(2001))
+    def test_edit_is_disabled_without_a_request(self) -> None:
+        with self.assertRaisesRegex(DiscordFailure, "超过2000"):
+            _reject_overlong_content(a1_message(2001))
+        self.assert_disabled_without_external_access(lambda: gateway().edit("a1", "987654321", a1_message(2001)))
 
-        urlopen.assert_not_called()
+    def test_paginated_read_is_disabled_without_a_request(self) -> None:
+        self.assert_disabled_without_external_access(lambda: gateway().messages("a1", before="987654321", limit=100))
 
+    def test_conflicting_pagination_does_not_bypass_disabled_gateway(self) -> None:
+        self.assert_disabled_without_external_access(lambda: gateway().messages("a1", after="1", before="2"))
 
-class DiscordGatewayReadTests(unittest.TestCase):
-    def test_messages_supports_before_pagination(self) -> None:
-        with (
-            patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}),
-            patch(
-                "trading_os_v2.discord_gateway.service.urllib.request.urlopen",
-                return_value=response([]),
-            ) as urlopen,
-        ):
-            result = gateway().messages("a1", before="987654321", limit=100)
+    def test_exact_message_read_is_disabled_without_a_request(self) -> None:
+        self.assert_disabled_without_external_access(lambda: gateway().message("a1", "987654321"))
 
-        self.assertEqual(result, [])
-        request = urlopen.call_args.args[0]
-        self.assertIn("before=987654321", request.full_url)
-
-    def test_messages_rejects_conflicting_pagination(self) -> None:
-        with patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}):
-            with self.assertRaisesRegex(DiscordFailure, "不能同时"):
-                gateway().messages("a1", after="1", before="2")
-
-    def test_message_reads_exact_message_id(self) -> None:
-        payload = {"id": "987654321", "content": "内容"}
-        with (
-            patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}),
-            patch(
-                "trading_os_v2.discord_gateway.service.urllib.request.urlopen",
-                return_value=response(payload),
-            ) as urlopen,
-        ):
-            result = gateway().message("a1", "987654321")
-
-        self.assertEqual(result, payload)
-        request = urlopen.call_args.args[0]
-        self.assertTrue(request.full_url.endswith("/messages/987654321"))
-
-    def test_message_rejects_non_numeric_id(self) -> None:
-        with patch.dict(os.environ, {"DISCORD_TEST_TOKEN": "token"}):
-            with self.assertRaisesRegex(DiscordFailure, "格式"):
-                gateway().message("a1", "not-an-id")
+    def test_invalid_message_id_does_not_bypass_disabled_gateway(self) -> None:
+        self.assert_disabled_without_external_access(lambda: gateway().message("a1", "not-an-id"))
 
 
 if __name__ == "__main__":
