@@ -30,8 +30,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 12490,
-      "sha256": "42daba85b05fc29add34fcf5c8cc8eb334bab31b952ae9fdce80a4ce9842568b"
+      "bytes": 12511,
+      "sha256": "26359bae9b9e3025f90fd654fe3669722abf0122ddeb76030b0b2b6ff85a4d5e"
     },
     {
       "path": "Start.cmd",
@@ -56,7 +56,7 @@
     {
       "path": "package.json",
       "bytes": 779,
-      "sha256": "79b2d6cadf4716d7cb689150901d51775efc4ec766c850a7ee7fec0f5eac9772"
+      "sha256": "ea8436364d8002a1aa925893103a0f9d5a0cfaaff9bc01276843286a3c6a9e6e"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -1381,7 +1381,7 @@
     {
       "path": "web/package.json",
       "bytes": 1624,
-      "sha256": "c2ad2abe5b70eb7cc29fbf6878b172c856e11c339465604ad435edf361afaf53"
+      "sha256": "785606500be48b99dd7a4d195628c5c0f903e9edf20b8a0c5367626088297041"
     },
     {
       "path": "web/pnpm-lock.yaml",

@@ -2,9 +2,9 @@
 
 Trading OS Open 是在自己电脑运行的开源交易研究工具，附带研究助手 Skill。你使用自己的模型账号、券商账号和数据权限，检查预测依据，记录交易计划并复盘。
 
-**Windows 10/11 x64 · 只读研究 · MIT · v0.1.0-preview.3**
+**Windows 10/11 x64 · 只读研究 · MIT · v0.1.0-preview.4**
 
-[下载预览版](https://github.com/frozen-tradingos/tradingos-open/releases) · [首次安装](#首次安装) · [数据源与授权](docs/PROVIDERS.md) · [反馈问题](https://github.com/frozen-tradingos/tradingos-open/issues)
+[下载预览版](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.4) · [首次安装](#首次安装) · [数据源与授权](docs/PROVIDERS.md) · [反馈问题](https://github.com/frozen-tradingos/tradingos-open/issues)
 
 ## 项目定位
 
@@ -25,7 +25,7 @@ Open-source, local-first market research, TS forecasts, trading plans and review
 
 ## 首次安装
 
-1. 从[发行页](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.3)下载 `TradingOS-Open-v0.1.0-preview.3.zip`，完整解压到自己的普通文件夹，例如 `D:\02_项目\TradingOS-Open`。与已有 Trading OS 副本分开放置，不链接旧数据目录。
+1. 从[发行页](https://github.com/frozen-tradingos/tradingos-open/releases/tag/v0.1.0-preview.4)下载 `TradingOS-Open-v0.1.0-preview.4.zip`，完整解压到自己的普通文件夹，例如 `D:\02_项目\TradingOS-Open`。与已有 Trading OS 副本分开放置，不链接旧数据目录。
 2. 双击 `Start.cmd`。首次运行会请求下载许可；输入 `DOWNLOAD` 后，启动器下载并校验固定版本的运行工具，安装锁定依赖，再构建界面。工具保存在本包 `.tools/`，不要求你先安装全局开发工具。
 3. 进入菜单后，选择 **2 设置本地登录密码**，再选 **7 打开工作区**。在 `http://127.0.0.1:4160` 使用 `owner` 和自己的本地密码登录。这里不需要项目的云账号或邮件登录；菜单7不请求行情或模型分析。
 4. 准备连接服务时，按下表完成自己的授权、连接检查和风险资料。授权页要求开户、充值、扩大权限或购买套餐时，先停止并核对费用。
